@@ -439,7 +439,12 @@ function setAuthMode(mode) {
 
   const btnTextNode = byId("auth-btn-text");
 
-  if (byId("group-name")) byId("group-name").style.display = registering ? "flex" : "none";
+  if (byId("group-name")) {
+    byId("group-name").style.display = registering ? "flex" : "none";
+    if (byId("auth-name")) {
+      byId("auth-name").required = registering;
+    }
+  }
   if (document.querySelector(".form-actions-row")) document.querySelector(".form-actions-row").style.display = (!registering && !forgot) ? "flex" : "none";
 
   if (forgot || loginOtp) {
@@ -862,5 +867,44 @@ if (byId("btn-send-otp")) {
       byId("btn-send-otp").disabled = false;
       byId("btn-send-otp").textContent = "Send OTP";
     }
+  });
+}
+
+
+// --- Google Auth Integration ---
+window.onload = function () {
+  if (window.google) {
+    google.accounts.id.initialize({
+      client_id: 'YOUR_GOOGLE_CLIENT_ID', // Replace with your actual Client ID
+      callback: handleCredentialResponse
+    });
+    const btn = document.getElementById('google-login-btn');
+    if (btn) {
+      btn.addEventListener('click', () => {
+        google.accounts.id.prompt(); // Shows the One Tap UI
+      });
+    }
+  }
+};
+
+function handleCredentialResponse(response) {
+  fetch('/auth/google', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token: response.credential })
+  })
+  .then(res => {
+    if (!res.ok) throw new Error('Google Auth Failed');
+    return res.json();
+  })
+  .then(data => {
+    localStorage.setItem('eco_token', data.access_token);
+    localStorage.setItem('eco_user_id', data.user_id);
+    checkSession();
+  })
+  .catch(err => {
+    console.error(err);
+    const msg = document.getElementById('auth-message');
+    if (msg) msg.textContent = 'Google login failed.';
   });
 }

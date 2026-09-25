@@ -12,6 +12,8 @@ import json
 import urllib.request
 import urllib.error
 import requests
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
 
 from fastapi import FastAPI, File, Form, Header, HTTPException, Request, UploadFile, status, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -106,6 +108,9 @@ class ResetPasswordRequest(BaseModel):
     email: str = Field(min_length=5, max_length=255)
     otp: str = Field(min_length=6, max_length=6)
     new_password: str = Field(min_length=5, max_length=128)
+
+class GoogleLoginRequest(BaseModel):
+    token: str = Field(min_length=1)
 
 
 class GoogleLocationRequest(BaseModel):
@@ -225,6 +230,37 @@ def login(request: LoginRequest) -> dict[str, str]:
         "token_type": "bearer",
         "user_id": stored_user["user_id"],
     }
+
+@app.post("/auth/google", response_model=dict[str, str])
+def google_login(request: GoogleLoginRequest) -> dict[str, str]:
+    client_id = os.getenv("GOOGLE_CLIENT_ID", "YOUR_GOOGLE_CLIENT_ID")
+    try:
+        idinfo = id_token.verify_oauth2_token(request.token, google_requests.Request(), client_id)
+        email = idinfo.get("email")
+        if not email:
+            raise HTTPException(status_code=400, detail="Google token does not contain an email")
+        
+        email = email.lower()
+        stored_user = find_user_by_email(email)
+        
+        if not stored_user:
+            user_id = f"usr-{uuid4().hex[:8]}"
+            name = idinfo.get("name", email.split("@")[0])
+            # Save user with random password since they use Google
+            save_user(user_id, name, email, Role.citizen.value, hash_password(uuid4().hex), datetime.now(timezone.utc).isoformat())
+            users[user_id] = User(user_id=user_id, name=name, role=Role.citizen)
+            role = Role.citizen.value
+        else:
+            user_id = stored_user["user_id"]
+            role = stored_user["role"]
+
+        return {
+            "access_token": create_token(user_id, role),
+            "token_type": "bearer",
+            "user_id": user_id,
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=401, detail=f"Invalid Google token: {e}")
 
 
 @app.post("/auth/request-otp")

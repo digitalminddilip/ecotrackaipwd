@@ -39,6 +39,12 @@ function enterGuestMode() {
   if (byId("collector-dashboard-wrapper")) byId("collector-dashboard-wrapper").hidden = true;
   if (byId("citizen-wrapper")) byId("citizen-wrapper").hidden = false;
   document.body.classList.remove("collector-mode");
+  
+  if (byId("cit-user-name")) byId("cit-user-name").textContent = "Guest";
+  if (byId("cit-user-email")) byId("cit-user-email").textContent = "Login to report";
+  if (byId("cit-user-avatar")) {
+    byId("cit-user-avatar").innerHTML = `<img src="https://ui-avatars.com/api/?name=Guest&background=random&color=fff&rounded=true" style="width: 100%; height: 100%; border-radius: 50%;">`;
+  }
 }
 
 function openSignIn() {
@@ -426,6 +432,12 @@ async function restoreSession() {
     if (byId("collector-dashboard-wrapper")) byId("collector-dashboard-wrapper").hidden = true;
     if (byId("citizen-wrapper")) byId("citizen-wrapper").hidden = false;
     document.body.classList.remove("collector-mode");
+    if (byId("cit-user-name")) byId("cit-user-name").textContent = currentUser.name;
+    if (byId("cit-user-email")) byId("cit-user-email").textContent = currentUser.email || `${currentUser.name.toLowerCase().replace(' ', '')}@ecotrack.local`;
+    const avatarUrl = currentUser.picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name)}&background=random&color=fff&rounded=true&size=128`;
+    if (byId("cit-user-avatar")) {
+      byId("cit-user-avatar").innerHTML = `<img src="${avatarUrl}" referrerpolicy="no-referrer" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+    }
   } else {
     if (byId("app-wrapper")) byId("app-wrapper").hidden = false;
     if (byId("citizen-wrapper")) byId("citizen-wrapper").hidden = true;
@@ -678,13 +690,86 @@ byId("auth-form").addEventListener("submit", async (event) => {
   }
 });
 
-byId("logout").addEventListener("click", () => {
-  localStorage.removeItem("ecotrack_token");
-  enterGuestMode();
-  loadDashboard();
-});
+const logoutBtn = byId("logout");
+if (logoutBtn) {
+  logoutBtn.addEventListener("click", () => {
+    localStorage.removeItem("ecotrack_token");
+    enterGuestMode();
+    loadDashboard();
+  });
+}
 
-byId("login").addEventListener("click", openSignIn);
+if (byId("login")) {
+  byId("login").addEventListener("click", openSignIn);
+}
+
+window.showCitView = function(viewId, el) { 
+  document.querySelectorAll('#citizen-wrapper .col-nav-link').forEach(a => a.classList.remove('active'));
+  if (el) el.classList.add('active');
+  
+  const views = ['new-report', 'track', 'reports', 'status', 'profile'];
+  views.forEach(v => {
+    const el = document.getElementById('cit-view-' + v);
+    if(el) el.style.display = (v === viewId) ? 'block' : 'none';
+  });
+  
+  const titleMap = {
+    'new-report': ['Report the Waste Product', 'Help keep our community clean by reporting plastic waste.'],
+    'track': ['Track Report', 'View live location of your reports.'],
+    'reports': ['My Reports', 'History of all your waste reports.'],
+    'status': ['Impact Status', 'Your contribution to the community.'],
+    'profile': ['My Profile', 'Manage your account details.']
+  };
+  
+  const titleEl = document.getElementById('cit-page-title');
+  const subEl = document.getElementById('cit-page-subtitle');
+  if (titleEl && titleMap[viewId]) titleEl.textContent = titleMap[viewId][0];
+  if (subEl && titleMap[viewId]) subEl.textContent = titleMap[viewId][1];
+  
+  if (viewId === 'reports' || viewId === 'status') {
+    populateCitReports();
+  }
+  if (viewId === 'profile') {
+    populateCitProfile();
+  }
+}
+
+function populateCitReports() {
+  const tbody = document.getElementById('cit-reports-tbody');
+  if (!tbody) return;
+  if (!reports || reports.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" style="padding: 12px; text-align: center; color: #94a3b8;">No reports found.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = reports.map(r => `
+    <tr style="border-bottom: 1px solid #f1f5f9;">
+      <td style="padding: 12px; color: #1e293b; font-weight: 500;">${r.report_id.substring(0,8)}...</td>
+      <td style="padding: 12px; color: #64748b;">${new Date(r.timestamp).toLocaleDateString()}</td>
+      <td style="padding: 12px; color: #64748b;">${r.category || '-'}</td>
+      <td style="padding: 12px;"><span class="status ${r.status}">${formatStatus(r.status)}</span></td>
+    </tr>
+  `).join('');
+  
+  let verified = reports.filter(r => r.status === 'verified' || r.status === 'collected').length;
+  const tEl = document.getElementById('cit-stat-total');
+  const vEl = document.getElementById('cit-stat-verified');
+  if (tEl) tEl.textContent = reports.length;
+  if (vEl) vEl.textContent = verified;
+}
+
+function populateCitProfile() {
+  const nameEl = document.getElementById('cit-profile-name');
+  const emailEl = document.getElementById('cit-profile-email');
+  const avatarEl = document.getElementById('cit-profile-avatar');
+  if (currentUser) {
+    if (nameEl) nameEl.textContent = currentUser.name;
+    if (emailEl) emailEl.textContent = currentUser.email || `${currentUser.name.toLowerCase().replace(' ', '')}@ecotrack.local`;
+    const finalAvatarUrl = currentUser.picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name)}&background=random&color=fff&rounded=true&size=128`;
+    if (avatarEl) {
+      avatarEl.innerHTML = `<img src="${finalAvatarUrl}" referrerpolicy="no-referrer" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+    }
+  }
+}
 
 const colLogout = document.getElementById("col-logout");
 if (colLogout) {
@@ -777,9 +862,13 @@ byId("refresh").addEventListener("click", () => {
 });
 byId("locate").addEventListener("click", getLocation);
 byId("network-locate").addEventListener("click", getNetworkLocation);
-byId("focus-report").addEventListener("click", () =>
-  byId("report-panel").scrollIntoView({ behavior: "smooth" }),
-);
+const focusReportBtn = byId("focus-report");
+if (focusReportBtn) {
+  focusReportBtn.addEventListener("click", () => {
+    const p = byId("report-panel");
+    if (p) p.scrollIntoView({ behavior: "smooth" });
+  });
+}
 
 initMap();
 getLocation();
@@ -881,7 +970,7 @@ if (byId("btn-send-otp")) {
 window.onload = function () {
   if (window.google) {
     google.accounts.id.initialize({
-      client_id: 'YOUR_GOOGLE_CLIENT_ID', // Replace with your actual Client ID
+      client_id: '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', // Provided by user
       callback: handleCredentialResponse
     });
     const btn = document.getElementById('google-login-btn');

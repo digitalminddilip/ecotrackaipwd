@@ -126,7 +126,7 @@ function renderChart(catCounts) {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { position: 'right', labels: { color: '#f8fafc' } }
+        legend: { position: 'right', labels: { color: '#6b7280' } }
       }
     }
   });
@@ -164,7 +164,7 @@ async function fetchCollectors() {
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td><strong>${col.name}</strong></td>
-        <td>${col.user_id}</td>
+        <td>${col.email || "No Email"}</td>
         <td><span class="status-badge status-verified">Active</span></td>
       `;
       tbody.appendChild(tr);
@@ -204,11 +204,9 @@ function renderReportsTable(reportsToRender) {
   
   reportsToRender.forEach(r => {
     const tr = document.createElement("tr");
-    
     const dateStr = new Date(r.timestamp).toLocaleDateString();
-    
     let actionHtml = `<button class="action-btn" onclick="viewDetails('${r.report_id}')">View</button>`;
-    if (r.status === "reported") {
+    if (r.status === "ai_analyzed" || r.status === "reported") {
       actionHtml = `<button class="action-btn" onclick="openReviewModal('${r.report_id}')">Review</button>`;
     } else if (r.status === "reviewed") {
       actionHtml = `<button class="action-btn" onclick="openAssignModal('${r.report_id}')">Assign Task</button>`;
@@ -315,9 +313,13 @@ byId("btn-approve-evidence").onclick = async () => {
     if (res.ok) {
       closeModal('modal-verify');
       initDashboard();
+    } else {
+      const errorData = await res.json();
+      alert(errorData.detail || "Failed to verify evidence");
     }
   } catch (e) {
     console.error(e);
+    alert("An error occurred");
   }
 };
 
@@ -331,9 +333,13 @@ byId("btn-reject-evidence").onclick = async () => {
     if (res.ok) {
       closeModal('modal-verify');
       initDashboard();
+    } else {
+      const errorData = await res.json();
+      alert(errorData.detail || "Failed to reject evidence");
     }
   } catch (e) {
     console.error(e);
+    alert("An error occurred");
   }
 };
 

@@ -23,7 +23,7 @@ from pydantic import BaseModel, Field
 from .ai_analyzer import analyze_image
 from .image_comparison import compare_image_bytes
 from .auth import create_token, decode_token, hash_password, verify_password
-from .database import find_user_by_email, init_db, load_reports, load_users, save_report, save_user, update_user_password, get_report_image_data, get_report_evidence_data
+from .database import find_user_by_email, init_db, load_reports, load_users, save_report, save_user, update_user_password, get_report_image_data, get_report_evidence_data, update_user_picture
 from .location_service import google_geolocate, google_reverse_geocode
 from .ip_location import lookup_ip_location
 from .notifications import notify_report_created, notify_reporter, send_otp_email
@@ -49,7 +49,9 @@ class ReportStatus(str, Enum):
 class User(BaseModel):
     user_id: str
     name: str
+    email: str
     role: Role
+    picture: str = ""
 
 
 class Report(BaseModel):
@@ -132,7 +134,7 @@ class CoordinatesRequest(BaseModel):
 app = FastAPI(title="EcoTrack AI API", version="1.0.0")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://127.0.0.1:5500"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -147,7 +149,7 @@ init_db()
 
 for stored_user in load_users():
     users[stored_user["user_id"]] = User(
-        user_id=stored_user["user_id"], name=stored_user["name"], role=stored_user["role"]
+        user_id=stored_user["user_id"], name=stored_user["name"], email=stored_user.get("email", ""), role=stored_user["role"], picture=stored_user.get("picture", "") or ""
     )
 reports.update(load_reports())
 
@@ -209,7 +211,7 @@ def register(request: RegisterRequest) -> dict[str, str]:
     user_id = f"usr-{uuid4().hex[:8]}"
     name = request.name.strip() if request.name else email.split("@")[0]
     save_user(user_id, name, email, Role.citizen.value, hash_password(request.password), datetime.now(timezone.utc).isoformat())
-    users[user_id] = User(user_id=user_id, name=name, role=Role.citizen)
+    users[user_id] = User(user_id=user_id, name=name, email=email, role=Role.citizen)
     
     return {
         "access_token": create_token(user_id, Role.citizen.value),
@@ -233,7 +235,7 @@ def login(request: LoginRequest) -> dict[str, str]:
 
 @app.post("/auth/google", response_model=dict[str, str])
 def google_login(request: GoogleLoginRequest) -> dict[str, str]:
-    client_id = os.getenv("GOOGLE_CLIENT_ID", "YOUR_GOOGLE_CLIENT_ID")
+    client_id = os.getenv("GOOGLE_CLIENT_ID", "639668684474-pelm9adgabbnefalu0teguo7lr40ib76.apps.googleusercontent.com")
     try:
         idinfo = id_token.verify_oauth2_token(request.token, google_requests.Request(), client_id)
         email = idinfo.get("email")
@@ -241,18 +243,22 @@ def google_login(request: GoogleLoginRequest) -> dict[str, str]:
             raise HTTPException(status_code=400, detail="Google token does not contain an email")
         
         email = email.lower()
+        picture = idinfo.get("picture", "")
         stored_user = find_user_by_email(email)
         
         if not stored_user:
             user_id = f"usr-{uuid4().hex[:8]}"
             name = idinfo.get("name", email.split("@")[0])
-            # Save user with random password since they use Google
-            save_user(user_id, name, email, Role.citizen.value, hash_password(uuid4().hex), datetime.now(timezone.utc).isoformat())
-            users[user_id] = User(user_id=user_id, name=name, role=Role.citizen)
+            save_user(user_id, name, email, Role.citizen.value, hash_password(uuid4().hex), datetime.now(timezone.utc).isoformat(), picture)
+            users[user_id] = User(user_id=user_id, name=name, email=email, role=Role.citizen, picture=picture)
             role = Role.citizen.value
         else:
             user_id = stored_user["user_id"]
             role = stored_user["role"]
+            if picture:
+                update_user_picture(email, picture)
+                if user_id in users:
+                    users[user_id].picture = picture
 
         return {
             "access_token": create_token(user_id, role),
@@ -450,6 +456,9 @@ def list_reports(
         result = [report for report in result if report.category == category]
     if user.role == Role.citizen:
         result = [report for report in result if report.user_id == user.user_id]
+        
+    # Sort by latest first
+    result.sort(key=lambda r: r.timestamp, reverse=True)
     return result
 
 
@@ -515,8 +524,8 @@ def verify_report(report_id: str, approved: bool, authorization: Optional[str] =
     user = authenticated_user(authorization)
     require_role(user.user_id, Role.administrator)
     report = get_report(report_id)
-    if not report.evidence_reference:
-        raise HTTPException(status_code=400, detail="Completion evidence is required")
+    if approved and not report.evidence_reference:
+        raise HTTPException(status_code=400, detail="Completion evidence is required to verify")
     report.status = ReportStatus.verified if approved else ReportStatus.rejected
     save_report(report)
     if approved:

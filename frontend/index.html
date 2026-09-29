@@ -117,59 +117,130 @@
 
   <!-- CITIZEN DASHBOARD -->
   <div id="citizen-wrapper" hidden>
-    <header class="citizen-header">
-      <button class="cit-menu-btn" aria-label="Toggle menu"
-        onclick="document.getElementById('cit-sidebar').classList.add('open'); document.getElementById('cit-sidebar-overlay').classList.add('show');"><i
-          class="fa-solid fa-bars"></i></button>
-      <div class="cit-brand">
-        <div class="cit-logo-icon">
-          <i class="fa-solid fa-leaf"></i>
-        </div>
-        <div class="cit-brand-text">
-          <span class="cit-brand-title">ECOTRACK AI</span>
-          <span class="cit-brand-sub">ACTION LEDGER</span>
-        </div>
-      </div>
-      <div style="width:24px"></div>
-    </header>
-
-    <div id="cit-sidebar-overlay" class="sidebar-overlay"
-      onclick="document.getElementById('cit-sidebar').classList.remove('open'); this.classList.remove('show');"></div>
-    <aside id="cit-sidebar" class="sidebar" style="z-index: 10000;">
-      <a href="#" class="sidebar-brand">
-        <div class="sidebar-brand-icon"><i class="fa-solid fa-leaf"></i></div>
-        <div class="sidebar-brand-text">
-          <span>EcoTrack AI</span>
-          <span class="subtitle">ACTION LEDGER</span>
-        </div>
+    <aside class="col-sidebar">
+      <a href="#" class="col-brand">
+        <img src="logo.png" alt="EcoTrack AI" style="height: 32px; margin-right: 8px;">
+        EcoTrack Citizen
       </a>
-      <span class="nav-section-title">NAVIGATE</span>
-      <nav class="sidebar-nav">
-        <a href="#" class="active"><i class="fa-solid fa-house"></i> Home</a>
-        <a href="#"><i class="fa-regular fa-file-lines"></i> My Reports</a>
-        <a href="#"><i class="fa-solid fa-user"></i> Profile</a>
-        <a href="#"
-          onclick="enterGuestMode(); setAuthMode('login'); byId('citizen-wrapper').hidden=true; openSignIn(); return false;"><i
-            class="fa-solid fa-arrow-right-from-bracket"></i> Logout</a>
-      </nav>
-    </aside>
-
-    <main class="cit-main">
-      <h2 class="cit-page-title">Report the Wast-Product</h2>
-
-      <div class="cit-card">
-        <button class="cit-report-btn"
-          onclick="document.getElementById('report-panel').classList.add('active-panel'); document.getElementById('citizen-wrapper').style.filter = 'blur(4px)';"><i
-            class="fa-solid fa-camera"></i> Report waste</button>
-        <textarea class="cit-textarea" placeholder="Description........"></textarea>
-        <button class="cit-submit-btn">Submit</button>
+      
+      <div class="col-menu-section">
+        <div class="col-menu-title">Menu</div>
+        <a href="#" class="col-nav-link active" onclick="showCitView('new-report', this)"><i class="fa-solid fa-plus"></i> New Report</a>
+        <a href="#" class="col-nav-link" onclick="showCitView('track', this)"><i class="fa-solid fa-location-crosshairs"></i> Track Report</a>
+        <a href="#" class="col-nav-link" onclick="showCitView('reports', this)"><i class="fa-solid fa-file-lines"></i> My Reports</a>
+        <a href="#" class="col-nav-link" onclick="showCitView('status', this)"><i class="fa-solid fa-chart-pie"></i> Status</a>
+        <a href="#" class="col-nav-link" onclick="showCitView('profile', this)"><i class="fa-solid fa-user"></i> My Profile</a>
       </div>
-    </main>
+    </aside>
+    
+    <main class="col-main">
+      <header class="col-topbar">
+        <div class="col-search" style="visibility: hidden;">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" placeholder="Search...">
+        </div>
+        <div class="col-top-actions">
+          <div class="col-user-profile">
+            <div class="col-user-avatar" id="cit-user-avatar"></div>
+            <div class="col-user-info">
+              <span class="col-user-name" id="cit-user-name">Citizen</span>
+              <span class="col-user-email" id="cit-user-email">citizen@ecotrack.local</span>
+            </div>
+          </div>
+        </div>
+      </header>
+      
+      <section class="col-header">
+        <div>
+          <h1 id="cit-page-title">Report the Waste Product</h1>
+          <p id="cit-page-subtitle">Help keep our community clean by reporting plastic waste.</p>
+        </div>
+      </section>
+      
+      <!-- VIEW: New Report -->
+      <div id="cit-view-new-report" class="col-card" style="padding: 24px;">
+        <form id="report-form" style="display: flex; flex-direction: column; gap: 16px;">
+          <label class="upload-box" for="image" style="display: block; border: 2px dashed #cbd5e1; border-radius: 8px; padding: 32px; text-align: center; cursor: pointer; color: #64748b; font-weight: 500; transition: all 0.2s;">
+            <i class="fa-solid fa-camera" style="font-size: 24px; margin-bottom: 8px; color: #10b981;"></i><br>
+            <span>Tap to open camera or choose a photo</span>
+            <input id="image" name="image" type="file" accept="image/*" capture="environment" required style="display: none;" onchange="this.parentElement.style.borderColor='#10b981'; this.parentElement.style.color='#10b981';" />
+          </label>
+          
+          <textarea name="description" placeholder="Description (optional)..." style="width: 100%; padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px; resize: vertical; min-height: 80px; font-family: inherit; font-size: 0.9rem;"></textarea>
+          
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <input id="latitude" name="latitude" type="number" step="any" placeholder="Latitude" required readonly style="flex: 1; padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px; background: #f8fafc; color: #64748b;" />
+            <input id="longitude" name="longitude" type="number" step="any" placeholder="Longitude" required readonly style="flex: 1; padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px; background: #f8fafc; color: #64748b;" />
+            <button id="locate" type="button" style="padding: 12px 16px; background: #f1f5f9; border: 1px solid #e5e7eb; border-radius: 8px; color: #475569; cursor: pointer;" title="Get Current Location"><i class="fa-solid fa-location-crosshairs"></i></button>
+          </div>
+          
+          <button type="submit" id="submit-btn" style="background: #10b981; color: white; border: none; padding: 14px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 1rem; margin-top: 8px;">Submit Report</button>
+        </form>
+      </div>
 
-    <footer class="cit-footer">
-      <div class="cit-footer-pwd">PWD</div>
-      <div class="cit-footer-copy">@2026Ecotrack AI</div>
-    </footer>
+      <!-- VIEW: Track Report -->
+      <div id="cit-view-track" class="col-card" style="padding: 24px; display: none;">
+        <h2 style="margin-bottom: 16px; color: #1e293b;">Live Tracking</h2>
+        <div id="cit-map" style="height: 300px; background: #f1f5f9; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #94a3b8;">
+          <i class="fa-solid fa-map-location-dot" style="font-size: 32px;"></i>
+        </div>
+      </div>
+
+      <!-- VIEW: My Reports -->
+      <div id="cit-view-reports" class="col-card" style="padding: 24px; display: none;">
+        <h2 style="margin-bottom: 16px; color: #1e293b;">History</h2>
+        <div style="overflow-x: auto;">
+          <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
+            <thead>
+              <tr style="border-bottom: 1px solid #e2e8f0; color: #64748b;">
+                <th style="padding: 12px; font-weight: 600;">ID</th>
+                <th style="padding: 12px; font-weight: 600;">Date</th>
+                <th style="padding: 12px; font-weight: 600;">Category</th>
+                <th style="padding: 12px; font-weight: 600;">Status</th>
+              </tr>
+            </thead>
+            <tbody id="cit-reports-tbody">
+              <tr><td colspan="4" style="padding: 12px; text-align: center; color: #94a3b8;">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- VIEW: Status -->
+      <div id="cit-view-status" class="col-card" style="padding: 24px; display: none;">
+        <h2 style="margin-bottom: 16px; color: #1e293b;">Overall Impact</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px;">
+          <div style="padding: 16px; background: #f1f5f9; border-radius: 8px; text-align: center;">
+            <div style="font-size: 24px; font-weight: bold; color: #10b981;" id="cit-stat-total">0</div>
+            <div style="color: #64748b; font-size: 0.85rem;">Total Reports</div>
+          </div>
+          <div style="padding: 16px; background: #f1f5f9; border-radius: 8px; text-align: center;">
+            <div style="font-size: 24px; font-weight: bold; color: #3b82f6;" id="cit-stat-verified">0</div>
+            <div style="color: #64748b; font-size: 0.85rem;">Verified Cleanups</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW: My Profile -->
+      <div id="cit-view-profile" class="col-card" style="padding: 24px; display: none;">
+        <h2 style="margin-bottom: 16px; color: #1e293b;">Profile Info</h2>
+        <div style="display: flex; gap: 16px; align-items: center; margin-bottom: 24px;">
+          <div id="cit-profile-avatar" style="width: 80px; height: 80px; border-radius: 50%; background: #e2e8f0;"></div>
+          <div>
+            <h3 id="cit-profile-name" style="margin: 0; color: #1e293b;">Citizen</h3>
+            <p id="cit-profile-email" style="margin: 4px 0 0; color: #64748b;">citizen@ecotrack.local</p>
+          </div>
+        </div>
+      </div>
+      
+      <footer style="text-align: center; padding: 24px; margin-top: auto; border-top: 1px solid var(--col-border);">
+        <div style="display: flex; justify-content: center; gap: 16px; margin-bottom: 24px;">
+          <button class="col-logout-btn" style="margin-top: 0; padding: 8px 16px; width: auto;" onclick="enterGuestMode(); setAuthMode('login'); byId('citizen-wrapper').hidden=true; document.body.classList.remove('collector-mode'); openSignIn();"><i class="fa-solid fa-arrow-right-from-bracket"></i> Logout</button>
+        </div>
+        <img src="logo.png" alt="EcoTrack AI Logo" style="height: 40px; display: inline-block;">
+        <div style="font-size: 12px; color: var(--col-text-muted); margin-top: 8px;">Powered by EcoTrack AI</div>
+      </footer>
+    </main>
   </div>
 
   <!-- MAIN Dashboard View -->
@@ -247,7 +318,7 @@
         <div class="page-eyebrow">COMMAND CENTER / LIVE</div>
         <h1 class="page-title">Know the impact before the day ends.</h1>
         <p class="page-subtitle">A single operating picture for every report, route, and verified cleanup.</p>
-        <button class="action-btn" id="focus-report"><i class="fa-solid fa-camera"></i> Report waste</button>
+
       </section>
 
       <!-- METRICS GRID -->

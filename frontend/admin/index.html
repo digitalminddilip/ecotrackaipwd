@@ -14,7 +14,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
   <!-- Styles -->
-  <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="admin.css?v=4">
 </head>
 <body>
 
@@ -26,9 +26,9 @@
   <div class="dashboard-layout" id="dashboard-layout" style="display: none;">
     <!-- Sidebar -->
     <aside class="sidebar">
-      <div class="sidebar-header">
-        <i class="fa-solid fa-leaf text-primary"></i>
-        <span>EcoTrack<span class="text-primary">AI</span></span>
+      <div class="sidebar-header" style="justify-content: flex-start; padding-left: 20px;">
+        <img src="../logo.png" alt="EcoTrack AI" style="height: 32px; margin-right: 8px;">
+        <span style="font-size: 1.25rem; font-weight: 700; color: #1f2937;">EcoTrack AI</span>
       </div>
       
       <nav class="sidebar-nav">
@@ -138,6 +138,7 @@
                 <select id="status-filter">
                   <option value="all">All Statuses</option>
                   <option value="reported">Reported</option>
+                  <option value="ai_analyzed">AI Analyzed</option>
                   <option value="reviewed">Reviewed (Needs Assign)</option>
                   <option value="assigned">Assigned</option>
                   <option value="in_progress">In Progress</option>
@@ -263,6 +264,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="admin.js?v=2"></script>
+  <script src="admin.js?v=3"></script>
 </body>
 </html>

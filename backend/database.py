@@ -23,7 +23,8 @@ def init_db() -> None:
                     role TEXT NOT NULL,
                     password_hash TEXT NOT NULL,
                     created_at TEXT NOT NULL,
-                    points INTEGER DEFAULT 0
+                    points INTEGER DEFAULT 0,
+                    picture TEXT
                 )
                 """
             )
@@ -65,12 +66,12 @@ def init_db() -> None:
     except Exception as e:
         print(f"Error initializing DB: {e}")
 
-def save_user(user_id: str, name: str, email: str, role: str, password_hash: str, created_at: str) -> None:
+def save_user(user_id: str, name: str, email: str, role: str, password_hash: str, created_at: str, picture: str = "") -> None:
     with connect() as connection:
         cursor = connection.cursor()
         cursor.execute(
-            "INSERT INTO users (user_id, name, email, role, password_hash, created_at) VALUES (?, ?, ?, ?, ?, ?)",
-            (user_id, name, email, role, password_hash, created_at),
+            "INSERT INTO users (user_id, name, email, role, password_hash, created_at, picture) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (user_id, name, email, role, password_hash, created_at, picture),
         )
         connection.commit()
 
@@ -100,7 +101,7 @@ def find_user_by_id(user_id: str) -> dict[str, Any] | None:
 def load_users() -> list[dict[str, Any]]:
     with connect() as connection:
         cursor = connection.cursor()
-        cursor.execute("SELECT user_id, name, email, role, points FROM users")
+        cursor.execute("SELECT user_id, name, email, role, points, picture FROM users")
         return [dict(row) for row in cursor.fetchall()]
 
 def add_user_points(user_id: str, points: int) -> None:
@@ -273,5 +274,14 @@ def mark_all_notifications_read(target_role: str = "administrator") -> None:
         cursor.execute(
             "UPDATE notifications SET is_read = 1 WHERE target_role = ? OR target_role = 'all'",
             (target_role,),
+        )
+        connection.commit()
+
+def update_user_picture(email: str, picture: str) -> None:
+    with connect() as connection:
+        cursor = connection.cursor()
+        cursor.execute(
+            "UPDATE users SET picture = ? WHERE email = ?",
+            (picture, email.lower()),
         )
         connection.commit()

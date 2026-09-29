@@ -75,6 +75,19 @@ body {
   transform: scale(1.05);
 }
 
+/* Logo */
+.logo-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.auth-main-logo {
+  height: 80px;
+  width: auto;
+  object-fit: contain;
+}
+
 /* Header */
 .auth-header-wrapper {
   text-align: center;

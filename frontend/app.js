@@ -612,6 +612,7 @@ byId("auth-form").addEventListener("submit", async (event) => {
   let endpoint = "/auth/login";
   if (registering) endpoint = "/auth/register";
   if (forgot) endpoint = "/auth/forgot-password";
+  if (loginOtp) endpoint = "/auth/request-otp";
 
   byId("auth-message").textContent = "Connecting...";
   try {

@@ -1,0 +1,208 @@
+/* citizen.css - Custom styles for citizen dashboard */
+:root {
+  --cit-yellow: #fce152;
+  --cit-yellow-hover: #e5cb4a;
+  --cit-green: #277b5a;
+  --cit-bg: #f9f9f9;
+  --cit-text: #333;
+}
+
+#citizen-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  width: 100%;
+  background-color: var(--cit-bg);
+  font-family: 'Inter', sans-serif;
+}
+
+/* Header */
+.citizen-header {
+  background-color: var(--cit-yellow);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.cit-menu-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--cit-text);
+  cursor: pointer;
+  padding: 4px;
+}
+
+.cit-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cit-logo-icon {
+  width: 32px;
+  height: 32px;
+  background: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--cit-green);
+  font-size: 1.2rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.cit-brand-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.cit-brand-title {
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: var(--cit-green);
+  letter-spacing: 0.5px;
+}
+
+.cit-brand-sub {
+  font-size: 0.5rem;
+  font-weight: 600;
+  color: #777;
+  letter-spacing: 0.5px;
+}
+
+/* Main Content */
+.cit-main {
+  flex: 1;
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.cit-page-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #222;
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.cit-card {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 16px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cit-report-btn {
+  background: var(--cit-green);
+  color: #fff;
+  border: none;
+  border-radius: 99px;
+  padding: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.cit-report-btn:hover {
+  opacity: 0.9;
+}
+
+.cit-textarea {
+  width: 100%;
+  height: 180px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 12px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  resize: none;
+}
+
+.cit-textarea:focus {
+  outline: 2px solid var(--cit-yellow);
+  border-color: transparent;
+}
+
+.cit-submit-btn {
+  background: var(--cit-yellow);
+  color: var(--cit-text);
+  border: none;
+  border-radius: 8px;
+  padding: 10px 24px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  align-self: flex-end;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: background 0.2s;
+}
+
+.cit-submit-btn:hover {
+  background: var(--cit-yellow-hover);
+}
+
+/* Footer */
+.cit-footer {
+  background-color: var(--cit-yellow);
+  padding: 16px;
+  text-align: center;
+  margin-top: auto;
+}
+
+.cit-footer-pwd {
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: var(--cit-text);
+}
+
+.cit-footer-copy {
+  font-size: 0.8rem;
+  color: #555;
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+/* Force cit-sidebar to always be offcanvas even on desktop */
+#cit-sidebar {
+  position: fixed !important;
+  left: -100% !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+#cit-sidebar.open {
+  left: 0 !important;
+}
+
+#cit-sidebar-overlay {
+  position: fixed !important;
+  top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
+  background: rgba(0,0,0,0.5) !important;
+  z-index: 9999 !important;
+  display: none !important;
+  opacity: 0 !important;
+  transition: opacity 0.3s !important;
+}
+
+#cit-sidebar-overlay.show {
+  display: block !important;
+  opacity: 1 !important;
+}

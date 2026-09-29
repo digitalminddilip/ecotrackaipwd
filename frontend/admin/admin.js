@@ -1,6 +1,7 @@
 const hostname = window.location.hostname;
 const isLocal = !hostname || hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.') || hostname.startsWith('10.');
-const API_URL = isLocal ? `http://${hostname || 'localhost'}:8000` : "/api";
+const isVercel = hostname.endsWith('.vercel.app');
+const API_URL = isVercel ? "/api" : (isLocal ? `http://${hostname || 'localhost'}:8000` : "");
 
 let accessToken = localStorage.getItem("ecotrack_token");
 let allReports = [];

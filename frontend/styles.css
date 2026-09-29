@@ -441,3 +441,139 @@ body {
   width: 90%; max-width: 600px;
   box-shadow: 0 20px 40px rgba(0,0,0,0.1);
 }
+
+/* MOBILE RESPONSIVE STYLES */
+@media (max-width: 992px) {
+  .metric-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .bottom-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  #app-wrapper {
+    flex-direction: column;
+  }
+  
+  .mobile-header {
+    display: flex;
+    align-items: center;
+    padding: 16px 20px;
+    background: var(--bg-sidebar);
+    color: #fff;
+    z-index: 998;
+  }
+  
+  .mobile-menu-btn {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 1.4rem;
+    cursor: pointer;
+    margin-right: 16px;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .mobile-brand {
+    font-weight: 700;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+  }
+  
+  .sidebar {
+    position: fixed;
+    left: -100%;
+    top: 0;
+    bottom: 0;
+    z-index: 1000;
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .sidebar.open {
+    left: 0;
+  }
+  
+  .sidebar-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 999;
+    display: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  
+  .sidebar-overlay.show {
+    display: block;
+    opacity: 1;
+  }
+  
+  .main-content {
+    padding: 20px 16px;
+  }
+  
+  .topbar {
+    margin-bottom: 24px;
+  }
+  
+  .mobile-menu-btn {
+    display: inline-block !important;
+  }
+  
+  .breadcrumbs {
+    display: flex;
+    align-items: center;
+  }
+  
+  .page-title {
+    font-size: 2rem;
+  }
+  
+  .action-btn {
+    position: static;
+    transform: none;
+    margin-top: 16px;
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .action-btn:hover {
+    transform: none;
+  }
+  
+  .metric-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .panel {
+    padding: 20px;
+  }
+  
+  .flow-stages {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .flow-stage .line {
+    width: 2px;
+    height: 16px;
+  }
+}
+
+/* Hide mobile header on desktop */
+@media (min-width: 769px) {
+  .mobile-header {
+    display: none !important;
+  }
+}
+
+/* Ensure hidden attribute always hides elements, overriding other display styles */
+[hidden] {
+  display: none !important;
+}

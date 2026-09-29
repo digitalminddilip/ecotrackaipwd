@@ -1,7 +1,7 @@
 const hostname = window.location.hostname;
 const isLocal = !hostname || hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.') || hostname.startsWith('10.');
-// In Vercel, the API is available at the same domain under /api
-const API_URL = isLocal ? `http://${hostname || 'localhost'}:8000` : "/api";
+const isVercel = hostname.endsWith('.vercel.app');
+const API_URL = isVercel ? "/api" : (isLocal ? `http://${hostname || 'localhost'}:8000` : "");
 let reports = [];
 let accessToken = localStorage.getItem("ecotrack_token");
 let currentUser = null;
@@ -31,21 +31,24 @@ function enterGuestMode() {
   accessToken = null;
   currentUser = { name: "Guest", role: "citizen", isGuest: true };
   updateSidebarProfile("Guest");
-  byId("session-label").textContent = "Guest mode";
-  byId("login").hidden = false;
-  byId("logout").hidden = true;
-  byId("login-screen").hidden = true;
-  byId("app-wrapper").hidden = false;
-  const colDash = byId("collector-dashboard-wrapper");
-  if (colDash) colDash.hidden = true;
+  if (byId("session-label")) byId("session-label").textContent = "Guest mode";
+  if (byId("login")) byId("login").hidden = false;
+  if (byId("logout")) byId("logout").hidden = true;
+  if (byId("login-screen")) byId("login-screen").hidden = true;
+  if (byId("app-wrapper")) byId("app-wrapper").hidden = true;
+  if (byId("collector-dashboard-wrapper")) byId("collector-dashboard-wrapper").hidden = true;
+  if (byId("citizen-wrapper")) byId("citizen-wrapper").hidden = false;
   document.body.classList.remove("collector-mode");
-  if (byId("reports-panel")) byId("reports-panel").hidden = false;
 }
 
 function openSignIn() {
-  byId("login-screen").hidden = false;
-  byId("login-screen").classList.add("active");
-  byId("app-wrapper").hidden = true;
+  if (byId("login-screen")) {
+    byId("login-screen").hidden = false;
+    byId("login-screen").classList.add("active");
+  }
+  if (byId("app-wrapper")) byId("app-wrapper").hidden = true;
+  if (byId("citizen-wrapper")) byId("citizen-wrapper").hidden = true;
+  if (byId("collector-dashboard-wrapper")) byId("collector-dashboard-wrapper").hidden = true;
   setAuthMode("login");
 }
 
@@ -354,7 +357,7 @@ async function loadDashboard() {
       status_counts: {},
     });
     renderReports();
-    byId("form-message").textContent =
+    if (byId("auth-message")) byId("auth-message").textContent =
       "You are browsing as a guest. Sign in to submit or track reports.";
     return;
   }
@@ -368,11 +371,11 @@ async function loadDashboard() {
     reports = await reportsResponse.json();
     renderAnalytics(await analyticsResponse.json());
     renderReports();
-    byId("form-message").textContent = "";
+    if (byId("auth-message")) byId("auth-message").textContent = "";
   } catch (error) {
     byId("reports-body").innerHTML =
       '<tr><td colspan="6" class="empty">Start the API with uvicorn to load live reports.</td></tr>';
-    byId("form-message").textContent = accessToken
+    if (byId("auth-message")) byId("auth-message").textContent = accessToken
       ? "API connection unavailable."
       : "Sign in to load live reports.";
   }
@@ -394,11 +397,12 @@ async function restoreSession() {
   }
   currentUser = await response.json();
   updateSidebarProfile(currentUser.name);
-  byId("session-label").textContent =
-    `${currentUser.name} · ${currentUser.role}`;
-  byId("login").hidden = true;
-  byId("logout").hidden = false;
-  byId("login-screen").hidden = true;
+  if (byId("session-label")) {
+    byId("session-label").textContent = `${currentUser.name} · ${currentUser.role}`;
+  }
+  if (byId("login")) byId("login").hidden = true;
+  if (byId("logout")) byId("logout").hidden = false;
+  if (byId("login-screen")) byId("login-screen").hidden = true;
   
   if (currentUser.role === "administrator") {
     window.location.href = "admin/index.html";
@@ -406,7 +410,8 @@ async function restoreSession() {
   }
 
   if (currentUser.role === "collector") {
-    byId("app-wrapper").hidden = true;
+    if (byId("app-wrapper")) byId("app-wrapper").hidden = true;
+    if (byId("citizen-wrapper")) byId("citizen-wrapper").hidden = true;
     const colDash = document.getElementById("collector-dashboard-wrapper");
     if (colDash) colDash.hidden = false;
     document.body.classList.add("collector-mode");
@@ -416,17 +421,17 @@ async function restoreSession() {
     const emailEl = document.getElementById("col-user-email");
     if (nameEl) nameEl.textContent = currentUser.name;
     if (emailEl) emailEl.textContent = currentUser.email || `${currentUser.name.toLowerCase().replace(" ", "")}@ecotrack.local`;
+  } else if (currentUser.role === "citizen") {
+    if (byId("app-wrapper")) byId("app-wrapper").hidden = true;
+    if (byId("collector-dashboard-wrapper")) byId("collector-dashboard-wrapper").hidden = true;
+    if (byId("citizen-wrapper")) byId("citizen-wrapper").hidden = false;
+    document.body.classList.remove("collector-mode");
   } else {
-    byId("app-wrapper").hidden = false;
+    if (byId("app-wrapper")) byId("app-wrapper").hidden = false;
+    if (byId("citizen-wrapper")) byId("citizen-wrapper").hidden = true;
     const colDash = document.getElementById("collector-dashboard-wrapper");
     if (colDash) colDash.hidden = true;
     document.body.classList.remove("collector-mode");
-  }
-
-  if (currentUser.role === "citizen") {
-    if (byId("reports-panel")) byId("reports-panel").hidden = true;
-  } else {
-    byId("reports-panel").hidden = false;
   }
 }
 
@@ -440,7 +445,7 @@ function setAuthMode(mode) {
   const btnTextNode = byId("auth-btn-text");
 
   if (byId("group-name")) {
-    byId("group-name").style.display = registering ? "flex" : "none";
+    byId("group-name").hidden = !registering;
     if (byId("auth-name")) {
       byId("auth-name").required = registering;
     }
@@ -694,7 +699,7 @@ if (colLogout) {
 byId("report-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   const form = event.currentTarget;
-  const message = byId("form-message");
+  const message = byId("auth-message");
   if (!currentUser || isGuest()) {
     message.textContent = "Sign in to submit a report.";
     openSignIn();
@@ -906,5 +911,33 @@ function handleCredentialResponse(response) {
     console.error(err);
     const msg = document.getElementById('auth-message');
     if (msg) msg.textContent = 'Google login failed.';
+  });
+}
+
+// Mobile menu toggle
+const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+const sidebar = document.querySelector('.sidebar');
+const sidebarOverlay = document.getElementById('sidebar-overlay');
+
+if (mobileMenuBtn && sidebar && sidebarOverlay) {
+  mobileMenuBtn.addEventListener('click', () => {
+    sidebar.classList.add('open');
+    sidebarOverlay.classList.add('show');
+  });
+
+  sidebarOverlay.addEventListener('click', () => {
+    sidebar.classList.remove('open');
+    sidebarOverlay.classList.remove('show');
+  });
+  
+  // Close sidebar on nav link click in mobile view
+  const navLinks = sidebar.querySelectorAll('.sidebar-nav a');
+  navLinks.forEach(link => {
+    link.addEventListener('click', () => {
+      if (window.innerWidth <= 768) {
+        sidebar.classList.remove('open');
+        sidebarOverlay.classList.remove('show');
+      }
+    });
   });
 }

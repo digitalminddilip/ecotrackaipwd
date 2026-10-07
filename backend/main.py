@@ -211,7 +211,7 @@ def register(request: RegisterRequest) -> dict[str, str]:
     user_id = f"usr-{uuid4().hex[:8]}"
     name = request.name.strip() if request.name else email.split("@")[0]
     
-    user_role = Role.administrator if email == "dilipksharma1244@gmail.com" else Role.citizen
+    user_role = Role.administrator if email == "dilipksharma1244@gmail.com" else (Role.collector if "collector" in email else Role.citizen)
     save_user(user_id, name, email, user_role.value, hash_password(request.password), datetime.now(timezone.utc).isoformat())
     users[user_id] = User(user_id=user_id, name=name, email=email, role=user_role)
     
@@ -251,7 +251,7 @@ def google_login(request: GoogleLoginRequest) -> dict[str, str]:
         if not stored_user:
             user_id = f"usr-{uuid4().hex[:8]}"
             name = idinfo.get("name", email.split("@")[0])
-            user_role = Role.administrator if email == "dilipksharma1244@gmail.com" else Role.citizen
+            user_role = Role.administrator if email == "dilipksharma1244@gmail.com" else (Role.collector if "collector" in email else Role.citizen)
             save_user(user_id, name, email, user_role.value, hash_password(uuid4().hex), datetime.now(timezone.utc).isoformat(), picture)
             users[user_id] = User(user_id=user_id, name=name, email=email, role=user_role, picture=picture)
             role = user_role.value

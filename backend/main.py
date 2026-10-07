@@ -26,7 +26,7 @@ from .auth import create_token, decode_token, hash_password, verify_password
 from .database import find_user_by_email, init_db, load_reports, load_users, save_report, save_user, update_user_password, get_report_image_data, get_report_evidence_data, update_user_picture
 from .location_service import google_geolocate, google_reverse_geocode
 from .ip_location import lookup_ip_location
-from .notifications import notify_report_created, notify_reporter, send_otp_email
+from .notifications import notify_report_created, notify_reporter, send_otp_email, notify_report_rejected
 
 
 class Role(str, Enum):
@@ -441,6 +441,13 @@ def list_collectors(authorization: Optional[str] = Header(None)) -> list[User]:
     require_role(authenticated_user(authorization).user_id, Role.administrator)
     return [user for user in users.values() if user.role == Role.collector]
 
+@app.get("/users/{user_id}", response_model=User)
+def get_user_by_id(user_id: str, authorization: Optional[str] = Header(None)) -> User:
+    require_role(authenticated_user(authorization).user_id, Role.administrator, Role.collector)
+    if user_id not in users:
+        raise HTTPException(status_code=404, detail="User not found")
+    return users[user_id]
+
 
 @app.get("/reports", response_model=list[Report])
 def list_reports(
@@ -503,8 +510,12 @@ async def submit_evidence(
     report = get_report(report_id)
     user = authenticated_user(authorization)
     require_role(user.user_id, Role.collector)
-    if report.collector_id != user.user_id or report.status != ReportStatus.collected:
+    if report.collector_id != user.user_id or report.status not in {ReportStatus.collected, ReportStatus.rejected}:
         raise HTTPException(status_code=400, detail="Report is not ready for evidence submission")
+    
+    if report.status == ReportStatus.rejected:
+        report.status = ReportStatus.collected
+        
     evidence_bytes = None
     if evidence:
         if evidence.content_type not in {"image/jpeg", "image/png", "image/webp"}:
@@ -530,6 +541,8 @@ def verify_report(report_id: str, approved: bool, authorization: Optional[str] =
     save_report(report)
     if approved:
         notify_reporter(report.report_id, report.user_id, None)
+    else:
+        notify_report_rejected(report.report_id, report.user_id, report.collector_id, user.email)
     return report
 
 

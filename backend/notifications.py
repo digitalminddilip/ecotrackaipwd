@@ -137,3 +137,43 @@ def notify_report_created(report_id: str, reporter_id: str) -> dict[str, str]:
         return {"email": "email-sent"}
     except (OSError, smtplib.SMTPException) as e:
         return {"email": "email-failed"}
+
+def notify_report_rejected(report_id: str, reporter_id: str, collector_id: str, admin_email: str) -> None:
+    smtp_host = os.getenv('ECOTRACK_SMTP_HOST')
+    smtp_user = os.getenv('ECOTRACK_SMTP_USER')
+    smtp_password = os.getenv('ECOTRACK_SMTP_PASSWORD')
+    smtp_port = int(os.getenv('ECOTRACK_SMTP_PORT', '587'))
+    if not all([smtp_host, smtp_user, smtp_password]):
+        print(f'\n[DEV MODE] Report {report_id} REJECTED email would be sent to Admin, Collector, and Citizen.\n')
+        return
+
+    reporter = find_user_by_id(reporter_id)
+    collector = find_user_by_id(collector_id) if collector_id else None
+    
+    recipients = []
+    if reporter and reporter.get('email'):
+        recipients.append(reporter['email'])
+    if collector and collector.get('email'):
+        recipients.append(collector['email'])
+    if admin_email:
+        recipients.append(admin_email)
+        
+    if not recipients:
+        return
+
+    message = EmailMessage()
+    message['Subject'] = f'EcoTrack AI: Report {report_id} Evidence Rejected'
+    message['From'] = smtp_user
+    message['To'] = ', '.join(recipients)
+    message.set_content(
+        f'Hello,\n\nThe cleanup evidence for report (Reference No: {report_id}) was reviewed and REJECTED by the administration.\n\nCollector: Please re-visit the location and upload a new valid photo of the cleaned area.\nCitizen: The cleanup is still pending and is being re-addressed.\n\nBest,\nThe EcoTrack AI Team'
+    )
+    
+    try:
+        with smtplib.SMTP(smtp_host, smtp_port, timeout=10) as server:
+            server.starttls()
+            server.login(smtp_user, smtp_password)
+            server.send_message(message)
+    except (OSError, smtplib.SMTPException) as e:
+        print(f'\n[DEV MODE] Failed to send rejection email: {e}\n')
+

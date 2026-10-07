@@ -1,7 +1,6 @@
 const hostname = window.location.hostname;
 const isLocal = !hostname || hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.') || hostname.startsWith('10.');
-const isVercel = hostname.endsWith('.vercel.app');
-const API_URL = isVercel ? "/api" : (isLocal ? `http://${hostname || 'localhost'}:8000` : "");
+const API_URL = isLocal ? `http://${hostname || 'localhost'}:8000` : "";
 
 let accessToken = localStorage.getItem("ecotrack_token");
 let allReports = [];
@@ -271,8 +270,31 @@ byId("btn-reject-report").onclick = async () => {
   closeModal('modal-review');
 };
 
-window.openAssignModal = (reportId) => {
+window.openAssignModal = async (reportId) => {
   currentReportId = reportId;
+  
+  const report = allReports.find(r => r.report_id === reportId);
+  if (report) {
+    byId("assign-rep-desc").textContent = report.description || "N/A";
+    byId("assign-rep-name").textContent = "Loading...";
+    byId("assign-rep-email").textContent = "Loading...";
+    
+    fetch(`${API_URL}/users/${report.user_id}`, { headers: authHeaders() })
+      .then(res => res.ok ? res.json() : null)
+      .then(user => {
+        if (user) {
+          byId("assign-rep-name").textContent = user.name || "N/A";
+          byId("assign-rep-email").textContent = user.email || "N/A";
+        } else {
+          byId("assign-rep-name").textContent = "Unknown";
+          byId("assign-rep-email").textContent = "Unknown";
+        }
+      }).catch(() => {
+        byId("assign-rep-name").textContent = "Error loading";
+        byId("assign-rep-email").textContent = "Error loading";
+      });
+  }
+  
   openModal('modal-assign');
 };
 
@@ -296,10 +318,33 @@ byId("btn-confirm-assign").onclick = async () => {
   }
 };
 
-window.openVerifyModal = (reportId) => {
+window.openVerifyModal = async (reportId) => {
   currentReportId = reportId;
   byId("verify-before").style.backgroundImage = `url('${API_URL}/reports/${reportId}/image')`;
-  byId("verify-after").style.backgroundImage = `url('${API_URL}/reports/${reportId}/evidence-image')`;
+  byId("verify-after").style.backgroundImage = `url('${API_URL}/reports/${reportId}/evidence-image?t=${new Date().getTime()}')`;
+  
+  const report = allReports.find(r => r.report_id === reportId);
+  if (report) {
+    byId("verify-rep-desc").textContent = report.description || "N/A";
+    byId("verify-rep-name").textContent = "Loading...";
+    byId("verify-rep-email").textContent = "Loading...";
+    
+    fetch(`${API_URL}/users/${report.user_id}`, { headers: authHeaders() })
+      .then(res => res.ok ? res.json() : null)
+      .then(user => {
+        if (user) {
+          byId("verify-rep-name").textContent = user.name || "N/A";
+          byId("verify-rep-email").textContent = user.email || "N/A";
+        } else {
+          byId("verify-rep-name").textContent = "Unknown";
+          byId("verify-rep-email").textContent = "Unknown";
+        }
+      }).catch(() => {
+        byId("verify-rep-name").textContent = "Error loading";
+        byId("verify-rep-email").textContent = "Error loading";
+      });
+  }
+  
   openModal('modal-verify');
 };
 
@@ -358,6 +403,59 @@ async function updateReportStatus(id, newStatus) {
   }
 }
 
-window.viewDetails = (reportId) => {
-  alert(`Details for report ${reportId}`);
+window.viewDetails = async (reportId) => {
+  const report = allReports.find(r => r.report_id === reportId);
+  if (!report) return;
+  
+  byId("view-desc").textContent = report.description || "No description provided.";
+  byId("view-image-before").style.backgroundImage = `url('${API_URL}/reports/${reportId}/image')`;
+  
+  byId("view-name").textContent = "Loading...";
+  byId("view-email").textContent = "Loading...";
+  byId("view-role").textContent = "Loading...";
+  
+  const collectorSection = byId("view-collector-section");
+  if (report.collector_id) {
+    collectorSection.style.display = "block";
+    byId("view-collector-name").textContent = "Loading...";
+    byId("view-collector-email").textContent = "Loading...";
+    
+    // Fetch collector details
+    fetch(`${API_URL}/users/${report.collector_id}`, { headers: authHeaders() })
+      .then(res => res.ok ? res.json() : null)
+      .then(col => {
+        if (col) {
+          byId("view-collector-name").textContent = col.name || "N/A";
+          byId("view-collector-email").textContent = col.email || "N/A";
+        } else {
+          byId("view-collector-name").textContent = "Unknown";
+          byId("view-collector-email").textContent = "Unknown";
+        }
+      }).catch(() => {
+        byId("view-collector-name").textContent = "Error";
+        byId("view-collector-email").textContent = "Error";
+      });
+  } else {
+    collectorSection.style.display = "none";
+  }
+  
+  openModal('modal-view-details');
+  
+  try {
+    const res = await fetch(`${API_URL}/users/${report.user_id}`, {
+      headers: authHeaders()
+    });
+    if (res.ok) {
+      const user = await res.json();
+      byId("view-name").textContent = user.name || "N/A";
+      byId("view-email").textContent = user.email || "N/A";
+      byId("view-role").textContent = user.role || "N/A";
+    } else {
+      byId("view-name").textContent = "Unknown User";
+      byId("view-email").textContent = "Unknown Email";
+      byId("view-role").textContent = "Unknown Role";
+    }
+  } catch (e) {
+    console.error(e);
+  }
 };

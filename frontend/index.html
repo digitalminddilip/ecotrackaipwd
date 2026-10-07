@@ -24,7 +24,7 @@
   <!-- Intro / Auth Mode -->
   <!-- Intro / Auth Mode -->
   <div id="login-screen" class="login-screen intro-mode">
-    <div class="login-box">
+    <div class="login-container modern-ui">
 
       <div class="auth-nav">
         <div class="auth-icon-btn" id="auth-back-btn"><i class="fa-solid fa-arrow-left"></i></div>
@@ -45,14 +45,12 @@
         <input type="hidden" id="auth-mode" value="login">
 
         <!-- Full Name -->
-        <div class="input-group" id="group-name" style="display: none;">
+        <div class="input-group" id="group-name" hidden>
           <label>Full Name*</label>
-          <div class="input-group" id="group-name" style="display: none;">
-            <label>Full Name*</label>
-            <div class="input-wrapper">
-              <input id="auth-name" type="text" placeholder="Alex Smith" autocomplete="name">
-            </div>
+          <div class="input-wrapper">
+            <input id="auth-name" type="text" placeholder="Alex Smith" autocomplete="name">
           </div>
+        </div>
 
           <!-- Email -->
           <div class="input-group" id="group-email">
@@ -99,6 +97,14 @@
           </div>
 
           <!-- Submit Button -->
+          <div style="display: flex; align-items: center; margin: 16px 0;">
+            <div style="flex: 1; height: 1px; background: #e5e7eb;"></div>
+            <div style="padding: 0 16px; color: #6b7280; font-size: 0.85rem;">OR</div>
+            <div style="flex: 1; height: 1px; background: #e5e7eb;"></div>
+          </div>
+          
+          <div id="google-login-btn" style="display: flex; justify-content: center; margin-bottom: 16px;"></div>
+
           <button id="auth-submit-btn" class="primary-button neon-btn" type="submit">
             <span id="auth-btn-text">Log In</span>
           </button>
@@ -113,14 +119,13 @@
       </form>
     </div>
   </div>
-  </div>
 
   <!-- CITIZEN DASHBOARD -->
   <div id="citizen-wrapper" hidden>
     <aside class="col-sidebar">
-      <a href="#" class="col-brand">
+      <a href="#" class="col-brand" style="margin-left: -15px;">
         <img src="logo.png" alt="EcoTrack AI" style="height: 32px; margin-right: 8px;">
-        EcoTrack Citizen
+        Citizen
       </a>
       
       <div class="col-menu-section">
@@ -150,7 +155,7 @@
         </div>
       </header>
       
-      <section class="col-header">
+      <section class="col-header" style="max-width: 550px; margin-left: auto; width: 100%;">
         <div>
           <h1 id="cit-page-title">Report the Waste Product</h1>
           <p id="cit-page-subtitle">Help keep our community clean by reporting plastic waste.</p>
@@ -158,23 +163,34 @@
       </section>
       
       <!-- VIEW: New Report -->
-      <div id="cit-view-new-report" class="col-card" style="padding: 24px;">
+      <div id="cit-view-new-report" class="col-card" style="padding: 32px; max-width: 440px; margin: 0 auto; background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+        <h2 style="text-align: center; margin-bottom: 24px; font-family: sans-serif; font-size: 1.25rem; font-weight: 700;">Upload Plastic Waste Photo</h2>
+        
+        <div id="report-message" style="margin-bottom: 16px; text-align: center; font-weight: bold; font-family: sans-serif;"></div>
+        
+        <div id="guest-report-msg" style="display: none; text-align: center; color: #64748b; padding: 24px;">
+          Please log in to report waste.
+        </div>
+        
         <form id="report-form" style="display: flex; flex-direction: column; gap: 16px;">
-          <label class="upload-box" for="image" style="display: block; border: 2px dashed #cbd5e1; border-radius: 8px; padding: 32px; text-align: center; cursor: pointer; color: #64748b; font-weight: 500; transition: all 0.2s;">
-            <i class="fa-solid fa-camera" style="font-size: 24px; margin-bottom: 8px; color: #10b981;"></i><br>
-            <span>Tap to open camera or choose a photo</span>
-            <input id="image" name="image" type="file" accept="image/*" capture="environment" required style="display: none;" onchange="this.parentElement.style.borderColor='#10b981'; this.parentElement.style.color='#10b981';" />
-          </label>
+          <!-- Hidden inputs for backend compatibility -->
+          <input type="hidden" id="latitude" name="latitude" />
+          <input type="hidden" id="longitude" name="longitude" />
+          <span id="file-label" style="display: none;"></span>
+          <button id="locate" type="button" style="display: none;"></button>
+          <div id="location-status" style="display: none;"></div>
           
-          <textarea name="description" placeholder="Description (optional)..." style="width: 100%; padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px; resize: vertical; min-height: 80px; font-family: inherit; font-size: 0.9rem;"></textarea>
+          <input id="image" name="image" type="file" accept="image/*" required style="width: 100%; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; box-sizing: border-box; font-family: sans-serif; color: #334155; font-size: 0.9rem;" />
           
-          <div style="display: flex; gap: 8px; align-items: center;">
-            <input id="latitude" name="latitude" type="number" step="any" placeholder="Latitude" required readonly style="flex: 1; padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px; background: #f8fafc; color: #64748b;" />
-            <input id="longitude" name="longitude" type="number" step="any" placeholder="Longitude" required readonly style="flex: 1; padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px; background: #f8fafc; color: #64748b;" />
-            <button id="locate" type="button" style="padding: 12px 16px; background: #f1f5f9; border: 1px solid #e5e7eb; border-radius: 8px; color: #475569; cursor: pointer;" title="Get Current Location"><i class="fa-solid fa-location-crosshairs"></i></button>
+          <input id="report-name" name="name" type="text" placeholder="Enter your name" style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 4px; box-sizing: border-box; font-family: sans-serif; color: #475569; font-size: 0.95rem;" />
+          
+          <input id="report-location" name="location" type="text" placeholder="Enter Location" style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 4px; box-sizing: border-box; font-family: sans-serif; color: #475569; font-size: 0.95rem;" />
+          
+          <textarea name="description" placeholder="Describe the waste" style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 4px; resize: vertical; min-height: 80px; box-sizing: border-box; font-family: monospace; color: #475569; font-size: 0.95rem;"></textarea>
+          
+          <div style="text-align: center; margin-top: 8px;">
+            <button type="submit" id="submit-btn" style="background: #27ae60; color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-size: 1rem; width: auto; font-family: sans-serif;">Submit Report</button>
           </div>
-          
-          <button type="submit" id="submit-btn" style="background: #10b981; color: white; border: none; padding: 14px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 1rem; margin-top: 8px;">Submit Report</button>
         </form>
       </div>
 
@@ -197,10 +213,11 @@
                 <th style="padding: 12px; font-weight: 600;">Date</th>
                 <th style="padding: 12px; font-weight: 600;">Category</th>
                 <th style="padding: 12px; font-weight: 600;">Status</th>
+                <th style="padding: 12px; font-weight: 600;">Proof</th>
               </tr>
             </thead>
             <tbody id="cit-reports-tbody">
-              <tr><td colspan="4" style="padding: 12px; text-align: center; color: #94a3b8;">Loading...</td></tr>
+              <tr><td colspan="5" style="padding: 12px; text-align: center; color: #94a3b8;">Loading...</td></tr>
             </tbody>
           </table>
         </div>
@@ -235,7 +252,8 @@
       
       <footer style="text-align: center; padding: 24px; margin-top: auto; border-top: 1px solid var(--col-border);">
         <div style="display: flex; justify-content: center; gap: 16px; margin-bottom: 24px;">
-          <button class="col-logout-btn" style="margin-top: 0; padding: 8px 16px; width: auto;" onclick="enterGuestMode(); setAuthMode('login'); byId('citizen-wrapper').hidden=true; document.body.classList.remove('collector-mode'); openSignIn();"><i class="fa-solid fa-arrow-right-from-bracket"></i> Logout</button>
+          <button id="cit-logout-btn" class="col-logout-btn" style="margin-top: 0; padding: 8px 16px; width: auto;" onclick="enterGuestMode(); setAuthMode('login'); byId('citizen-wrapper').hidden=true; document.body.classList.remove('collector-mode'); openSignIn();"><i class="fa-solid fa-arrow-right-from-bracket"></i> Logout</button>
+          <button id="cit-login-btn" class="col-logout-btn" style="margin-top: 0; padding: 8px 16px; width: auto; background: #3b82f6; display: none;" onclick="setAuthMode('login'); byId('citizen-wrapper').hidden=true; document.body.classList.remove('collector-mode'); openSignIn();"><i class="fa-solid fa-arrow-right-to-bracket"></i> Login</button>
         </div>
         <img src="logo.png" alt="EcoTrack AI Logo" style="height: 40px; display: inline-block;">
         <div style="font-size: 12px; color: var(--col-text-muted); margin-top: 8px;">Powered by EcoTrack AI</div>
@@ -269,11 +287,11 @@
 
       <span class="nav-section-title">NAVIGATE</span>
       <nav class="sidebar-nav">
-        <a href="#" class="active"><i class="fa-solid fa-chart-line"></i> Overview</a>
-        <a href="#"><i class="fa-regular fa-rectangle-list"></i> Report queue</a>
-        <a href="#"><i class="fa-regular fa-file-lines"></i> New report</a>
-        <a href="#"><i class="fa-solid fa-users"></i> Collection team</a>
-        <a href="#"><i class="fa-solid fa-chart-area"></i> Activity</a>
+        <a href="#" class="active" onclick="showAdminView('overview', this)"><i class="fa-solid fa-chart-line"></i> Overview</a>
+        <a href="#" onclick="showAdminView('queue', this)"><i class="fa-regular fa-rectangle-list"></i> Report queue</a>
+        <a href="#" onclick="showAdminView('new', this)"><i class="fa-regular fa-file-lines"></i> New report</a>
+        <a href="#" onclick="showAdminView('team', this)"><i class="fa-solid fa-users"></i> Collection team</a>
+        <a href="#" onclick="showAdminView('activity', this)"><i class="fa-solid fa-chart-area"></i> Activity</a>
       </nav>
 
       <div class="sidebar-bottom">
@@ -284,12 +302,17 @@
             All signals operational
           </div>
         </div>
-        <div class="user-profile">
-          <div class="user-avatar" id="sidebar-avatar">AM</div>
-          <div class="user-info">
-            <span class="name" id="sidebar-name">Alex Morgan</span>
-            <span class="workspace" id="sidebar-workspace">Demo workspace</span>
+        <div class="user-profile" style="display: flex; justify-content: space-between; align-items: center;">
+          <div style="display: flex; gap: 12px; align-items: center;">
+            <div class="user-avatar" id="sidebar-avatar">AM</div>
+            <div class="user-info">
+              <span class="name" id="sidebar-name">Alex Morgan</span>
+              <span class="workspace" id="sidebar-workspace">Demo workspace</span>
+            </div>
           </div>
+          <button id="sidebar-logout-btn" style="background: transparent; border: none; color: #a1a1aa; cursor: pointer; padding: 8px;" title="Logout" onclick="document.getElementById('logout').click();">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i>
+          </button>
         </div>
       </div>
     </aside>
@@ -309,10 +332,11 @@
           <button>Collector</button>
           <button style="padding:6px;width:32px"><i class="fa-solid fa-mobile-screen"></i></button>
           <button style="padding:6px;width:32px"><i class="fa-solid fa-gear"></i></button>
-          <button id="logout" style="display:none;">Logout</button>
+          <button id="logout" hidden>Logout</button>
         </div>
       </header>
 
+      <div id="admin-view-overview">
       <!-- PAGE HEADER -->
       <section class="page-header">
         <div class="page-eyebrow">COMMAND CENTER / LIVE</div>
@@ -405,26 +429,131 @@
         </article>
 
       </section>
+      </div>
+
+      
+      <!-- VIEW: Report queue -->
+      <div id="admin-view-queue" style="display: none;">
+        <section class="page-header">
+          <div class="page-eyebrow">COMMAND CENTER / QUEUE</div>
+          <h1 class="page-title">Report Queue</h1>
+        </section>
+        <section class="panel" style="margin-top: 24px; overflow-x: auto;">
+          <div style="display: flex; gap: 16px; margin-bottom: 24px; flex-wrap: wrap;">
+            <input type="text" id="search" placeholder="Search report ID..." style="padding: 10px 16px; border-radius: 8px; border: 1px solid var(--col-border); min-width: 250px;">
+            <select id="status-filter" style="padding: 10px 16px; border-radius: 8px; border: 1px solid var(--col-border);">
+              <option value="">All statuses</option>
+              <option value="pending">Pending</option>
+              <option value="assigned">Assigned</option>
+              <option value="in_progress">In Progress</option>
+              <option value="collected">Collected</option>
+              <option value="verified">Verified</option>
+            </select>
+            <div id="map-count" style="align-self: center; font-weight: 500; color: var(--col-text-muted);">0 visible</div>
+          </div>
+          <table style="width: 100%; border-collapse: collapse; text-align: left;">
+            <thead>
+              <tr style="border-bottom: 1px solid var(--col-border);">
+                <th style="padding: 12px; color: var(--col-text-muted); font-weight: 500;">Report</th>
+                <th style="padding: 12px; color: var(--col-text-muted); font-weight: 500;">Category</th>
+                <th style="padding: 12px; color: var(--col-text-muted); font-weight: 500;">Location</th>
+                <th style="padding: 12px; color: var(--col-text-muted); font-weight: 500;">Date</th>
+                <th style="padding: 12px; color: var(--col-text-muted); font-weight: 500;">Status</th>
+                <th style="padding: 12px; color: var(--col-text-muted); font-weight: 500;">Action</th>
+              </tr>
+            </thead>
+            <tbody id="reports-body">
+              <tr><td colspan="6" class="empty">Loading...</td></tr>
+            </tbody>
+          </table>
+        </section>
+      </div>
+
+      <!-- VIEW: New report -->
+      <div id="admin-view-new" style="display: none;">
+        <section class="page-header">
+          <div class="page-eyebrow">COMMAND CENTER / NEW</div>
+          <h1 class="page-title">New Report</h1>
+        </section>
+        <section class="panel" style="margin-top: 24px;">
+           <p>Log a report on behalf of a citizen or collector.</p>
+           <form id="admin-report-form" style="display: flex; flex-direction: column; gap: 16px; max-width: 600px; margin-top: 24px;">
+            <textarea placeholder="Description..." style="padding: 12px; border-radius: 8px; border: 1px solid var(--col-border); min-height: 100px;"></textarea>
+            <button type="button" class="col-btn-primary" style="align-self: flex-start;">Submit Report</button>
+           </form>
+        </section>
+      </div>
+
+      <!-- VIEW: Collection team -->
+      <div id="admin-view-team" style="display: none;">
+        <section class="page-header">
+          <div class="page-eyebrow">COMMAND CENTER / TEAM</div>
+          <h1 class="page-title">Collection Team</h1>
+        </section>
+        <section class="panel" style="margin-top: 24px;">
+          <p>Manage collectors and routing assignments.</p>
+          <div style="margin-top: 24px; display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));">
+            <div style="padding: 16px; border: 1px solid var(--col-border); border-radius: 12px; display: flex; align-items: center; gap: 16px;">
+              <div style="width: 48px; height: 48px; border-radius: 50%; background: var(--col-primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold;">RV</div>
+              <div>
+                <div style="font-weight: 600;">Rahul Verma</div>
+                <div style="font-size: 0.8rem; color: var(--col-text-muted);">Active Route 2</div>
+              </div>
+            </div>
+            <div style="padding: 16px; border: 1px solid var(--col-border); border-radius: 12px; display: flex; align-items: center; gap: 16px;">
+              <div style="width: 48px; height: 48px; border-radius: 50%; background: var(--col-primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold;">SK</div>
+              <div>
+                <div style="font-weight: 600;">Sunita Kaur</div>
+                <div style="font-size: 0.8rem; color: var(--col-text-muted);">Idle</div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- VIEW: Activity -->
+      <div id="admin-view-activity" style="display: none;">
+        <section class="page-header">
+          <div class="page-eyebrow">COMMAND CENTER / LOGS</div>
+          <h1 class="page-title">Activity Log</h1>
+        </section>
+        <section class="panel" style="margin-top: 24px;">
+          <p>System-wide actions and events.</p>
+          <div style="margin-top: 24px; display: flex; flex-direction: column; gap: 16px;">
+            <div style="padding: 16px; border: 1px solid var(--col-border); border-radius: 8px;">
+               <div style="font-weight: 600;">Report #RE-889 verified</div>
+               <div style="font-size: 0.85rem; color: var(--col-text-muted); margin-top: 4px;">2 hours ago by System</div>
+            </div>
+            <div style="padding: 16px; border: 1px solid var(--col-border); border-radius: 8px;">
+               <div style="font-weight: 600;">Collector RV started route</div>
+               <div style="font-size: 0.85rem; color: var(--col-text-muted); margin-top: 4px;">4 hours ago by Rahul Verma</div>
+            </div>
+          </div>
+        </section>
+      </div>
 
     </main>
   </div>
 
-  <!-- Hidden Report Form for JS -->
-  <article class="panel report-panel" id="report-panel">
-    <div class="panel-heading">
-      <h2>Report plastic waste</h2>
+  <div id="evidence-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center;">
+    <div style="background: white; padding: 24px; border-radius: 12px; width: 90%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+      <h3 style="margin-bottom: 16px; font-family: sans-serif; margin-top: 0;">Upload Collection Evidence</h3>
+      <form id="evidence-form">
+        <input type="hidden" id="evidence-report-id" name="report_id" />
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; margin-bottom: 8px; font-size: 0.9rem; color: #475569;">Select a photo showing the cleaned area:</label>
+          <input type="file" name="evidence" id="evidence-file" accept="image/*" required style="width: 100%; border: 1px solid #cbd5e1; padding: 8px; border-radius: 6px;">
+        </div>
+        <div id="evidence-message" style="margin-bottom: 16px; font-weight: bold; font-size: 0.9rem;"></div>
+        <div style="display: flex; justify-content: flex-end; gap: 12px;">
+          <button type="button" onclick="document.getElementById('evidence-modal').style.display='none'" style="padding: 8px 16px; border: 1px solid #cbd5e1; border-radius: 6px; background: white; cursor: pointer; color: #475569; font-weight: 600;">Cancel</button>
+          <button type="submit" style="padding: 8px 16px; border: none; border-radius: 6px; background: #3b82f6; color: white; cursor: pointer; font-weight: 600;">Submit Proof</button>
+        </div>
+      </form>
     </div>
-    <form id="report-form">
-      <label class="upload-box" for="image"><span>Choose a photo</span><input id="image" name="image" type="file"
-          required /></label>
-      <input id="latitude" name="latitude" type="number" step="any" required />
-      <input id="longitude" name="longitude" type="number" step="any" required />
-      <button id="locate" type="button">Locate</button>
-      <button type="submit" id="submit-btn">Submit</button>
-    </form>
-  </article>
+  </div>
 
-  <script src="app.js?v=10"></script>
+  <script src="app.js?v=16"></script>
 </body>
 
 </html>

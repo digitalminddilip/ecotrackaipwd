@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Admin Dashboard | EcoTrack AI</title>
   
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,7 +17,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
   <!-- Styles -->
-  <link rel="stylesheet" href="admin.css?v=4">
+  <link rel="stylesheet" href="admin.css?v=5">
 </head>
 <body>
 
@@ -224,6 +227,15 @@
       </div>
       <div class="modal-body">
         <p>Select a collection team member to assign to this task.</p>
+        
+        <!-- Reporter Info -->
+        <div style="margin: 16px 0; padding: 12px; background: #f8fafc; border-radius: 8px; font-size: 0.9rem;">
+          <strong>Reporter Info:</strong><br>
+          Name: <span id="assign-rep-name">Loading...</span><br>
+          Email: <span id="assign-rep-email">Loading...</span><br>
+          Desc: <span id="assign-rep-desc" style="white-space: pre-wrap; font-family: monospace;"></span>
+        </div>
+        
         <div class="form-group">
           <label>Available Collectors</label>
           <select id="collector-select" class="modern-select"></select>
@@ -245,6 +257,15 @@
       </div>
       <div class="modal-body">
         <p>Review the collector's evidence photo to verify the job is complete.</p>
+        
+        <!-- Reporter Info -->
+        <div style="margin: 16px 0; padding: 12px; background: #f8fafc; border-radius: 8px; font-size: 0.9rem;">
+          <strong>Reporter Info:</strong><br>
+          Name: <span id="verify-rep-name">Loading...</span><br>
+          Email: <span id="verify-rep-email">Loading...</span><br>
+          Desc: <span id="verify-rep-desc" style="white-space: pre-wrap; font-family: monospace;"></span>
+        </div>
+        
         <div class="evidence-comparison">
           <div class="evidence-box">
             <span>Before</span>
@@ -263,7 +284,40 @@
     </div>
   </div>
 
+  <!-- 4. View Details Modal -->
+  <div class="modal-overlay" id="modal-view-details">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Reporter & Task Details</h3>
+        <button class="btn-close" onclick="closeModal('modal-view-details')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <div style="padding-bottom: 12px; border-bottom: 1px solid #e2e8f0; margin-bottom: 12px;">
+          <h4 style="margin-bottom: 8px; font-size: 1rem; color: #1e293b;">Reporter Info</h4>
+          <p><strong>Name:</strong> <span id="view-name">Loading...</span></p>
+          <p><strong>Email:</strong> <span id="view-email">Loading...</span></p>
+          <p><strong>Role:</strong> <span id="view-role">Loading...</span></p>
+          <p><strong>Location/Desc:</strong> <br><span id="view-desc" style="white-space: pre-wrap; font-family: monospace;"></span></p>
+        </div>
+        
+        <div id="view-collector-section" style="display: none; padding-bottom: 12px; border-bottom: 1px solid #e2e8f0; margin-bottom: 12px;">
+          <h4 style="margin-bottom: 8px; font-size: 1rem; color: #1e293b;">Assigned Collector</h4>
+          <p><strong>Name:</strong> <span id="view-collector-name">Loading...</span></p>
+          <p><strong>Email:</strong> <span id="view-collector-email">Loading...</span></p>
+        </div>
+        
+        <div style="margin-top: 16px;">
+          <p style="margin-bottom: 8px;"><strong>Report Photo:</strong></p>
+          <div class="image-preview" id="view-image-before"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline" onclick="closeModal('modal-view-details')">Close</button>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="admin.js?v=3"></script>
+  <script src="admin.js?v=6"></script>
 </body>
 </html>

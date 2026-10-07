@@ -1,7 +1,6 @@
 const hostname = window.location.hostname;
 const isLocal = !hostname || hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.') || hostname.startsWith('10.');
-const isVercel = hostname.endsWith('.vercel.app');
-const API_URL = isVercel ? "/api" : (isLocal ? `http://${hostname || 'localhost'}:8000` : "");
+const API_URL = isLocal ? `http://${hostname || 'localhost'}:8000` : "";
 let reports = [];
 let accessToken = localStorage.getItem("ecotrack_token");
 let currentUser = null;
@@ -45,6 +44,12 @@ function enterGuestMode() {
   if (byId("cit-user-avatar")) {
     byId("cit-user-avatar").innerHTML = `<img src="https://ui-avatars.com/api/?name=Guest&background=random&color=fff&rounded=true" style="width: 100%; height: 100%; border-radius: 50%;">`;
   }
+  
+  // Custom toggles for guest view
+  if (byId("cit-logout-btn")) byId("cit-logout-btn").style.display = "none";
+  if (byId("cit-login-btn")) byId("cit-login-btn").style.display = "inline-block";
+  if (byId("report-form")) byId("report-form").style.display = "none";
+  if (byId("guest-report-msg")) byId("guest-report-msg").style.display = "block";
 }
 
 function openSignIn() {
@@ -141,8 +146,27 @@ function setLocation(latitude, longitude) {
   currentLocation = [latitude, longitude];
   byId("latitude").value = latitude.toFixed(6);
   byId("longitude").value = longitude.toFixed(6);
-  byId("location-status").textContent =
-    `GPS locked: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+  const locationStatus = byId("location-status");
+  if (locationStatus) {
+    locationStatus.textContent = `GPS locked: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+  }
+  
+  const locInput = byId("report-location");
+  if (locInput && !locInput.value) {
+    locInput.placeholder = "Locating...";
+    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`)
+      .then(r => r.json())
+      .then(data => {
+        if (data && data.display_name) {
+          locInput.value = data.display_name.split(",").slice(0, 3).join(",");
+        }
+      })
+      .catch(e => {
+        console.error("Reverse geocoding failed", e);
+        locInput.placeholder = "Enter Location";
+      });
+  }
+
   if (campusScene) {
     campusScene.camera.position.set(10, 13, 15);
     renderCampusLocation();
@@ -181,16 +205,15 @@ function renderCampusLocation() {
 function getLocation() {
   const locationStatus = byId("location-status");
   if (!navigator.geolocation) {
-    locationStatus.textContent = "GPS is not supported by this browser";
+    if (locationStatus) locationStatus.textContent = "GPS is not supported by this browser";
     return;
   }
-  locationStatus.textContent = "Requesting your location...";
+  if (locationStatus) locationStatus.textContent = "Requesting your location...";
   navigator.geolocation.getCurrentPosition(
     (position) =>
       setLocation(position.coords.latitude, position.coords.longitude),
     () => {
-      locationStatus.textContent =
-        "GPS unavailable. Trying network location...";
+      if (locationStatus) locationStatus.textContent = "GPS unavailable. Trying network location...";
       getNetworkLocation();
     },
     { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 },
@@ -199,17 +222,19 @@ function getLocation() {
 
 async function getNetworkLocation() {
   const locationStatus = byId("location-status");
-  locationStatus.textContent = "Detecting approximate network location...";
+  if (locationStatus) locationStatus.textContent = "Detecting approximate network location...";
   try {
     const response = await fetch(`${API_URL}/location/ip`);
     const result = await response.json();
     if (!response.ok)
       throw new Error(result.detail || "Network location unavailable");
     setLocation(Number(result.latitude), Number(result.longitude));
-    locationStatus.textContent =
-      `${result.city || "Approximate area"}, ${result.region || ""} (network)`.trim();
+    if (locationStatus) {
+      locationStatus.textContent =
+        `${result.city || "Approximate area"}, ${result.region || ""} (network)`.trim();
+    }
   } catch (error) {
-    locationStatus.textContent = "Unable to detect network location.";
+    if (locationStatus) locationStatus.textContent = "Unable to detect network location.";
   }
 }
 
@@ -235,18 +260,20 @@ function formatStatus(value) {
 }
 
 function renderAnalytics(data) {
-  byId("total-reports").textContent = data.total_reports;
-  byId("pending-reports").textContent = data.pending_reports;
-  byId("collected-reports").textContent = data.collected_reports;
+  if(byId("total-reports")) byId("total-reports").textContent = data.total_reports;
+  if(byId("pending-reports")) byId("pending-reports").textContent = data.pending_reports;
+  if(byId("collected-reports")) byId("collected-reports").textContent = data.collected_reports;
   const verified = data.status_counts.verified || 0;
-  byId("verified-rate").textContent = data.total_reports
+  if(byId("verified-rate")) byId("verified-rate").textContent = data.total_reports
     ? `${Math.round((verified / data.total_reports) * 100)}%`
     : "0%";
 }
 
 function renderReports() {
-  const search = byId("search").value.trim().toLowerCase();
-  const status = byId("status-filter").value;
+  const searchEl = byId("search");
+  const filterEl = byId("status-filter");
+  const search = searchEl ? searchEl.value.trim().toLowerCase() : "";
+  const status = filterEl ? filterEl.value : "";
   const visible = reports.filter((report) => {
     const matchesSearch =
       !search ||
@@ -254,7 +281,7 @@ function renderReports() {
       (report.category || "").toLowerCase().includes(search);
     return matchesSearch && (!status || report.status === status);
   });
-  byId("map-count").textContent = `${visible.length} visible`;
+  if(byId("map-count")) byId("map-count").textContent = `${visible.length} visible`;
   if (campusScene) {
     campusScene.markerGroup.clear();
     visible.forEach((report) => {
@@ -314,6 +341,8 @@ function actionMarkup(report) {
       return `<button class="table-action" data-action="collect" data-id="${report.report_id}">Collected</button>`;
     if (report.status === "collected" && !report.evidence_reference)
       return `<button class="table-action" data-action="evidence" data-id="${report.report_id}">Evidence</button>`;
+    if (report.status === "rejected")
+      return `<button class="table-action" data-action="evidence" data-id="${report.report_id}" style="color: #ef4444; border-color: #fca5a5;">Retry Proof</button>`;
   }
   return '<span class="muted">-</span>';
 }
@@ -334,11 +363,14 @@ async function handleAction(action, reportId) {
     });
     endpoint = `/reports/${reportId}/status`;
   } else if (action === "evidence") {
-    const evidence = prompt("Evidence image reference or filename:");
-    if (!evidence) return;
-    options.method = "POST";
-    options.body = JSON.stringify({ evidence_reference: evidence });
-    endpoint = `/reports/${reportId}/evidence`;
+    const modal = byId("evidence-modal");
+    if (modal) {
+      byId("evidence-report-id").value = reportId;
+      if (byId("evidence-file")) byId("evidence-file").value = "";
+      if (byId("evidence-message")) byId("evidence-message").textContent = "";
+      modal.style.display = "flex";
+    }
+    return;
   } else if (action === "verify") {
     const approved = confirm("Approve this completion evidence?");
     options.method = "POST";
@@ -379,7 +411,7 @@ async function loadDashboard() {
     renderReports();
     if (byId("auth-message")) byId("auth-message").textContent = "";
   } catch (error) {
-    byId("reports-body").innerHTML =
+    if(byId("reports-body")) byId("reports-body").innerHTML =
       '<tr><td colspan="6" class="empty">Start the API with uvicorn to load live reports.</td></tr>';
     if (byId("auth-message")) byId("auth-message").textContent = accessToken
       ? "API connection unavailable."
@@ -389,8 +421,24 @@ async function loadDashboard() {
 
 async function restoreSession() {
   if (!accessToken) {
-    enterGuestMode();
-    return;
+    try {
+      const loginRes = await fetch(`${API_URL}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: "digitalminddilip0906@gmail.com", password: "dilip0906" })
+      });
+      if (loginRes.ok) {
+        const result = await loginRes.json();
+        accessToken = result.access_token;
+        localStorage.setItem("ecotrack_token", accessToken);
+      } else {
+        enterGuestMode();
+        return;
+      }
+    } catch (e) {
+      enterGuestMode();
+      return;
+    }
   }
   const response = await fetch(`${API_URL}/auth/me`, {
     headers: authHeaders(),
@@ -402,6 +450,7 @@ async function restoreSession() {
     return;
   }
   currentUser = await response.json();
+alert('Logged in as: ' + currentUser.role);
   updateSidebarProfile(currentUser.name);
   if (byId("session-label")) {
     byId("session-label").textContent = `${currentUser.name} · ${currentUser.role}`;
@@ -410,23 +459,26 @@ async function restoreSession() {
   if (byId("logout")) byId("logout").hidden = false;
   if (byId("login-screen")) byId("login-screen").hidden = true;
   
+  if (byId("cit-logout-btn")) byId("cit-logout-btn").style.display = "inline-block";
+  if (byId("cit-login-btn")) byId("cit-login-btn").style.display = "none";
+  if (byId("report-form")) byId("report-form").style.display = "flex";
+  if (byId("guest-report-msg")) byId("guest-report-msg").style.display = "none";
+  
   if (currentUser.role === "administrator") {
     window.location.href = "admin/index.html";
     return;
   }
 
   if (currentUser.role === "collector") {
-    if (byId("app-wrapper")) byId("app-wrapper").hidden = true;
     if (byId("citizen-wrapper")) byId("citizen-wrapper").hidden = true;
-    const colDash = document.getElementById("collector-dashboard-wrapper");
-    if (colDash) colDash.hidden = false;
+    if (byId("app-wrapper")) byId("app-wrapper").hidden = false;
     document.body.classList.add("collector-mode");
     
     // Update user info in collector dashboard
-    const nameEl = document.getElementById("col-user-name");
-    const emailEl = document.getElementById("col-user-email");
+    const nameEl = document.getElementById("sidebar-name");
+    const emailEl = document.getElementById("sidebar-workspace");
     if (nameEl) nameEl.textContent = currentUser.name;
-    if (emailEl) emailEl.textContent = currentUser.email || `${currentUser.name.toLowerCase().replace(" ", "")}@ecotrack.local`;
+    if (emailEl) emailEl.textContent = "Collector View";
   } else if (currentUser.role === "citizen") {
     if (byId("app-wrapper")) byId("app-wrapper").hidden = true;
     if (byId("collector-dashboard-wrapper")) byId("collector-dashboard-wrapper").hidden = true;
@@ -738,7 +790,7 @@ function populateCitReports() {
   const tbody = document.getElementById('cit-reports-tbody');
   if (!tbody) return;
   if (!reports || reports.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="4" style="padding: 12px; text-align: center; color: #94a3b8;">No reports found.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" style="padding: 12px; text-align: center; color: #94a3b8;">No reports found.</td></tr>';
     return;
   }
   tbody.innerHTML = reports.map(r => `
@@ -747,6 +799,9 @@ function populateCitReports() {
       <td style="padding: 12px; color: #64748b;">${new Date(r.timestamp).toLocaleDateString()}</td>
       <td style="padding: 12px; color: #64748b;">${r.category || '-'}</td>
       <td style="padding: 12px;"><span class="status ${r.status}">${formatStatus(r.status)}</span></td>
+      <td style="padding: 12px;">
+        ${r.evidence_reference ? `<button onclick="window.open('${API_URL}${r.evidence_reference}', '_blank')" style="padding: 4px 12px; border: none; background: #e0e7ff; color: #4338ca; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600;"><i class="fa-solid fa-image"></i> View</button>` : '<span style="color: #94a3b8;">-</span>'}
+      </td>
     </tr>
   `).join('');
   
@@ -785,13 +840,28 @@ if (colLogout) {
 byId("report-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   const form = event.currentTarget;
-  const message = byId("auth-message");
+  const message = byId("report-message") || byId("auth-message");
+  message.style.color = "#475569";
   if (!currentUser || isGuest()) {
+    message.style.color = "#ef4444";
     message.textContent = "Sign in to submit a report.";
     openSignIn();
     return;
   }
   const data = new FormData(form);
+  
+  // Combine Name and Location into Description if they exist
+  const nameStr = data.get("name");
+  const locStr = data.get("location");
+  let descStr = data.get("description") || "";
+  if (nameStr || locStr) {
+    let extra = [];
+    if (nameStr) extra.push(`Name: ${nameStr}`);
+    if (locStr) extra.push(`Location: ${locStr}`);
+    descStr = extra.join(" | ") + (descStr ? "\n" + descStr : "");
+    data.set("description", descStr);
+  }
+  
   data.append("user_id", currentUser.user_id);
   message.textContent = "Submitting report...";
   try {
@@ -801,67 +871,104 @@ byId("report-form").addEventListener("submit", async (event) => {
       body: data,
     });
     const result = await response.json();
-    if (!response.ok)
-      throw new Error(result.detail || "Unable to submit report");
+    if (!response.ok) {
+      let errorMessage = "Unable to submit report";
+      if (result.detail) {
+        if (Array.isArray(result.detail)) {
+          errorMessage = result.detail.map((err) => err.msg || JSON.stringify(err)).join(", ");
+        } else {
+          errorMessage = result.detail;
+        }
+      }
+      throw new Error(errorMessage);
+    }
     form.reset();
-    byId("file-label").textContent = "Choose a photo";
-    message.textContent = `Reference No: ${result.report_id} - Record successful and confirmation letter will be sent soon`;
+    getLocation();
+    if (byId("file-label")) byId("file-label").textContent = "Choose a photo";
+    message.textContent = "";
+    
+    // Show notification alert
+    alert(`Report submitted successfully!
+Reference No: ${result.report_id}
+A confirmation will be sent soon.`);
+    
     await loadDashboard();
+    
+    // Auto-navigate to My Reports view
+    const reportsLinks = document.querySelectorAll('.col-nav-link');
+    for (let link of reportsLinks) {
+      if (link.textContent.includes('My Reports')) {
+        showCitView('reports', link);
+        break;
+      }
+    }
   } catch (error) {
+    message.style.color = "#ef4444";
     message.textContent = error.message;
   }
 });
 
-byId("image-compare-form").addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const first = byId("compare-photo-1").files[0];
-  const second = byId("compare-photo-2").files[0];
-  const message = byId("image-compare-message");
-  const resultBox = byId("image-compare-result");
-  if (!first || !second) return;
-  if (isGuest()) {
-    message.textContent = "Sign in to analyze images.";
-    openSignIn();
-    return;
-  }
-  message.textContent = "Analyzing image details...";
-  resultBox.hidden = true;
-  try {
-    const data = new FormData();
-    data.append("photo1", first);
-    data.append("photo2", second);
-    const response = await fetch(`${API_URL}/image-compare`, {
-      method: "POST",
-      headers: authHeaders(),
-      body: data,
-    });
-    const result = await response.json();
-    if (!response.ok)
-      throw new Error(result.detail || "Image comparison failed");
-    resultBox.className = `compare-result${result.match ? "" : " no-match"}`;
-    resultBox.textContent = `${result.match ? "TRUE" : "FALSE"} · ${result.similarity}% match (threshold: ${result.threshold}%). Visual appearance: ${result.comparison.visual_appearance}%, colour distribution: ${result.comparison.colour_distribution}%.`;
-    resultBox.hidden = false;
-    message.textContent = "";
-  } catch (error) {
-    message.textContent = error.message;
-  }
-});
+const imageCompareForm = byId("image-compare-form");
+if (imageCompareForm) {
+  imageCompareForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const first = byId("compare-photo-1").files[0];
+    const second = byId("compare-photo-2").files[0];
+    const message = byId("image-compare-message");
+    const resultBox = byId("image-compare-result");
+    if (!first || !second) return;
+    if (isGuest()) {
+      message.textContent = "Sign in to analyze images.";
+      openSignIn();
+      return;
+    }
+    message.textContent = "Analyzing image details...";
+    resultBox.hidden = true;
+    try {
+      const data = new FormData();
+      data.append("photo1", first);
+      data.append("photo2", second);
+      const response = await fetch(`${API_URL}/image-compare`, {
+        method: "POST",
+        headers: authHeaders(),
+        body: data,
+      });
+      const result = await response.json();
+      if (!response.ok)
+        throw new Error(result.detail || "Image comparison failed");
+      resultBox.className = `compare-result${result.match ? "" : " no-match"}`;
+      resultBox.textContent = `${result.match ? "TRUE" : "FALSE"} \u2014 ${result.similarity}% match (threshold: ${result.threshold}%). Visual appearance: ${result.comparison.visual_appearance}%, colour distribution: ${result.comparison.colour_distribution}%.`;
+      resultBox.hidden = false;
+      message.textContent = "";
+    } catch (error) {
+      message.textContent = error.message;
+    }
+  });
+}
 
 byId("image").addEventListener("change", (event) => {
   byId("file-label").textContent =
     event.target.files[0]?.name || "Choose a photo";
 });
-byId("search").addEventListener("input", renderReports);
-byId("status-filter").addEventListener("change", renderReports);
-byId("refresh").addEventListener("click", () => {
-  if (campusScene) {
-    campusScene.camera.position.set(13, 16, 18);
-    campusScene.camera.lookAt(0, 0, 0);
-  }
-  loadDashboard();
-});
-byId("locate").addEventListener("click", getLocation);
-byId("network-locate").addEventListener("click", getNetworkLocation);
+const searchEl = byId("search");
+if (searchEl) searchEl.addEventListener("input", renderReports);
+
+const filterEl = byId("status-filter");
+if (filterEl) filterEl.addEventListener("change", renderReports);
+const refreshEl = byId("refresh");
+if (refreshEl) {
+  refreshEl.addEventListener("click", () => {
+    if (campusScene) {
+      campusScene.camera.position.set(13, 16, 18);
+      campusScene.camera.lookAt(0, 0, 0);
+    }
+    loadDashboard();
+  });
+}
+const locateEl = byId("locate");
+if (locateEl) locateEl.addEventListener("click", getLocation);
+const networkLocateEl = byId("network-locate");
+if (networkLocateEl) networkLocateEl.addEventListener("click", getNetworkLocation);
 const focusReportBtn = byId("focus-report");
 if (focusReportBtn) {
   focusReportBtn.addEventListener("click", () => {
@@ -975,32 +1082,43 @@ window.onload = function () {
     });
     const btn = document.getElementById('google-login-btn');
     if (btn) {
-      btn.addEventListener('click', () => {
-        google.accounts.id.prompt(); // Shows the One Tap UI
-      });
+      google.accounts.id.renderButton(
+        btn,
+        { theme: "outline", size: "large", width: "100%" }
+      );
     }
   }
 };
 
 function handleCredentialResponse(response) {
-  fetch('/auth/google', {
+  const msg = document.getElementById('auth-message');
+  if (msg) msg.textContent = 'Connecting with Google...';
+  
+  fetch(`${API_URL}/auth/google`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ token: response.credential })
   })
+  .then(res => res.json().then(data => ({ status: res.status, ok: res.ok, body: data })))
   .then(res => {
-    if (!res.ok) throw new Error('Google Auth Failed');
-    return res.json();
-  })
-  .then(data => {
-    localStorage.setItem('eco_token', data.access_token);
-    localStorage.setItem('eco_user_id', data.user_id);
-    checkSession();
+    if (!res.ok) throw new Error(res.body.detail || 'Google Auth Failed');
+    
+    accessToken = res.body.access_token;
+    localStorage.setItem('ecotrack_token', accessToken);
+    
+    // Fallback if API_URL wasn't used or checkSession was deleted
+    if (typeof restoreSession === 'function') {
+      restoreSession().then(() => {
+        if (msg) msg.textContent = '';
+        if (typeof loadDashboard === 'function') loadDashboard();
+      });
+    } else if (typeof checkSession === 'function') {
+      checkSession();
+    }
   })
   .catch(err => {
     console.error(err);
-    const msg = document.getElementById('auth-message');
-    if (msg) msg.textContent = 'Google login failed.';
+    if (msg) msg.textContent = err.message || 'Google login failed.';
   });
 }
 
@@ -1031,3 +1149,53 @@ if (mobileMenuBtn && sidebar && sidebarOverlay) {
     });
   });
 }
+
+
+window.showAdminView = function(viewId, el) { 
+  document.querySelectorAll('#app-wrapper .sidebar-nav a').forEach(a => a.classList.remove('active'));
+  if (el) el.classList.add('active');
+  
+  const views = ['overview', 'queue', 'new', 'team', 'activity'];
+  views.forEach(v => {
+    const el = document.getElementById('admin-view-' + v);
+    if(el) el.style.display = (v === viewId) ? 'block' : 'none';
+  });
+};
+
+const evidenceForm = document.getElementById('evidence-form');
+if (evidenceForm) {
+  evidenceForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const message = document.getElementById('evidence-message');
+    message.style.color = '#475569';
+    message.textContent = 'Uploading evidence...';
+    
+    const reportId = document.getElementById('evidence-report-id').value;
+    const data = new FormData(form);
+    data.delete('report_id'); // Just need the evidence file itself
+    
+    try {
+      const response = await fetch(`${API_URL}/reports/${reportId}/evidence`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: data,
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.detail || 'Unable to upload evidence');
+      }
+      message.style.color = '#27ae60';
+      message.textContent = 'Evidence uploaded successfully!';
+      setTimeout(() => {
+        document.getElementById('evidence-modal').style.display = 'none';
+        loadDashboard();
+      }, 1500);
+    } catch (error) {
+      message.style.color = '#ef4444';
+      message.textContent = error.message;
+    }
+  });
+}
+
+

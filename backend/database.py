@@ -62,7 +62,28 @@ def init_db() -> None:
                 )
                 """
             )
+
             connection.commit()
+            
+            connection.commit()
+            
+            # Seed or reset admin user to ensure login works for demo
+            cursor.execute("SELECT user_id FROM users WHERE email = 'dilipksharma1244@gmail.com'")
+            admin = cursor.fetchone()
+            import uuid
+            from .auth import hash_password
+            admin_hash = hash_password("Dilip@2006")
+            
+            if not admin:
+                admin_id = f"usr-{uuid.uuid4().hex[:8]}"
+                cursor.execute(
+                    "INSERT INTO users (user_id, name, email, role, password_hash, created_at, points, picture) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                    (admin_id, "Dilip Kumar Sharma", "dilipksharma1244@gmail.com", "administrator", admin_hash, datetime.utcnow().isoformat(), 0, "")
+                )
+            else:
+                cursor.execute("UPDATE users SET password_hash = ? WHERE email = 'dilipksharma1244@gmail.com'", (admin_hash,))
+            connection.commit()
+
     except Exception as e:
         print(f"Error initializing DB: {e}")
 

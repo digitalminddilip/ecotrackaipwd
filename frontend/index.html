@@ -138,8 +138,14 @@
       </div>
     </aside>
     
+    <div id="cit-sidebar-overlay" class="cit-sidebar-overlay"
+      onclick="document.querySelector('.col-sidebar').classList.remove('open'); this.classList.remove('show');"></div>
     <main class="col-main">
       <header class="col-topbar">
+        <button id="cit-mobile-menu-btn" class="cit-mobile-menu-btn" aria-label="Toggle menu"
+          onclick="document.querySelector('.col-sidebar').classList.add('open'); document.getElementById('cit-sidebar-overlay').classList.add('show');">
+          <i class="fa-solid fa-bars"></i>
+        </button>
         <div class="col-search" style="visibility: hidden;">
           <i class="fa-solid fa-magnifying-glass"></i>
           <input type="text" placeholder="Search...">

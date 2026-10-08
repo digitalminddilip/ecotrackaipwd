@@ -17,7 +17,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
   <!-- Styles -->
-  <link rel="stylesheet" href="admin.css?v=5">
+  <link rel="stylesheet" href="admin.css?v=6">
 </head>
 <body>
 
@@ -26,6 +26,7 @@
     <div class="spinner"></div>
   </div>
 
+  <div id="mobile-overlay" class="mobile-overlay"></div>
   <div class="dashboard-layout" id="dashboard-layout" style="display: none;">
     <!-- Sidebar -->
     <aside class="sidebar">
@@ -57,7 +58,8 @@
     <main class="main-content">
       <!-- Topbar -->
       <header class="topbar">
-        <div class="topbar-left">
+        <div class="topbar-left" style="display: flex; align-items: center; gap: 12px;">
+          <button id="mobile-menu-btn" class="mobile-menu-btn"><i class="fa-solid fa-bars"></i></button>
           <h2 class="page-title" id="page-title">Dashboard Overview</h2>
         </div>
         <div class="topbar-right">
@@ -318,6 +320,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="admin.js?v=6"></script>
+  <script src="admin.js?v=7"></script>
 </body>
 </html>

@@ -54,8 +54,38 @@ document.addEventListener("DOMContentLoaded", async () => {
   };
   
   byId("report-search").addEventListener("input", filterReports);
+  
+  byId("report-search").addEventListener("input", filterReports);
   byId("status-filter").addEventListener("change", filterReports);
+  
+  // Mobile menu toggle
+  const mobileMenuBtn = byId("mobile-menu-btn");
+  const mobileOverlay = byId("mobile-overlay");
+  const sidebar = document.querySelector(".sidebar");
+  
+  if (mobileMenuBtn && mobileOverlay && sidebar) {
+    mobileMenuBtn.addEventListener("click", () => {
+      sidebar.classList.add("active");
+      mobileOverlay.classList.add("active");
+    });
+    
+    mobileOverlay.addEventListener("click", () => {
+      sidebar.classList.remove("active");
+      mobileOverlay.classList.remove("active");
+    });
+    
+    // Close sidebar when clicking a nav item on mobile
+    document.querySelectorAll(".nav-item").forEach(item => {
+      item.addEventListener("click", () => {
+        if (window.innerWidth <= 900) {
+          sidebar.classList.remove("active");
+          mobileOverlay.classList.remove("active");
+        }
+      });
+    });
+  }
 });
+
 
 function setupNavigation() {
   document.querySelectorAll(".nav-item").forEach(item => {

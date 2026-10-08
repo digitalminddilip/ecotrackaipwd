@@ -1,3 +1,4 @@
+from contextlib import closing
 import sqlite3
 import os
 from datetime import datetime
@@ -12,7 +13,7 @@ def connect():
 
 def init_db() -> None:
     try:
-        with connect() as connection:
+        with closing(connect()) as connection, connection:
             cursor = connection.cursor()
             cursor.execute(
                 """
@@ -88,16 +89,16 @@ def init_db() -> None:
         print(f"Error initializing DB: {e}")
 
 def save_user(user_id: str, name: str, email: str, role: str, password_hash: str, created_at: str, picture: str = "") -> None:
-    with connect() as connection:
+    with closing(connect()) as connection, connection:
         cursor = connection.cursor()
         cursor.execute(
             "INSERT INTO users (user_id, name, email, role, password_hash, created_at, picture) VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (user_id, name, email, role, password_hash, created_at, picture),
+            (user_id, name, email.lower(), role, password_hash, created_at, picture),
         )
         connection.commit()
 
 def update_user_password(email: str, password_hash: str) -> None:
-    with connect() as connection:
+    with closing(connect()) as connection, connection:
         cursor = connection.cursor()
         cursor.execute(
             "UPDATE users SET password_hash = ? WHERE email = ?",
@@ -106,27 +107,27 @@ def update_user_password(email: str, password_hash: str) -> None:
         connection.commit()
 
 def find_user_by_email(email: str) -> dict[str, Any] | None:
-    with connect() as connection:
+    with closing(connect()) as connection, connection:
         cursor = connection.cursor()
         cursor.execute("SELECT * FROM users WHERE email = ?", (email.lower(),))
         row = cursor.fetchone()
     return dict(row) if row else None
 
 def find_user_by_id(user_id: str) -> dict[str, Any] | None:
-    with connect() as connection:
+    with closing(connect()) as connection, connection:
         cursor = connection.cursor()
         cursor.execute("SELECT * FROM users WHERE user_id = ?", (user_id,))
         row = cursor.fetchone()
     return dict(row) if row else None
 
 def load_users() -> list[dict[str, Any]]:
-    with connect() as connection:
+    with closing(connect()) as connection, connection:
         cursor = connection.cursor()
         cursor.execute("SELECT user_id, name, email, role, points, picture FROM users")
         return [dict(row) for row in cursor.fetchall()]
 
 def add_user_points(user_id: str, points: int) -> None:
-    with connect() as connection:
+    with closing(connect()) as connection, connection:
         cursor = connection.cursor()
         cursor.execute("UPDATE users SET points = points + ? WHERE user_id = ?", (points, user_id))
         connection.commit()
@@ -134,7 +135,7 @@ def add_user_points(user_id: str, points: int) -> None:
 def load_reports() -> dict[str, Any]:
     from .main import Report
 
-    with connect() as connection:
+    with closing(connect()) as connection, connection:
         cursor = connection.cursor()
         # Exclude image_data and evidence_data to save memory during bulk loads
         cursor.execute("""
@@ -164,21 +165,21 @@ def load_reports() -> dict[str, Any]:
     }
 
 def get_report_image_data(report_id: str) -> bytes | None:
-    with connect() as connection:
+    with closing(connect()) as connection, connection:
         cursor = connection.cursor()
         cursor.execute("SELECT image_data FROM reports WHERE report_id = ?", (report_id,))
         row = cursor.fetchone()
     return row["image_data"] if row and row["image_data"] else None
 
 def get_report_evidence_data(report_id: str) -> bytes | None:
-    with connect() as connection:
+    with closing(connect()) as connection, connection:
         cursor = connection.cursor()
         cursor.execute("SELECT evidence_data FROM reports WHERE report_id = ?", (report_id,))
         row = cursor.fetchone()
     return row["evidence_data"] if row and row["evidence_data"] else None
 
 def save_report(report: Any, image_data: bytes | None = None, evidence_data: bytes | None = None) -> None:
-    with connect() as connection:
+    with closing(connect()) as connection, connection:
         cursor = connection.cursor()
         
         # Check if exists to do UPSERT
@@ -252,7 +253,7 @@ def save_notification(
 ) -> None:
     from datetime import datetime, timezone
     ts = timestamp or datetime.now(timezone.utc).isoformat()
-    with connect() as connection:
+    with closing(connect()) as connection, connection:
         cursor = connection.cursor()
         cursor.execute(
             """
@@ -265,7 +266,7 @@ def save_notification(
         connection.commit()
 
 def load_notifications(target_role: str = "administrator", limit: int = 50) -> list[dict[str, Any]]:
-    with connect() as connection:
+    with closing(connect()) as connection, connection:
         cursor = connection.cursor()
         cursor.execute(
             """
@@ -281,7 +282,7 @@ def load_notifications(target_role: str = "administrator", limit: int = 50) -> l
     return [dict(row) for row in rows]
 
 def mark_notification_read(notification_id: str) -> None:
-    with connect() as connection:
+    with closing(connect()) as connection, connection:
         cursor = connection.cursor()
         cursor.execute(
             "UPDATE notifications SET is_read = 1 WHERE notification_id = ?",
@@ -290,7 +291,7 @@ def mark_notification_read(notification_id: str) -> None:
         connection.commit()
 
 def mark_all_notifications_read(target_role: str = "administrator") -> None:
-    with connect() as connection:
+    with closing(connect()) as connection, connection:
         cursor = connection.cursor()
         cursor.execute(
             "UPDATE notifications SET is_read = 1 WHERE target_role = ? OR target_role = 'all'",
@@ -299,7 +300,7 @@ def mark_all_notifications_read(target_role: str = "administrator") -> None:
         connection.commit()
 
 def update_user_picture(email: str, picture: str) -> None:
-    with connect() as connection:
+    with closing(connect()) as connection, connection:
         cursor = connection.cursor()
         cursor.execute(
             "UPDATE users SET picture = ? WHERE email = ?",

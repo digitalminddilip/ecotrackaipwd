@@ -496,3 +496,65 @@ body {
 ::-webkit-scrollbar-track { background: var(--bg-card); }
 ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .dashboard-layout {
+    flex-direction: column;
+  }
+  .sidebar {
+    width: 100%;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+  .sidebar-header {
+    height: auto;
+    padding: 16px;
+  }
+  .sidebar-nav {
+    flex-direction: row;
+    overflow-x: auto;
+    padding: 12px;
+  }
+  .nav-item {
+    white-space: nowrap;
+    padding: 10px 14px;
+  }
+  .sidebar-footer {
+    padding: 12px;
+  }
+  .topbar {
+    height: auto;
+    padding: 16px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .topbar-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .content-scroll {
+    padding: 16px;
+  }
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  .charts-section {
+    grid-template-columns: 1fr;
+  }
+  .evidence-comparison {
+    flex-direction: column;
+  }
+  .table-header {
+    flex-direction: column;
+    gap: 16px;
+  }
+  .search-box {
+    width: 100%;
+  }
+  .filter-box, .filter-box select {
+    width: 100%;
+  }
+}

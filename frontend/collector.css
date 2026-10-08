@@ -576,7 +576,7 @@ body.collector-mode {
 }
 
 @media (max-width: 768px) {
-  #collector-dashboard-wrapper {
+  #citizen-wrapper {
     flex-direction: column;
   }
   .col-sidebar {

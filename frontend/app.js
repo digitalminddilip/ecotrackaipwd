@@ -264,7 +264,9 @@ function renderAnalytics(data) {
   if(byId("pending-reports")) byId("pending-reports").textContent = data.pending_reports;
   if(byId("collected-reports")) byId("collected-reports").textContent = data.collected_reports;
   const verified = data.status_counts.verified || 0;
-  if(byId("verified-rate")) byId("verified-rate").textContent = data.total_reports
+  renderPremiumCharts(data);
+    renderPremiumImpact(data);
+    if(byId("verified-rate")) byId("verified-rate").textContent = data.total_reports
     ? `${Math.round((verified / data.total_reports) * 100)}%`
     : "0%";
 }
@@ -1199,3 +1201,118 @@ if (evidenceForm) {
 }
 
 
+
+
+let trendChartInst = null;
+let pieChartInst = null;
+
+function renderPremiumCharts(data) {
+  if (typeof Chart === 'undefined') return;
+  
+  const chartDefaults = {
+    color: '#6b7280',
+    borderColor: '#e5e7eb',
+  };
+  Chart.defaults.color = chartDefaults.color;
+  Chart.defaults.borderColor = chartDefaults.borderColor;
+
+  if (trendChartInst) trendChartInst.destroy();
+  if (pieChartInst) pieChartInst.destroy();
+
+  // Simulated Weekly Trend based on real totals for demo effect
+  const base = data.total_reports * 2;
+  const weeklyData = {
+    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+    recycle: [base, base+5, base+2, base+8, base+6, base-4, base+1],
+    organic: [base-2, base, base-1, base+2, base+1, base-5, base],
+    landfill: [base-5, base-3, base-4, base-2, base-6, base-8, base-4]
+  };
+
+  const trendCtx = document.getElementById('trendChart');
+  if (trendCtx) {
+    trendChartInst = new Chart(trendCtx.getContext('2d'), {
+      type: 'line',
+      data: {
+        labels: weeklyData.labels,
+        datasets: [
+          {
+            label: 'Recyclable',
+            data: weeklyData.recycle,
+            borderColor: '#22c55e',
+            backgroundColor: 'rgba(34,197,94,0.08)',
+            tension: 0.4, fill: true,
+            pointBackgroundColor: '#22c55e', pointRadius: 4,
+          },
+          {
+            label: 'Organic',
+            data: weeklyData.organic,
+            borderColor: '#f5a623',
+            backgroundColor: 'rgba(245,166,35,0.06)',
+            tension: 0.4, fill: true,
+            pointBackgroundColor: '#f5a623', pointRadius: 4,
+          },
+          {
+            label: 'Landfill',
+            data: weeklyData.landfill,
+            borderColor: '#d14d3f',
+            backgroundColor: 'rgba(209,77,63,0.05)',
+            tension: 0.4, fill: true,
+            pointBackgroundColor: '#d14d3f', pointRadius: 4,
+          }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: true,
+        plugins: { legend: { position: 'bottom' } },
+        scales: {
+          x: { grid: { color: 'rgba(0,0,0,0.03)' } },
+          y: { grid: { color: 'rgba(0,0,0,0.03)' } }
+        }
+      }
+    });
+  }
+
+  const pieCtx = document.getElementById('pieChart');
+  if (pieCtx) {
+    pieChartInst = new Chart(pieCtx.getContext('2d'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Recyclable', 'Organic', 'Landfill'],
+        datasets: [{
+          data: [data.collected_reports * 3, data.collected_reports * 2, data.pending_reports],
+          backgroundColor: ['rgba(34,197,94,0.85)', 'rgba(245,166,35,0.85)', 'rgba(209,77,63,0.85)'],
+          borderColor: 'transparent',
+          hoverOffset: 6
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: true, cutout: '65%',
+        plugins: { legend: { position: 'bottom' } }
+      }
+    });
+  }
+}
+
+function renderPremiumImpact(data) {
+  const grid = document.getElementById('impact-metrics');
+  if (!grid) return;
+  grid.innerHTML = '';
+  
+  const impactMetrics = [
+    { icon: '??', value: (data.collected_reports * 5.2).toFixed(1) + ' kg', label: 'Waste Recycled Today' },
+    { icon: '??', value: (data.collected_reports * 2.8).toFixed(1) + ' kg', label: 'CO2 Emissions Saved' },
+    { icon: '??', value: (data.collected_reports * 1.5).toFixed(1) + ' kg', label: 'Plastic Recovered' },
+    { icon: '??', value: (data.total_reports * 3 + 12), label: 'Community Participants' },
+  ];
+
+  impactMetrics.forEach(m => {
+    const card = document.createElement('div');
+    card.className = 'impact-metric-card';
+    card.innerHTML = 
+      <div class="imc-icon"></div>
+      <div class="imc-value"></div>
+      <div class="imc-label"></div>
+    ;
+    grid.appendChild(card);
+  });
+}

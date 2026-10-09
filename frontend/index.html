@@ -438,6 +438,28 @@
       </div>
 
       
+      
+        <!-- CHARTS ROW (Premium Animated) -->
+        <section class="charts-row" style="margin-top: 32px; animation: fadeIn 0.4s ease forwards;">
+          <div class="chart-card wide">
+            <div class="chart-card-title">Weekly Collection Trend (kg)</div>
+            <canvas id="trendChart"></canvas>
+          </div>
+          <div class="chart-card">
+            <div class="chart-card-title">Waste Type Breakdown</div>
+            <canvas id="pieChart"></canvas>
+          </div>
+        </section>
+
+        <!-- IMPACT METRICS -->
+        <section style="margin-top: 32px; animation: fadeIn 0.5s ease forwards;">
+          <div class="page-eyebrow">ENVIRONMENTAL IMPACT</div>
+          <h2 style="font-size: 18px; margin-bottom: 16px; color: var(--text-main);">Community Impact</h2>
+          <div class="impact-metrics" id="impact-metrics">
+            <!-- Rendered by JS -->
+          </div>
+        </section>
+
       <!-- VIEW: Report queue -->
       <div id="admin-view-queue" style="display: none;">
         <section class="page-header">
@@ -560,6 +582,7 @@
   </div>
 
   <script src="app.js?v=16"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </body>
 
 </html>

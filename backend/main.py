@@ -134,8 +134,9 @@ class CoordinatesRequest(BaseModel):
 app = FastAPI(title="EcoTrack AI API", version="1.0.0")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://127.0.0.1:5500"],
-    allow_credentials=True,
+    allow_origins=["*"],
+    #  # Disabled for wildcard CORS
+    
     allow_methods=["*"],
     allow_headers=["*"],
 )

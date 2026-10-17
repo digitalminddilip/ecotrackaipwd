@@ -42,8 +42,8 @@ By leveraging **IBM Z (LinuxONE)** enterprise cloud infrastructure, the platform
 ### Option A: 1-Click Automated Script (Recommended)
 On your IBM LinuxONE Community Cloud virtual machine:
 ```bash
-git clone https://github.com/virus-x09/ecotrack-ai.git
-cd ecotrack-ai
+git clone https://github.com/dilipksharma1244-ops/Clean-Connect-AI.git
+cd Clean-Connect-AI
 chmod +x deploy-ibm-z.sh
 ./deploy-ibm-z.sh
 ```

@@ -15,8 +15,8 @@ When you SSH into your **IBM Z / LinuxONE Community Cloud VM** (Ubuntu / RHEL on
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/virus-x09/ecotrack-ai.git
-cd ecotrack-ai
+git clone https://github.com/dilipksharma1244-ops/Clean-Connect-AI.git
+cd Clean-Connect-AI
 
 # 2. Run the 1-click automated deployment script
 chmod +x deploy-ibm-z.sh

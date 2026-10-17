@@ -42,3 +42,4 @@ def google_reverse_geocode(latitude: float, longitude: float) -> dict[str, objec
         "longitude": longitude,
         "provider": "google-geocoding",
     }
+

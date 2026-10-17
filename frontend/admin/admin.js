@@ -2,7 +2,7 @@ const hostname = window.location.hostname;
 const isLocal = !hostname || hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.') || hostname.startsWith('10.');
 const API_URL = isLocal ? `http://${hostname || 'localhost'}:8000` : "";
 
-let accessToken = localStorage.getItem("ecotrack_token");
+let accessToken = localStorage.getItem("cleanconnect_token");
 let allReports = [];
 let allCollectors = [];
 let currentReportId = null;
@@ -41,7 +41,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }, 500);
     
   } catch (err) {
-    localStorage.removeItem("ecotrack_token");
+    localStorage.removeItem("cleanconnect_token");
     window.location.href = "../index.html";
   }
 
@@ -49,7 +49,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   setupNavigation();
   
   byId("logout-btn").onclick = () => {
-    localStorage.removeItem("ecotrack_token");
+    localStorage.removeItem("cleanconnect_token");
     window.location.href = "../index.html";
   };
   
@@ -489,3 +489,4 @@ window.viewDetails = async (reportId) => {
     console.error(e);
   }
 };
+

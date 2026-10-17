@@ -27,6 +27,7 @@ from .database import find_user_by_email, init_db, load_reports, load_users, sav
 from .location_service import google_geolocate, google_reverse_geocode
 from .ip_location import lookup_ip_location
 from .notifications import notify_report_created, notify_reporter, send_otp_email, notify_report_rejected
+from .voice_ai import process_voice_query
 
 
 class Role(str, Enum):
@@ -131,7 +132,7 @@ class CoordinatesRequest(BaseModel):
     longitude: float = Field(ge=-180, le=180)
 
 
-app = FastAPI(title="EcoTrack AI API", version="1.0.0")
+app = FastAPI(title="CleanConnect API", version="1.0.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -453,7 +454,13 @@ def get_user_by_id(user_id: str, authorization: Optional[str] = Header(None)) ->
     return users[user_id]
 
 
-@app.get("/reports", response_model=list[Report])
+@app.get('/reports/community', response_model=list[Report])
+def community_reports():
+    result = list(reports.values())
+    result.sort(key=lambda r: r.timestamp, reverse=True)
+    return result
+
+@app.get('/reports', response_model=list[Report])
 def list_reports(
     status_filter: Optional[ReportStatus] = None,
     category: Optional[str] = None,
@@ -591,6 +598,53 @@ def analytics(authorization: Optional[str] = Header(None)) -> dict[str, object]:
     }
 
 
+class VoiceQueryRequest(BaseModel):
+    query: str = Field(min_length=1, max_length=1000)
+    user_id: Optional[str] = None
+
+
+@app.post("/api/voice-assistant")
+def voice_assistant_endpoint(
+    req: VoiceQueryRequest,
+    authorization: Optional[str] = Header(None)
+):
+    current_uid = req.user_id
+    if authorization:
+        try:
+            u = authenticated_user(authorization)
+            current_uid = u.user_id
+        except Exception:
+            pass
+
+    user_reports_list = []
+    if current_uid:
+        user_reports_list = [
+            {
+                "report_id": r.report_id,
+                "status": r.status.value,
+                "category": r.category,
+                "description": r.description
+            }
+            for r in reports.values() if r.user_id == current_uid
+        ]
+        user_reports_list.sort(key=lambda x: x.get("report_id", ""), reverse=True)
+    else:
+        user_reports_list = [
+            {
+                "report_id": r.report_id,
+                "status": r.status.value,
+                "category": r.category,
+                "description": r.description
+            }
+            for r in list(reports.values())[:5]
+        ]
+
+    return process_voice_query(req.query, user_id=current_uid, user_reports=user_reports_list)
+
+
 FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
 if FRONTEND_DIR.exists():
     app.mount("/", StaticFiles(directory=str(FRONTEND_DIR), html=True), name="frontend")
+
+
+

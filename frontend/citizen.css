@@ -1,8 +1,8 @@
 /* citizen.css - Custom styles for citizen dashboard */
 :root {
-  --cit-yellow: #fce152;
-  --cit-yellow-hover: #e5cb4a;
-  --cit-green: #277b5a;
+  --cit-yellow: #FF9933;
+  --cit-yellow-hover: #e68a2e;
+  --cit-green: #138808;
   --cit-bg: #f9f9f9;
   --cit-text: #333;
 }
@@ -207,3 +207,5 @@
   display: block !important;
   opacity: 1 !important;
 }
+
+

@@ -1,4 +1,4 @@
-"""General-purpose visual comparison used by the EcoTrack AI dashboard."""
+"""General-purpose visual comparison used by the CleanConnect dashboard."""
 
 from io import BytesIO
 
@@ -82,3 +82,4 @@ def compare_image_bytes(first_bytes: bytes, second_bytes: bytes) -> dict[str, ob
         "comparison": components,
         "message": "Images match at or above the 75% threshold." if match else "Images match below the 75% threshold.",
     }
+

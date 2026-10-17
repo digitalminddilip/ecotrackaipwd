@@ -2,7 +2,7 @@ const hostname = window.location.hostname;
 const isLocal = !hostname || hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.') || hostname.startsWith('10.');
 const API_URL = isLocal ? `http://${hostname || 'localhost'}:8000` : "";
 let reports = [];
-let accessToken = localStorage.getItem("ecotrack_token");
+let accessToken = localStorage.getItem("cleanconnect_token");
 let currentUser = null;
 let map;
 let campusScene;
@@ -216,7 +216,7 @@ function getLocation() {
       if (locationStatus) locationStatus.textContent = "GPS unavailable. Trying network location...";
       getNetworkLocation();
     },
-    { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 },
+    { enableHighAccuracy: true, timeout: 3000, maximumAge: 300000 },
   );
 }
 
@@ -224,752 +224,18 @@ async function getNetworkLocation() {
   const locationStatus = byId("location-status");
   if (locationStatus) locationStatus.textContent = "Detecting approximate network location...";
   try {
-    const response = await fetch(`${API_URL}/location/ip`);
+    const response = await fetch("https://www.googleapis.com/geolocation/v1/geolocate?key=AIzaSyAa1vpYMlgD57Qfnb6DQHds509S9sL0cOs", { method: 'POST' });
     const result = await response.json();
-    if (!response.ok)
-      throw new Error(result.detail || "Network location unavailable");
-    setLocation(Number(result.latitude), Number(result.longitude));
+    if (!response.ok || !result.location)
+      throw new Error("Network location unavailable");
+    setLocation(Number(result.location.lat), Number(result.location.lng));
     if (locationStatus) {
-      locationStatus.textContent =
-        `${result.city || "Approximate area"}, ${result.region || ""} (network)`.trim();
+      locationStatus.textContent = "Google Network GPS Locked";
     }
   } catch (error) {
-    if (locationStatus) locationStatus.textContent = "Unable to detect network location.";
+    if (locationStatus) locationStatus.textContent = "Unable to detect network location. Error: " + error.message;
   }
 }
-
-function renderMapMarkers() {
-  renderCampusMarkers();
-}
-
-function renderCampusMarkers() {
-  if (!campusScene) return;
-  campusScene.markerGroup.clear();
-  reports.forEach((report) => {
-    const marker = createMarker(0xf07b61);
-    const position = toCampusPosition(report.latitude, report.longitude);
-    marker.position.set(position.x, 1.1, position.z);
-    marker.userData.reportId = report.report_id;
-    campusScene.markerGroup.add(marker);
-  });
-  renderCampusLocation();
-}
-
-function formatStatus(value) {
-  return value.replaceAll("_", " ");
-}
-
-function renderAnalytics(data) {
-  if(byId("total-reports")) byId("total-reports").textContent = data.total_reports;
-  if(byId("pending-reports")) byId("pending-reports").textContent = data.pending_reports;
-  if(byId("collected-reports")) byId("collected-reports").textContent = data.collected_reports;
-  const verified = data.status_counts.verified || 0;
-  renderPremiumCharts(data);
-    renderPremiumImpact(data);
-    if(byId("verified-rate")) byId("verified-rate").textContent = data.total_reports
-    ? `${Math.round((verified / data.total_reports) * 100)}%`
-    : "0%";
-}
-
-function renderReports() {
-  const searchEl = byId("search");
-  const filterEl = byId("status-filter");
-  const search = searchEl ? searchEl.value.trim().toLowerCase() : "";
-  const status = filterEl ? filterEl.value : "";
-  const visible = reports.filter((report) => {
-    const matchesSearch =
-      !search ||
-      report.report_id.toLowerCase().includes(search) ||
-      (report.category || "").toLowerCase().includes(search);
-    return matchesSearch && (!status || report.status === status);
-  });
-  if(byId("map-count")) byId("map-count").textContent = `${visible.length} visible`;
-  if (campusScene) {
-    campusScene.markerGroup.clear();
-    visible.forEach((report) => {
-      const marker = createMarker(0xf07b61);
-      const position = toCampusPosition(report.latitude, report.longitude);
-      marker.position.set(position.x, 1.1, position.z);
-      campusScene.markerGroup.add(marker);
-    });
-    renderCampusLocation();
-  }
-  const body = byId("reports-body");
-  if (!visible.length) {
-    body.innerHTML =
-      '<tr><td colspan="6" class="empty">No reports match these filters.</td></tr>';
-    return;
-  }
-  body.innerHTML = visible
-    .map(
-      (report) => `<tr>
-    <td><div class="report-id">${report.report_id}</div><div class="muted">${report.description || "No description"}</div></td>
-    <td>${report.category || "Unclassified"}</td>
-    <td>${Number(report.latitude).toFixed(4)}, ${Number(report.longitude).toFixed(4)}</td>
-    <td>${new Date(report.timestamp).toLocaleDateString()}</td>
-    <td><span class="status ${report.status}">${formatStatus(report.status)}</span></td>
-    <td>${actionMarkup(report)}</td>
-  </tr>`,
-    )
-    .join("");
-  body
-    .querySelectorAll("[data-action]")
-    .forEach((button) =>
-      button.addEventListener("click", () =>
-        handleAction(button.dataset.action, button.dataset.id),
-      ),
-    );
-}
-
-function actionMarkup(report) {
-  if (!currentUser) return '<span class="muted">Sign in</span>';
-  if (currentUser.role === "administrator") {
-    if (
-      !report.collector_id &&
-      !["verified", "rejected"].includes(report.status)
-    )
-      return `<button class="table-action" data-action="assign" data-id="${report.report_id}">Assign</button>`;
-    if (report.evidence_reference)
-      return `<button class="table-action" data-action="verify" data-id="${report.report_id}">Verify</button>`;
-    return '<span class="muted">Watching</span>';
-  }
-  if (
-    currentUser.role === "collector" &&
-    report.collector_id === currentUser.user_id
-  ) {
-    if (report.status === "assigned")
-      return `<button class="table-action" data-action="progress" data-id="${report.report_id}">Start</button>`;
-    if (report.status === "in_progress")
-      return `<button class="table-action" data-action="collect" data-id="${report.report_id}">Collected</button>`;
-    if (report.status === "collected" && !report.evidence_reference)
-      return `<button class="table-action" data-action="evidence" data-id="${report.report_id}">Evidence</button>`;
-    if (report.status === "rejected")
-      return `<button class="table-action" data-action="evidence" data-id="${report.report_id}" style="color: #ef4444; border-color: #fca5a5;">Retry Proof</button>`;
-  }
-  return '<span class="muted">-</span>';
-}
-
-async function handleAction(action, reportId) {
-  let endpoint;
-  let options = {
-    headers: { ...authHeaders(), "Content-Type": "application/json" },
-  };
-  if (action === "assign") {
-    options.method = "POST";
-    options.body = JSON.stringify({ collector_id: "collector-demo" });
-    endpoint = `/reports/${reportId}/assignment`;
-  } else if (action === "progress" || action === "collect") {
-    options.method = "PATCH";
-    options.body = JSON.stringify({
-      status: action === "progress" ? "in_progress" : "collected",
-    });
-    endpoint = `/reports/${reportId}/status`;
-  } else if (action === "evidence") {
-    const modal = byId("evidence-modal");
-    if (modal) {
-      byId("evidence-report-id").value = reportId;
-      if (byId("evidence-file")) byId("evidence-file").value = "";
-      if (byId("evidence-message")) byId("evidence-message").textContent = "";
-      modal.style.display = "flex";
-    }
-    return;
-  } else if (action === "verify") {
-    const approved = confirm("Approve this completion evidence?");
-    options.method = "POST";
-    endpoint = `/reports/${reportId}/verify?approved=${approved}`;
-  }
-  const response = await fetch(`${API_URL}${endpoint}`, options);
-  if (!response.ok) {
-    const error = await response.json();
-    alert(error.detail || "Action failed");
-    return;
-  }
-  await loadDashboard();
-}
-
-async function loadDashboard() {
-  if (isGuest()) {
-    reports = [];
-    renderAnalytics({
-      total_reports: 0,
-      pending_reports: 0,
-      collected_reports: 0,
-      status_counts: {},
-    });
-    renderReports();
-    if (byId("auth-message")) byId("auth-message").textContent =
-      "You are browsing as a guest. Sign in to submit or track reports.";
-    return;
-  }
-  try {
-    const [reportsResponse, analyticsResponse] = await Promise.all([
-      fetch(`${API_URL}/reports`, { headers: authHeaders() }),
-      fetch(`${API_URL}/analytics`, { headers: authHeaders() }),
-    ]);
-    if (!reportsResponse.ok || !analyticsResponse.ok)
-      throw new Error("API unavailable");
-    reports = await reportsResponse.json();
-    renderAnalytics(await analyticsResponse.json());
-    renderReports();
-    if (byId("auth-message")) byId("auth-message").textContent = "";
-  } catch (error) {
-    if(byId("reports-body")) byId("reports-body").innerHTML =
-      '<tr><td colspan="6" class="empty">Start the API with uvicorn to load live reports.</td></tr>';
-    if (byId("auth-message")) byId("auth-message").textContent = accessToken
-      ? "API connection unavailable."
-      : "Sign in to load live reports.";
-  }
-}
-
-async function restoreSession() {
-  if (!accessToken) {
-    try {
-      const loginRes = await fetch(`${API_URL}/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: "digitalminddilip0906@gmail.com", password: "dilip0906" })
-      });
-      if (loginRes.ok) {
-        const result = await loginRes.json();
-        accessToken = result.access_token;
-        localStorage.setItem("ecotrack_token", accessToken);
-      } else {
-        enterGuestMode();
-        return;
-      }
-    } catch (e) {
-      enterGuestMode();
-      return;
-    }
-  }
-  const response = await fetch(`${API_URL}/auth/me`, {
-    headers: authHeaders(),
-  });
-  if (!response.ok) {
-    accessToken = null;
-    localStorage.removeItem("ecotrack_token");
-    enterGuestMode();
-    return;
-  }
-  currentUser = await response.json();
-alert('Logged in as: ' + currentUser.role);
-  updateSidebarProfile(currentUser.name);
-  if (byId("session-label")) {
-    byId("session-label").textContent = `${currentUser.name} · ${currentUser.role}`;
-  }
-  if (byId("login")) byId("login").hidden = true;
-  if (byId("logout")) byId("logout").hidden = false;
-  if (byId("login-screen")) byId("login-screen").hidden = true;
-  
-  if (byId("cit-logout-btn")) byId("cit-logout-btn").style.display = "inline-block";
-  if (byId("cit-login-btn")) byId("cit-login-btn").style.display = "none";
-  if (byId("report-form")) byId("report-form").style.display = "flex";
-  if (byId("guest-report-msg")) byId("guest-report-msg").style.display = "none";
-  
-  if (currentUser.role === "administrator") {
-    window.location.href = "admin/index.html";
-    return;
-  }
-
-  if (currentUser.role === "collector") {
-    if (byId("citizen-wrapper")) byId("citizen-wrapper").hidden = true;
-    if (byId("app-wrapper")) byId("app-wrapper").hidden = false;
-    document.body.classList.add("collector-mode");
-    
-    // Update user info in collector dashboard
-    const nameEl = document.getElementById("sidebar-name");
-    const emailEl = document.getElementById("sidebar-workspace");
-    if (nameEl) nameEl.textContent = currentUser.name;
-    if (emailEl) emailEl.textContent = "Collector View";
-  } else if (currentUser.role === "citizen") {
-    if (byId("app-wrapper")) byId("app-wrapper").hidden = true;
-    if (byId("collector-dashboard-wrapper")) byId("collector-dashboard-wrapper").hidden = true;
-    if (byId("citizen-wrapper")) byId("citizen-wrapper").hidden = false;
-    document.body.classList.remove("collector-mode");
-    if (byId("cit-user-name")) byId("cit-user-name").textContent = currentUser.name;
-    if (byId("cit-user-email")) byId("cit-user-email").textContent = currentUser.email || `${currentUser.name.toLowerCase().replace(' ', '')}@ecotrack.local`;
-    const avatarUrl = currentUser.picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name)}&background=random&color=fff&rounded=true&size=128`;
-    if (byId("cit-user-avatar")) {
-      byId("cit-user-avatar").innerHTML = `<img src="${avatarUrl}" referrerpolicy="no-referrer" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
-    }
-  } else {
-    if (byId("app-wrapper")) byId("app-wrapper").hidden = false;
-    if (byId("citizen-wrapper")) byId("citizen-wrapper").hidden = true;
-    const colDash = document.getElementById("collector-dashboard-wrapper");
-    if (colDash) colDash.hidden = true;
-    document.body.classList.remove("collector-mode");
-  }
-}
-
-let isOtpStep = false;
-function setAuthMode(mode) {
-  byId("auth-mode").value = mode;
-  const registering = mode === "register";
-  const forgot = mode === "forgot";
-  const loginOtp = mode === "login_otp";
-
-  const btnTextNode = byId("auth-btn-text");
-
-  if (byId("group-name")) {
-    byId("group-name").hidden = !registering;
-    if (byId("auth-name")) {
-      byId("auth-name").required = registering;
-    }
-  }
-  if (document.querySelector(".form-actions-row")) document.querySelector(".form-actions-row").style.display = (!registering && !forgot) ? "flex" : "none";
-
-  if (forgot || loginOtp) {
-    if (byId("group-password")) byId("group-password").hidden = true;
-    if (byId("auth-password")) {
-      byId("auth-password").required = false;
-      if (forgot) byId("auth-password").placeholder = "New Password (5+ characters)";
-    }
-    if (btnTextNode)
-      btnTextNode.textContent = loginOtp ? "Login" : "Send Code";
-    if (byId("auth-title")) byId("auth-title").textContent = loginOtp ? "Login with OTP" : "Forgot Password?";
-    if (byId("auth-subtitle"))
-      byId("auth-subtitle").textContent = loginOtp ? "Please enter your email and OTP to login." : "Enter your email and we'll send a 5-digit verification code instantly.";
-  } else {
-    if (byId("group-password")) byId("group-password").hidden = false;
-    if (byId("auth-password")) {
-      byId("auth-password").required = true;
-      byId("auth-password").placeholder = "@Sn123hsn#";
-    }
-    if (btnTextNode)
-      btnTextNode.textContent = registering ? "Register" : "Sign in";
-    if (byId("auth-title"))
-      byId("auth-title").textContent = registering
-        ? "Create Your Account?"
-        : "Welcome Back!";
-    if (byId("auth-subtitle"))
-      byId("auth-subtitle").textContent = registering
-        ? "Create your account to explore exciting travel destinations and adventures."
-        : "Sign in to access smart, personalized travel plans made for you.";
-
-    if (byId("bottom-text")) {
-      byId("bottom-text").innerHTML = registering
-        ? 'Already have an account? <a href="#" id="link-login">Sign In</a>'
-        : 'Don\'t have an account? <a href="#" id="link-register">Sign up</a>';
-      
-      // Re-attach event listeners to dynamic links
-      if (byId("link-login")) byId("link-login").addEventListener("click", (e) => { e.preventDefault(); setAuthMode("login"); });
-      if (byId("link-register")) byId("link-register").addEventListener("click", (e) => { e.preventDefault(); setAuthMode("register"); });
-    }
-  }
-
-  if (byId("auth-password"))
-    byId("auth-password").autocomplete = registering
-      ? "new-password"
-      : "current-password";
-
-  if (byId("link-login")) byId("link-login").hidden = !registering;
-  if (byId("link-register")) byId("link-register").hidden = registering;
-  if (byId("password-rules")) byId("password-rules").hidden = !registering;
-
-  if (byId("link-login-otp")) byId("link-login-otp").hidden = (mode !== "login" && mode !== "register");
-  if (byId("link-login-password")) byId("link-login-password").hidden = !loginOtp;
-
-  // Reset OTP step
-  if (loginOtp) {
-    isOtpStep = true;
-    if (byId("group-otp")) byId("group-otp").hidden = false;
-    if (byId("auth-otp")) byId("auth-otp").required = true;
-  } else {
-    isOtpStep = false;
-    if (byId("group-otp")) byId("group-otp").hidden = true;
-    if (byId("auth-otp")) byId("auth-otp").required = false;
-  }
-
-  if (byId("auth-message")) byId("auth-message").textContent = "";
-}
-
-if (byId("link-login"))
-  byId("link-login").addEventListener("click", (e) => {
-    e.preventDefault();
-    setAuthMode("login");
-  });
-if (byId("link-register"))
-  byId("link-register").addEventListener("click", (e) => {
-    e.preventDefault();
-    setAuthMode("register");
-  });
-if (byId("link-forgot"))
-  byId("link-forgot").addEventListener("click", (e) => {
-    e.preventDefault();
-    setAuthMode("forgot");
-  });
-if (byId("link-login-otp"))
-  byId("link-login-otp").addEventListener("click", (e) => {
-    e.preventDefault();
-    setAuthMode("login_otp");
-  });
-if (byId("link-login-password"))
-  byId("link-login-password").addEventListener("click", (e) => {
-    e.preventDefault();
-    setAuthMode("login");
-  });
-
-byId("auth-form").addEventListener("submit", async (event) => {
-  event.preventDefault();
-
-  if (isOtpStep) {
-    const mode = byId("auth-mode").value;
-    const isForgot = mode === "forgot";
-
-    byId("auth-message").textContent = "Verifying OTP...";
-    try {
-      const payload = {
-        email: byId("auth-email").value,
-        otp: byId("auth-otp").value,
-      };
-      if (isForgot) payload.new_password = byId("auth-password").value;
-
-      const endpoint = isForgot ? "/auth/reset-password" : "/auth/verify-otp";
-      const response = await fetch(`${API_URL}${endpoint}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      
-      let result;
-      const textResponse = await response.text();
-      try {
-        result = JSON.parse(textResponse);
-      } catch (e) {
-        throw new Error(`Server error: ${response.status} - ${textResponse.slice(0, 30)}...`);
-      }
-      
-      if (!response.ok)
-        throw new Error(result.detail || "OTP verification failed");
-
-      accessToken = result.access_token;
-      localStorage.setItem("ecotrack_token", accessToken);
-      await restoreSession();
-      byId("auth-message").textContent = "";
-      await loadDashboard();
-
-      // Reset for next time
-      setAuthMode("register");
-      byId("auth-form").reset();
-    } catch (error) {
-      byId("auth-message").textContent = error.message;
-    }
-    return;
-  }
-
-  const mode = byId("auth-mode").value;
-  const registering = mode === "register";
-  const forgot = mode === "forgot";
-  const loginOtp = mode === "login_otp";
-
-  const payload = {
-    email: byId("auth-email").value,
-
-  };
-  
-  if (!payload.email.toLowerCase().endsWith("@gmail.com")) {
-    byId("auth-message").textContent = "Only @gmail.com addresses are allowed.";
-    return;
-  }
-  
-  if (!forgot && !loginOtp) payload.password = byId("auth-password").value;
-
-
-  let endpoint = "/auth/login";
-  if (registering) endpoint = "/auth/register";
-  if (forgot) endpoint = "/auth/forgot-password";
-  if (loginOtp) endpoint = "/auth/request-otp";
-
-  byId("auth-message").textContent = "Connecting...";
-  try {
-    const response = await fetch(`${API_URL}${endpoint}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    
-    let result;
-    const textResponse = await response.text();
-    try {
-      result = JSON.parse(textResponse);
-    } catch (e) {
-      throw new Error(`Server error: ${response.status} - ${textResponse.slice(0, 30)}...`);
-    }
-    
-    if (!response.ok) {
-      let errorMessage = "Authentication failed";
-      if (result.detail) {
-        if (Array.isArray(result.detail)) {
-          errorMessage = result.detail.map((err) => err.msg || JSON.stringify(err)).join(", ");
-        } else {
-          errorMessage = result.detail;
-        }
-      }
-      throw new Error(errorMessage);
-    }
-
-    if (result.status === "otp_sent") {
-      isOtpStep = true;
-      byId("auth-message").textContent =
-        "OTP sent to your email. Please verify.";
-
-      if (forgot) {
-        byId("group-password").hidden = false;
-        byId("auth-password").required = true;
-        if (byId("password-rules")) byId("password-rules").hidden = false;
-      } else {
-        byId("group-password").hidden = true;
-        byId("auth-password").required = false;
-        if (byId("password-rules")) byId("password-rules").hidden = true;
-      }
-
-      byId("group-otp").hidden = false;
-      byId("auth-otp").required = true;
-
-      let btnText = "Verify OTP";
-      if (forgot) btnText = "Reset Password";
-      else if (loginOtp) btnText = "Login";
-      byId("auth-submit-btn").textContent = btnText;
-      return;
-    }
-
-    accessToken = result.access_token;
-    localStorage.setItem("ecotrack_token", accessToken);
-    await restoreSession();
-    byId("auth-message").textContent = "";
-    await loadDashboard();
-  } catch (error) {
-    byId("auth-message").textContent = error.message;
-
-  }
-});
-
-const logoutBtn = byId("logout");
-if (logoutBtn) {
-  logoutBtn.addEventListener("click", () => {
-    localStorage.removeItem("ecotrack_token");
-    enterGuestMode();
-    loadDashboard();
-  });
-}
-
-if (byId("login")) {
-  byId("login").addEventListener("click", openSignIn);
-}
-
-window.showCitView = function(viewId, el) { 
-  document.querySelectorAll('#citizen-wrapper .col-nav-link').forEach(a => a.classList.remove('active'));
-  if (el) el.classList.add('active');
-  
-  const views = ['new-report', 'track', 'reports', 'status', 'profile'];
-  views.forEach(v => {
-    const el = document.getElementById('cit-view-' + v);
-    if(el) el.style.display = (v === viewId) ? 'block' : 'none';
-  });
-  
-  const titleMap = {
-    'new-report': ['Report the Waste Product', 'Help keep our community clean by reporting plastic waste.'],
-    'track': ['Track Report', 'View live location of your reports.'],
-    'reports': ['My Reports', 'History of all your waste reports.'],
-    'status': ['Impact Status', 'Your contribution to the community.'],
-    'profile': ['My Profile', 'Manage your account details.']
-  };
-  
-  const titleEl = document.getElementById('cit-page-title');
-  const subEl = document.getElementById('cit-page-subtitle');
-  if (titleEl && titleMap[viewId]) titleEl.textContent = titleMap[viewId][0];
-  if (subEl && titleMap[viewId]) subEl.textContent = titleMap[viewId][1];
-  
-  if (viewId === 'reports' || viewId === 'status') {
-    populateCitReports();
-  }
-  if (viewId === 'profile') {
-    populateCitProfile();
-  }
-}
-
-function populateCitReports() {
-  const tbody = document.getElementById('cit-reports-tbody');
-  if (!tbody) return;
-  if (!reports || reports.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5" style="padding: 12px; text-align: center; color: #94a3b8;">No reports found.</td></tr>';
-    return;
-  }
-  tbody.innerHTML = reports.map(r => `
-    <tr style="border-bottom: 1px solid #f1f5f9;">
-      <td style="padding: 12px; color: #1e293b; font-weight: 500;">${r.report_id.substring(0,8)}...</td>
-      <td style="padding: 12px; color: #64748b;">${new Date(r.timestamp).toLocaleDateString()}</td>
-      <td style="padding: 12px; color: #64748b;">${r.category || '-'}</td>
-      <td style="padding: 12px;"><span class="status ${r.status}">${formatStatus(r.status)}</span></td>
-      <td style="padding: 12px;">
-        ${r.evidence_reference ? `<button onclick="window.open('${API_URL}${r.evidence_reference}', '_blank')" style="padding: 4px 12px; border: none; background: #e0e7ff; color: #4338ca; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600;"><i class="fa-solid fa-image"></i> View</button>` : '<span style="color: #94a3b8;">-</span>'}
-      </td>
-    </tr>
-  `).join('');
-  
-  let verified = reports.filter(r => r.status === 'verified' || r.status === 'collected').length;
-  const tEl = document.getElementById('cit-stat-total');
-  const vEl = document.getElementById('cit-stat-verified');
-  if (tEl) tEl.textContent = reports.length;
-  if (vEl) vEl.textContent = verified;
-}
-
-function populateCitProfile() {
-  const nameEl = document.getElementById('cit-profile-name');
-  const emailEl = document.getElementById('cit-profile-email');
-  const avatarEl = document.getElementById('cit-profile-avatar');
-  if (currentUser) {
-    if (nameEl) nameEl.textContent = currentUser.name;
-    if (emailEl) emailEl.textContent = currentUser.email || `${currentUser.name.toLowerCase().replace(' ', '')}@ecotrack.local`;
-    const finalAvatarUrl = currentUser.picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name)}&background=random&color=fff&rounded=true&size=128`;
-    if (avatarEl) {
-      avatarEl.innerHTML = `<img src="${finalAvatarUrl}" referrerpolicy="no-referrer" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
-    }
-  }
-}
-
-const colLogout = document.getElementById("col-logout");
-if (colLogout) {
-  colLogout.addEventListener("click", () => {
-    localStorage.removeItem("ecotrack_token");
-    const colDash = document.getElementById("collector-dashboard-wrapper");
-    if (colDash) colDash.hidden = true;
-    enterGuestMode();
-    loadDashboard();
-  });
-}
-
-byId("report-form").addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const form = event.currentTarget;
-  const message = byId("report-message") || byId("auth-message");
-  message.style.color = "#475569";
-  if (!currentUser || isGuest()) {
-    message.style.color = "#ef4444";
-    message.textContent = "Sign in to submit a report.";
-    openSignIn();
-    return;
-  }
-  const data = new FormData(form);
-  
-  // Combine Name and Location into Description if they exist
-  const nameStr = data.get("name");
-  const locStr = data.get("location");
-  let descStr = data.get("description") || "";
-  if (nameStr || locStr) {
-    let extra = [];
-    if (nameStr) extra.push(`Name: ${nameStr}`);
-    if (locStr) extra.push(`Location: ${locStr}`);
-    descStr = extra.join(" | ") + (descStr ? "\n" + descStr : "");
-    data.set("description", descStr);
-  }
-  
-  data.append("user_id", currentUser.user_id);
-  message.textContent = "Submitting report...";
-  try {
-    const response = await fetch(`${API_URL}/reports`, {
-      method: "POST",
-      headers: authHeaders(),
-      body: data,
-    });
-    const result = await response.json();
-    if (!response.ok) {
-      let errorMessage = "Unable to submit report";
-      if (result.detail) {
-        if (Array.isArray(result.detail)) {
-          errorMessage = result.detail.map((err) => err.msg || JSON.stringify(err)).join(", ");
-        } else {
-          errorMessage = result.detail;
-        }
-      }
-      throw new Error(errorMessage);
-    }
-    form.reset();
-    getLocation();
-    if (byId("file-label")) byId("file-label").textContent = "Choose a photo";
-    message.textContent = "";
-    
-    // Show notification alert
-    alert(`Report submitted successfully!
-Reference No: ${result.report_id}
-A confirmation will be sent soon.`);
-    
-    await loadDashboard();
-    
-    // Auto-navigate to My Reports view
-    const reportsLinks = document.querySelectorAll('.col-nav-link');
-    for (let link of reportsLinks) {
-      if (link.textContent.includes('My Reports')) {
-        showCitView('reports', link);
-        break;
-      }
-    }
-  } catch (error) {
-    message.style.color = "#ef4444";
-    message.textContent = error.message;
-  }
-});
-
-const imageCompareForm = byId("image-compare-form");
-if (imageCompareForm) {
-  imageCompareForm.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const first = byId("compare-photo-1").files[0];
-    const second = byId("compare-photo-2").files[0];
-    const message = byId("image-compare-message");
-    const resultBox = byId("image-compare-result");
-    if (!first || !second) return;
-    if (isGuest()) {
-      message.textContent = "Sign in to analyze images.";
-      openSignIn();
-      return;
-    }
-    message.textContent = "Analyzing image details...";
-    resultBox.hidden = true;
-    try {
-      const data = new FormData();
-      data.append("photo1", first);
-      data.append("photo2", second);
-      const response = await fetch(`${API_URL}/image-compare`, {
-        method: "POST",
-        headers: authHeaders(),
-        body: data,
-      });
-      const result = await response.json();
-      if (!response.ok)
-        throw new Error(result.detail || "Image comparison failed");
-      resultBox.className = `compare-result${result.match ? "" : " no-match"}`;
-      resultBox.textContent = `${result.match ? "TRUE" : "FALSE"} \u2014 ${result.similarity}% match (threshold: ${result.threshold}%). Visual appearance: ${result.comparison.visual_appearance}%, colour distribution: ${result.comparison.colour_distribution}%.`;
-      resultBox.hidden = false;
-      message.textContent = "";
-    } catch (error) {
-      message.textContent = error.message;
-    }
-  });
-}
-
-byId("image").addEventListener("change", (event) => {
-  byId("file-label").textContent =
-    event.target.files[0]?.name || "Choose a photo";
-});
-const searchEl = byId("search");
-if (searchEl) searchEl.addEventListener("input", renderReports);
-
-const filterEl = byId("status-filter");
-if (filterEl) filterEl.addEventListener("change", renderReports);
-const refreshEl = byId("refresh");
-if (refreshEl) {
-  refreshEl.addEventListener("click", () => {
-    if (campusScene) {
-      campusScene.camera.position.set(13, 16, 18);
-      campusScene.camera.lookAt(0, 0, 0);
-    }
-    loadDashboard();
-  });
-}
-const locateEl = byId("locate");
-if (locateEl) locateEl.addEventListener("click", getLocation);
-const networkLocateEl = byId("network-locate");
 if (networkLocateEl) networkLocateEl.addEventListener("click", getNetworkLocation);
 const focusReportBtn = byId("focus-report");
 if (focusReportBtn) {
@@ -1106,7 +372,7 @@ function handleCredentialResponse(response) {
     if (!res.ok) throw new Error(res.body.detail || 'Google Auth Failed');
     
     accessToken = res.body.access_token;
-    localStorage.setItem('ecotrack_token', accessToken);
+    localStorage.setItem('cleanconnect_token', accessToken);
     
     // Fallback if API_URL wasn't used or checkSession was deleted
     if (typeof restoreSession === 'function') {
@@ -1308,11 +574,59 @@ function renderPremiumImpact(data) {
   impactMetrics.forEach(m => {
     const card = document.createElement('div');
     card.className = 'impact-metric-card';
-    card.innerHTML = 
-      <div class="imc-icon"></div>
-      <div class="imc-value"></div>
-      <div class="imc-label"></div>
-    ;
+    card.innerHTML = `<div class="imc-icon">${m.icon}</div><div class="imc-value">${m.value}</div><div class="imc-label">${m.label}</div>`;
     grid.appendChild(card);
   });
 }
+
+
+
+
+// Form Submission Logic
+window.submitReport = async function(e) {
+  e.preventDefault();
+  const reportForm = document.getElementById("report-form");
+  if (!reportForm) return false;
+  
+  const submitBtn = document.getElementById("submit-btn");
+  const originalText = submitBtn.textContent;
+  submitBtn.textContent = "Submitting...";
+  submitBtn.disabled = true;
+
+  try {
+    const formData = new FormData(reportForm);
+    if (!formData.get("latitude") || !formData.get("longitude")) {
+      alert("Please fetch your GPS location first.");
+      submitBtn.textContent = originalText;
+      submitBtn.disabled = false;
+      return false;
+    }
+
+    const res = await fetch(API_URL + "/reports", {
+      method: "POST",
+      headers: authHeaders(),
+      body: formData
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.detail || "Failed to submit report");
+    }
+
+    alert("Successfully submitted! Thank you for your contribution.");
+    
+    reportForm.reset();
+    const fileLabel = document.getElementById("file-label");
+    if (fileLabel) fileLabel.textContent = "Choose a photo";
+    
+    if (typeof loadCommunityFeed === 'function') loadCommunityFeed();
+    loadDashboard();
+    
+  } catch (err) {
+    alert("Error: " + err.message);
+  } finally {
+    submitBtn.textContent = originalText;
+    submitBtn.disabled = false;
+  }
+  return false;
+};

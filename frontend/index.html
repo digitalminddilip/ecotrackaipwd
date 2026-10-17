@@ -2,20 +2,24 @@
 <html lang="en">
 
 <head>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#138808">
+  <link rel="apple-touch-icon" href="logo.png">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>EcoTrack AI</title>
+  <title>CleanConnect</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
     href="https://fonts.googleapis.com/css2?family=Lato:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap"
     rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=18">
   <link rel="stylesheet" href="auth.css?v=2">
   <link rel="stylesheet" href="location.css">
-  <link rel="stylesheet" href="citizen.css">
+  <link rel="stylesheet" href="citizen.css?v=18">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
   <link rel="stylesheet" href="collector.css">
+  <link rel="stylesheet" href="voice.css?v=1">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -23,7 +27,7 @@
 <body>
   <!-- Intro / Auth Mode -->
   <!-- Intro / Auth Mode -->
-  <div id="login-screen" class="login-screen intro-mode">
+  <div id="login-screen" class="login-screen intro-mode" style="display: none !important;">
     <div class="login-container modern-ui">
 
       <div class="auth-nav">
@@ -32,7 +36,7 @@
       </div>
 
       <div class="logo-container">
-        <img src="logo.png" alt="EcoTrack Logo" class="auth-main-logo">
+        <img src="logo.png" alt="CleanConnect Logo" class="auth-main-logo">
       </div>
 
       <!-- Header -->
@@ -121,10 +125,10 @@
   </div>
 
   <!-- CITIZEN DASHBOARD -->
-  <div id="citizen-wrapper" hidden>
+  <div id="citizen-wrapper">
     <aside class="col-sidebar">
       <a href="#" class="col-brand" style="margin-left: -15px;">
-        <img src="logo.png" alt="EcoTrack AI" style="height: 32px; margin-right: 8px;">
+        <img src="logo.png" alt="CleanConnect" style="height: 32px; margin-right: 8px;">
         Citizen
       </a>
       
@@ -132,7 +136,8 @@
         <div class="col-menu-title">Menu</div>
         <a href="#" class="col-nav-link active" onclick="showCitView('new-report', this)"><i class="fa-solid fa-plus"></i> New Report</a>
         <a href="#" class="col-nav-link" onclick="showCitView('track', this)"><i class="fa-solid fa-location-crosshairs"></i> Track Report</a>
-        <a href="#" class="col-nav-link" onclick="showCitView('reports', this)"><i class="fa-solid fa-file-lines"></i> My Reports</a>
+        <a href="#" class="col-nav-link" onclick="showCitView('community', this)"><i class="fa-solid fa-users"></i> Community Feed</a>
+          <a href="#" class="col-nav-link" onclick="showCitView('reports', this)"><i class="fa-solid fa-file-lines"></i> My Reports</a>
         <a href="#" class="col-nav-link" onclick="showCitView('status', this)"><i class="fa-solid fa-chart-pie"></i> Status</a>
         <a href="#" class="col-nav-link" onclick="showCitView('profile', this)"><i class="fa-solid fa-user"></i> My Profile</a>
       </div>
@@ -155,7 +160,7 @@
             <div class="col-user-avatar" id="cit-user-avatar"></div>
             <div class="col-user-info">
               <span class="col-user-name" id="cit-user-name">Citizen</span>
-              <span class="col-user-email" id="cit-user-email">citizen@ecotrack.local</span>
+              <span class="col-user-email" id="cit-user-email">citizen@cleanconnect.local</span>
             </div>
           </div>
         </div>
@@ -164,13 +169,13 @@
       <section class="col-header" style="max-width: 550px; margin-left: auto; width: 100%;">
         <div>
           <h1 id="cit-page-title">Report the Waste Product</h1>
-          <p id="cit-page-subtitle">Help keep our community clean by reporting plastic waste.</p>
+          <p id="cit-page-subtitle">Help keep our community clean by reporting civic issues.</p>
         </div>
       </section>
       
       <!-- VIEW: New Report -->
       <div id="cit-view-new-report" class="col-card" style="max-width: 440px; margin: 0 auto; background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
-        <h2 style="text-align: center; margin-bottom: 24px; font-family: sans-serif; font-size: 1.25rem; font-weight: 700;">Upload Plastic Waste Photo</h2>
+        <h2 style="text-align: center; margin-bottom: 24px; font-family: sans-serif; font-size: 1.25rem; font-weight: 700;">Upload Issue Photo</h2>
         
         <div id="report-message" style="margin-bottom: 16px; text-align: center; font-weight: bold; font-family: sans-serif;"></div>
         
@@ -178,21 +183,20 @@
           Please log in to report waste.
         </div>
         
-        <form id="report-form" style="display: flex; flex-direction: column; gap: 16px;">
+        <form id="report-form" onsubmit="return submitReport(event)" style="display: flex; flex-direction: column; gap: 16px;">
           <!-- Hidden inputs for backend compatibility -->
           <input type="hidden" id="latitude" name="latitude" />
           <input type="hidden" id="longitude" name="longitude" />
           <span id="file-label" style="display: none;"></span>
           <button id="locate" type="button" style="display: none;"></button>
-          <div id="location-status" style="display: none;"></div>
+          
           
           <input id="image" name="image" type="file" accept="image/*" required style="width: 100%; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; box-sizing: border-box; font-family: sans-serif; color: #334155; font-size: 0.9rem;" />
           
           <input id="report-name" name="name" type="text" placeholder="Enter your name" style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 4px; box-sizing: border-box; font-family: sans-serif; color: #475569; font-size: 0.95rem;" />
           
-          <input id="report-location" name="location" type="text" placeholder="Enter Location" style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 4px; box-sizing: border-box; font-family: sans-serif; color: #475569; font-size: 0.95rem;" />
-          
-          <textarea name="description" placeholder="Describe the waste" style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 4px; resize: vertical; min-height: 80px; box-sizing: border-box; font-family: monospace; color: #475569; font-size: 0.95rem;"></textarea>
+          <div style="display: flex; gap: 8px;"><input id="report-location" name="location" type="text" placeholder="Enter Location" style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 4px; box-sizing: border-box; font-family: sans-serif; color: #475569; font-size: 0.95rem;" /><button type="button" onclick="getLocation()" style="background: #138808; color: white; border: none; padding: 0 12px; border-radius: 4px; cursor: pointer; white-space: nowrap;"><i class="fa-solid fa-location-crosshairs"></i> Fetch GPS</button></div>
+            <div id="location-status" style="font-size: 0.8rem; color: #138808; font-weight: bold; margin-bottom: 8px;"></div><textarea name="description" placeholder="Describe the waste" style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 4px; resize: vertical; min-height: 80px; box-sizing: border-box; font-family: monospace; color: #475569; font-size: 0.95rem;"></textarea>
           
           <div style="text-align: center; margin-top: 8px;">
             <button type="submit" id="submit-btn" style="background: #27ae60; color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-size: 1rem; width: auto; font-family: sans-serif;">Submit Report</button>
@@ -200,7 +204,13 @@
         </form>
       </div>
 
-      <!-- VIEW: Track Report -->
+      <!-- VIEW: Community -->
+        <div id="cit-view-community" style="display: none;">
+          <h2 style="margin-bottom:16px; font-weight:600;">Community Feed</h2>
+          <div id="community-feed-container" style="display:flex; flex-direction:column; gap:16px;"></div>
+        </div>
+
+        <!-- VIEW: Track Report -->
       <div id="cit-view-track" class="col-card" style="padding: 24px; display: none;">
         <h2 style="margin-bottom: 16px; color: #1e293b;">Live Tracking</h2>
         <div id="cit-map" style="height: 300px; background: #f1f5f9; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #94a3b8;">
@@ -251,7 +261,7 @@
           <div id="cit-profile-avatar" style="width: 80px; height: 80px; border-radius: 50%; background: #e2e8f0;"></div>
           <div>
             <h3 id="cit-profile-name" style="margin: 0; color: #1e293b;">Citizen</h3>
-            <p id="cit-profile-email" style="margin: 4px 0 0; color: #64748b;">citizen@ecotrack.local</p>
+            <p id="cit-profile-email" style="margin: 4px 0 0; color: #64748b;">citizen@cleanconnect.local</p>
           </div>
         </div>
       </div>
@@ -261,8 +271,8 @@
           <button id="cit-logout-btn" class="col-logout-btn" style="margin-top: 0; padding: 8px 16px; width: auto;" onclick="enterGuestMode(); setAuthMode('login'); byId('citizen-wrapper').hidden=true; document.body.classList.remove('collector-mode'); openSignIn();"><i class="fa-solid fa-arrow-right-from-bracket"></i> Logout</button>
           <button id="cit-login-btn" class="col-logout-btn" style="margin-top: 0; padding: 8px 16px; width: auto; background: #3b82f6; display: none;" onclick="setAuthMode('login'); byId('citizen-wrapper').hidden=true; document.body.classList.remove('collector-mode'); openSignIn();"><i class="fa-solid fa-arrow-right-to-bracket"></i> Login</button>
         </div>
-        <img src="logo.png" alt="EcoTrack AI Logo" style="height: 40px; display: inline-block;">
-        <div style="font-size: 12px; color: var(--col-text-muted); margin-top: 8px;">Powered by EcoTrack AI</div>
+        <img src="logo.png" alt="CleanConnect Logo" style="height: 40px; display: inline-block;">
+        <div style="font-size: 12px; color: var(--col-text-muted); margin-top: 8px;">Powered by CleanConnect</div>
       </footer>
     </main>
   </div>
@@ -277,7 +287,7 @@
         <i class="fa-solid fa-bars"></i>
       </button>
       <div class="mobile-brand">
-        <i class="fa-solid fa-leaf" style="color: #f69446; margin-right: 6px;"></i> EcoTrack AI
+        <i class="fa-solid fa-leaf" style="color: #f69446; margin-right: 6px;"></i> CleanConnect
       </div>
     </header>
 
@@ -286,7 +296,7 @@
       <a href="#" class="sidebar-brand">
         <div class="sidebar-brand-icon"><i class="fa-solid fa-leaf"></i></div>
         <div class="sidebar-brand-text">
-          <span>EcoTrack AI</span>
+          <span>CleanConnect</span>
           <span class="subtitle">ACTION LEDGER</span>
         </div>
       </a>
@@ -384,7 +394,7 @@
             <i class="fa-solid fa-box"></i>
           </div>
           <div class="trend-badge positive"><i class="fa-solid fa-arrow-trend-up"></i> +5.7%</div>
-          <div class="metric-label">PLASTIC DIVERTED</div>
+          <div class="metric-label">ISSUES RESOLVED</div>
           <div class="metric-value" id="verified-rate">55.2</div>
           <div class="metric-subtext">kg (75% cleanup rate)</div>
         </article>
@@ -581,8 +591,39 @@
     </div>
   </div>
 
-  <script src="app.js?v=16"></script>
+  <script src="app.js?v=27"></script>
+  <script src="voice_assistant.js?v=1"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').catch(err => console.error('SW failed', err));
+      });
+    }
+  </script>
 </body>
 
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

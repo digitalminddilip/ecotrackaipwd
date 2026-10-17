@@ -7,7 +7,7 @@ import time
 from typing import Any
 
 
-AUTH_SECRET = os.getenv("ECOTRACK_AUTH_SECRET", "change-this-development-secret").encode()
+AUTH_SECRET = os.getenv("CLEANCONNECT_AUTH_SECRET", "change-this-development-secret").encode()
 TOKEN_LIFETIME_SECONDS = 60 * 60 * 24
 
 
@@ -56,3 +56,4 @@ def decode_token(token: str) -> dict[str, Any] | None:
     if not hmac.compare_digest(signature, expected) or payload.get("exp", 0) < time.time():
         return None
     return payload
+

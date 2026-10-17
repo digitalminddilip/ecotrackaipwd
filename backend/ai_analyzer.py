@@ -7,7 +7,7 @@ from PIL import Image
 from io import BytesIO
 
 
-AI_ENDPOINT = os.getenv("ECOTRACK_AI_ENDPOINT")
+AI_ENDPOINT = os.getenv("CLEANCONNECT_AI_ENDPOINT")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 
@@ -19,18 +19,18 @@ def _local_analysis(image_bytes: bytes, filename: str) -> dict[str, Any]:
         raise ValueError("The uploaded file is not a valid image") from error
 
     name = filename.lower()
-    category = "other_plastic"
+    category = "other_issue"
     for keyword, detected_category in {
-        "bottle": "bottle",
-        "bag": "bag",
-        "wrapper": "wrapper",
-        "container": "container",
+        "garbage": "garbage_dumps",
+        "animal": "dead_animals",
+        "toilet": "dirty_public_toilets",
+        "dustbin": "uncleaned_dustbins",
     }.items():
         if keyword in name:
             category = detected_category
             break
     return {
-        "ai_result": "plastic_detected",
+        "ai_result": "issue_detected",
         "category": category,
         "confidence": 0.62,
         "provider": "local-prototype",
@@ -44,22 +44,23 @@ def _gemini_analysis(image_bytes: bytes, filename: str) -> dict[str, Any]:
     client = genai.Client(api_key=GEMINI_API_KEY)
 
     prompt = """
-    Analyze the uploaded image and determine if plastic waste is present.
-    If plastic waste is present, classify it into one of the following categories:
-    - bottle
-    - bag
-    - wrapper
-    - container
-    - other_plastic
+    Analyze the uploaded image and determine if any municipal or cleanliness issue is present (like the Swachh Bharat mission).
+    If an issue is present, classify it into one of the following categories:
+    - garbage_dumps
+    - dead_animals
+    - dirty_public_toilets
+    - sweeping_not_done
+    - uncleaned_dustbins
+    - other_issue
     
-    If no plastic waste is present, set ai_result to 'no_plastic_detected' and category to 'none'.
-    If plastic waste is present, set ai_result to 'plastic_detected' and use one of the specified categories.
+    If no issue is present (e.g. clean street, normal scenery), set ai_result to 'no_issue_detected' and category to 'none'.
+    If an issue is present, set ai_result to 'issue_detected' and use one of the specified categories.
     Estimate your confidence between 0.0 and 1.0.
     
     Respond STRICTLY in the following JSON format without any markdown wrappers:
     {
-      "ai_result": "plastic_detected",
-      "category": "bottle",
+      "ai_result": "issue_detected",
+      "category": "garbage_dumps",
       "confidence": 0.95
     }
     """
@@ -123,3 +124,4 @@ def analyze_image(image_bytes: bytes, filename: str) -> dict[str, Any]:
         return result
     except Exception:
         return _local_analysis(image_bytes, filename)
+

@@ -16,7 +16,7 @@ def lookup_ip_location(client_ip: str | None) -> dict[str, object]:
             "accuracy": "approximate",
         }
 
-    request = Request(f"https://ipapi.co/{client_ip}/json/", headers={"User-Agent": "EcoTrack-AI/1.0"})
+    request = Request(f"https://ipapi.co/{client_ip}/json/", headers={"User-Agent": "CleanConnect/1.0"})
     try:
         with urlopen(request, timeout=5) as response:
             result = json.loads(response.read().decode())
@@ -35,3 +35,4 @@ def lookup_ip_location(client_ip: str | None) -> dict[str, object]:
         "longitude": result["longitude"],
         "accuracy": "approximate",
     }
+

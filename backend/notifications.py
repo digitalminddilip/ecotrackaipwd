@@ -9,19 +9,19 @@ from .database import find_user_by_id
 
 
 def _send_email(recipient: str, report_id: str, address: str) -> str:
-    smtp_host = os.getenv("ECOTRACK_SMTP_HOST")
-    smtp_user = os.getenv("ECOTRACK_SMTP_USER")
-    smtp_password = os.getenv("ECOTRACK_SMTP_PASSWORD")
-    smtp_port = int(os.getenv("ECOTRACK_SMTP_PORT", "587"))
+    smtp_host = os.getenv("CLEANCONNECT_SMTP_HOST")
+    smtp_user = os.getenv("CLEANCONNECT_SMTP_USER")
+    smtp_password = os.getenv("CLEANCONNECT_SMTP_PASSWORD")
+    smtp_port = int(os.getenv("CLEANCONNECT_SMTP_PORT", "587"))
     if not all([smtp_host, smtp_user, smtp_password]):
         return "email-not-configured"
 
     message = EmailMessage()
-    message["Subject"] = f"EcoTrack AI: Your Report {report_id} has been Resolved"
+    message["Subject"] = f"CleanConnect: Your Report {report_id} has been Resolved"
     message["From"] = smtp_user
     message["To"] = recipient
     message.set_content(
-        f"Hello,\n\nWe are pleased to inform you that your report (Reference No: {report_id}) has been successfully resolved and cleaned.\n\nThank you for helping keep the community clean!\n\nBest,\nThe EcoTrack AI Team"
+        f"Hello,\n\nWe are pleased to inform you that your report (Reference No: {report_id}) has been successfully resolved and cleaned.\n\nThank you for helping keep the community clean!\n\nBest,\nThe CleanConnect Team"
     )
     with smtplib.SMTP(smtp_host, smtp_port, timeout=10) as server:
         server.starttls()
@@ -31,7 +31,7 @@ def _send_email(recipient: str, report_id: str, address: str) -> str:
 
 
 def _send_agent_webhook(payload: dict[str, object]) -> str:
-    webhook_url = os.getenv("ECOTRACK_AGENT_WEBHOOK")
+    webhook_url = os.getenv("CLEANCONNECT_AGENT_WEBHOOK")
     if not webhook_url:
         return "agent-not-configured"
     request = Request(
@@ -69,20 +69,20 @@ def notify_reporter(report_id: str, reporter_id: str, address: str | None) -> di
 
 
 def send_otp_email(recipient: str, otp: str) -> str:
-    smtp_host = os.getenv("ECOTRACK_SMTP_HOST")
-    smtp_user = os.getenv("ECOTRACK_SMTP_USER")
-    smtp_password = os.getenv("ECOTRACK_SMTP_PASSWORD")
-    smtp_port = int(os.getenv("ECOTRACK_SMTP_PORT", "587"))
+    smtp_host = os.getenv("CLEANCONNECT_SMTP_HOST")
+    smtp_user = os.getenv("CLEANCONNECT_SMTP_USER")
+    smtp_password = os.getenv("CLEANCONNECT_SMTP_PASSWORD")
+    smtp_port = int(os.getenv("CLEANCONNECT_SMTP_PORT", "587"))
 
     if not all([smtp_host, smtp_user, smtp_password]):
         print(f"\n[DEV MODE] OTP for {recipient} is: {otp}\n")
         return "email-not-configured-printed-to-console"
 
     message = EmailMessage()
-    message["Subject"] = "Your EcoTrack AI Login OTP"
+    message["Subject"] = "Your CleanConnect Login OTP"
     message["From"] = smtp_user
     message["To"] = recipient
-    message.set_content(f"Hello,\n\nYour One-Time Password (OTP) for logging into EcoTrack AI is:\n\n{otp}\n\nThis OTP will expire in 5 minutes. Do not share it with anyone."
+    message.set_content(f"Hello,\n\nYour One-Time Password (OTP) for logging into CleanConnect is:\n\n{otp}\n\nThis OTP will expire in 5 minutes. Do not share it with anyone."
     )
     try:
         with smtplib.SMTP(smtp_host, smtp_port, timeout=10) as server:
@@ -104,28 +104,28 @@ def notify_report_created(report_id: str, reporter_id: str) -> dict[str, str]:
     if not reporter_email:
         return {"email": "email-not-configured"}
         
-    smtp_host = os.getenv("ECOTRACK_SMTP_HOST")
-    smtp_user = os.getenv("ECOTRACK_SMTP_USER")
-    smtp_password = os.getenv("ECOTRACK_SMTP_PASSWORD")
-    smtp_port = int(os.getenv("ECOTRACK_SMTP_PORT", "587"))
+    smtp_host = os.getenv("CLEANCONNECT_SMTP_HOST")
+    smtp_user = os.getenv("CLEANCONNECT_SMTP_USER")
+    smtp_password = os.getenv("CLEANCONNECT_SMTP_PASSWORD")
+    smtp_port = int(os.getenv("CLEANCONNECT_SMTP_PORT", "587"))
 
     if not all([smtp_host, smtp_user, smtp_password]):
         return {"email": "email-not-configured"}
 
     message = EmailMessage()
-    message["Subject"] = f"EcoTrack AI: Your Report {report_id} has been Received"
+    message["Subject"] = f"CleanConnect: Your Report {report_id} has been Received"
     message["From"] = smtp_user
     message["To"] = reporter_email
     message.set_content(
-        f"Hello,\n\nWe have successfully received your report. Your Tracking Reference Number is: {report_id}.\n\nYou can use this number to track the status of your complaint in our system.\n\nThank you for helping keep the community clean!\n\nBest,\nThe EcoTrack AI Team"
+        f"Hello,\n\nWe have successfully received your report. Your Tracking Reference Number is: {report_id}.\n\nYou can use this number to track the status of your complaint in our system.\n\nThank you for helping keep the community clean!\n\nBest,\nThe CleanConnect Team"
     )
     
     admin_message = EmailMessage()
-    admin_message["Subject"] = f"EcoTrack AI: New Report {report_id} Submitted"
+    admin_message["Subject"] = f"CleanConnect: New Report {report_id} Submitted"
     admin_message["From"] = smtp_user
     admin_message["To"] = "dilipksharma1244@gmail.com"
     admin_message.set_content(
-        f"Hello Admin,\n\nA new report has been submitted by {reporter_email} with Tracking Reference Number: {report_id}.\n\nPlease check the dashboard for more details.\n\nBest,\nThe EcoTrack AI System"
+        f"Hello Admin,\n\nA new report has been submitted by {reporter_email} with Tracking Reference Number: {report_id}.\n\nPlease check the dashboard for more details.\n\nBest,\nThe CleanConnect System"
     )
     
     try:
@@ -139,10 +139,10 @@ def notify_report_created(report_id: str, reporter_id: str) -> dict[str, str]:
         return {"email": "email-failed"}
 
 def notify_report_rejected(report_id: str, reporter_id: str, collector_id: str, admin_email: str) -> None:
-    smtp_host = os.getenv('ECOTRACK_SMTP_HOST')
-    smtp_user = os.getenv('ECOTRACK_SMTP_USER')
-    smtp_password = os.getenv('ECOTRACK_SMTP_PASSWORD')
-    smtp_port = int(os.getenv('ECOTRACK_SMTP_PORT', '587'))
+    smtp_host = os.getenv('CLEANCONNECT_SMTP_HOST')
+    smtp_user = os.getenv('CLEANCONNECT_SMTP_USER')
+    smtp_password = os.getenv('CLEANCONNECT_SMTP_PASSWORD')
+    smtp_port = int(os.getenv('CLEANCONNECT_SMTP_PORT', '587'))
     if not all([smtp_host, smtp_user, smtp_password]):
         print(f'\n[DEV MODE] Report {report_id} REJECTED email would be sent to Admin, Collector, and Citizen.\n')
         return
@@ -162,11 +162,11 @@ def notify_report_rejected(report_id: str, reporter_id: str, collector_id: str, 
         return
 
     message = EmailMessage()
-    message['Subject'] = f'EcoTrack AI: Report {report_id} Evidence Rejected'
+    message['Subject'] = f'CleanConnect: Report {report_id} Evidence Rejected'
     message['From'] = smtp_user
     message['To'] = ', '.join(recipients)
     message.set_content(
-        f'Hello,\n\nThe cleanup evidence for report (Reference No: {report_id}) was reviewed and REJECTED by the administration.\n\nCollector: Please re-visit the location and upload a new valid photo of the cleaned area.\nCitizen: The cleanup is still pending and is being re-addressed.\n\nBest,\nThe EcoTrack AI Team'
+        f'Hello,\n\nThe cleanup evidence for report (Reference No: {report_id}) was reviewed and REJECTED by the administration.\n\nCollector: Please re-visit the location and upload a new valid photo of the cleaned area.\nCitizen: The cleanup is still pending and is being re-addressed.\n\nBest,\nThe CleanConnect Team'
     )
     
     try:
@@ -176,4 +176,5 @@ def notify_report_rejected(report_id: str, reporter_id: str, collector_id: str, 
             server.send_message(message)
     except (OSError, smtplib.SMTPException) as e:
         print(f'\n[DEV MODE] Failed to send rejection email: {e}\n')
+
 

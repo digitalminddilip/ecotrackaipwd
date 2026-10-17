@@ -1,4 +1,4 @@
-# EcoTrack AI backend baseline dependencies
+# EcoTrack AI / CleanConnect - IBM Z Datathon Baseline Dependencies
 fastapi>=0.115,<1.0
 uvicorn[standard]>=0.30,<1.0
 python-multipart>=0.0.9,<1.0
@@ -8,4 +8,5 @@ numpy>=2.0,<3.0
 googlemaps>=4.10,<5.0
 requests>=2.30
 google-genai
-psycopg2-binary==2.9.9
+python-dotenv>=1.0.0
+google-auth>=2.20.0

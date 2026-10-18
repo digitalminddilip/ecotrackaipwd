@@ -20,14 +20,14 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
   <link rel="stylesheet" href="collector.css">
   <link rel="stylesheet" href="voice.css?v=1">
+  <link rel="stylesheet" href="modern_video_ui.css?v=2">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 
 <body>
   <!-- Intro / Auth Mode -->
-  <!-- Intro / Auth Mode -->
-  <div id="login-screen" class="login-screen intro-mode" style="display: none !important;">
+  <div id="login-screen" class="login-screen intro-mode" hidden>
     <div class="login-container modern-ui">
 
       <div class="auth-nav">
@@ -127,19 +127,24 @@
   <!-- CITIZEN DASHBOARD -->
   <div id="citizen-wrapper">
     <aside class="col-sidebar">
-      <a href="#" class="col-brand" style="margin-left: -15px;">
-        <img src="logo.png" alt="CleanConnect" style="height: 32px; margin-right: 8px;">
-        Citizen
-      </a>
-      
-      <div class="col-menu-section">
-        <div class="col-menu-title">Menu</div>
-        <a href="#" class="col-nav-link active" onclick="showCitView('new-report', this)"><i class="fa-solid fa-plus"></i> New Report</a>
-        <a href="#" class="col-nav-link" onclick="showCitView('track', this)"><i class="fa-solid fa-location-crosshairs"></i> Track Report</a>
-        <a href="#" class="col-nav-link" onclick="showCitView('community', this)"><i class="fa-solid fa-users"></i> Community Feed</a>
+      <div>
+        <a href="#" class="col-brand">
+          <i class="fa-solid fa-leaf" style="color:#10b981; font-size: 24px; margin-right: 8px;"></i>
+          CleanConnect
+        </a>
+        
+        <div class="col-menu-section">
+          <div class="col-menu-title">Menu</div>
+          <a href="#" class="col-nav-link active" onclick="showCitView('new-report', this)"><i class="fa-solid fa-plus-circle"></i> New Report</a>
+          <a href="#" class="col-nav-link" onclick="showCitView('track', this)"><i class="fa-solid fa-location-crosshairs"></i> Track Report</a>
+          <a href="#" class="col-nav-link" onclick="showCitView('community', this)"><i class="fa-solid fa-users"></i> Community Feed</a>
           <a href="#" class="col-nav-link" onclick="showCitView('reports', this)"><i class="fa-solid fa-file-lines"></i> My Reports</a>
-        <a href="#" class="col-nav-link" onclick="showCitView('status', this)"><i class="fa-solid fa-chart-pie"></i> Status</a>
-        <a href="#" class="col-nav-link" onclick="showCitView('profile', this)"><i class="fa-solid fa-user"></i> My Profile</a>
+          <a href="#" class="col-nav-link" onclick="showCitView('status', this)"><i class="fa-solid fa-chart-pie"></i> Impact Analytics</a>
+          <a href="#" class="col-nav-link" onclick="showCitView('profile', this)"><i class="fa-solid fa-user"></i> My Profile</a>
+        </div>
+      </div>
+      <div style="font-size: 0.8rem; color: #94a3b8; text-align: center; margin-top: auto; padding-top: 16px;">
+        <i class="fa-solid fa-server" style="color: #10b981; margin-right: 4px;"></i> Powered by IBM Z Cloud
       </div>
     </aside>
     
@@ -166,16 +171,16 @@
         </div>
       </header>
       
-      <section class="col-header" style="max-width: 550px; margin-left: auto; width: 100%;">
-        <div>
-          <h1 id="cit-page-title">Report the Waste Product</h1>
-          <p id="cit-page-subtitle">Help keep our community clean by reporting civic issues.</p>
+      <div style="display: flex; justify-content: center; width: 100%; margin-bottom: 8px;">
+        <div id="cit-step-indicator" class="step-indicator">
+          <i class="fa-solid fa-pen-to-square"></i> STEP 1: CITIZEN REPORTING FORM INITIALIZED
         </div>
-      </section>
+      </div>
       
       <!-- VIEW: New Report -->
-      <div id="cit-view-new-report" class="col-card" style="max-width: 440px; margin: 0 auto; background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
-        <h2 style="text-align: center; margin-bottom: 24px; font-family: sans-serif; font-size: 1.25rem; font-weight: 700;">Upload Issue Photo</h2>
+      <div id="cit-view-new-report" class="col-card">
+        <h2 style="margin: 0 0 6px; font-family: 'Outfit', sans-serif; font-size: 1.4rem; color: #0f172a; font-weight: 700;">Report Civic Waste Product</h2>
+        <p class="card-subtitle" style="margin: 0 0 24px; color: #64748b; font-size: 0.9rem;">Fill in real-time incident details to dispatch municipal collectors.</p>
         
         <div id="report-message" style="margin-bottom: 16px; text-align: center; font-weight: bold; font-family: sans-serif;"></div>
         
@@ -183,23 +188,56 @@
           Please log in to report waste.
         </div>
         
-        <form id="report-form" onsubmit="return submitReport(event)" style="display: flex; flex-direction: column; gap: 16px;">
+        <form id="report-form" onsubmit="return submitReport(event)" style="display: flex; flex-direction: column; gap: 0;">
           <!-- Hidden inputs for backend compatibility -->
           <input type="hidden" id="latitude" name="latitude" />
           <input type="hidden" id="longitude" name="longitude" />
           <span id="file-label" style="display: none;"></span>
           <button id="locate" type="button" style="display: none;"></button>
           
-          
-          <input id="image" name="image" type="file" accept="image/*" required style="width: 100%; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; box-sizing: border-box; font-family: sans-serif; color: #334155; font-size: 0.9rem;" />
-          
-          <input id="report-name" name="name" type="text" placeholder="Enter your name" style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 4px; box-sizing: border-box; font-family: sans-serif; color: #475569; font-size: 0.95rem;" />
-          
-          <div style="display: flex; gap: 8px;"><input id="report-location" name="location" type="text" placeholder="Enter Location" style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 4px; box-sizing: border-box; font-family: sans-serif; color: #475569; font-size: 0.95rem;" /><button type="button" onclick="getLocation()" style="background: #138808; color: white; border: none; padding: 0 12px; border-radius: 4px; cursor: pointer; white-space: nowrap;"><i class="fa-solid fa-location-crosshairs"></i> Fetch GPS</button></div>
-            <div id="location-status" style="font-size: 0.8rem; color: #138808; font-weight: bold; margin-bottom: 8px;"></div><textarea name="description" placeholder="Describe the waste" style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 4px; resize: vertical; min-height: 80px; box-sizing: border-box; font-family: monospace; color: #475569; font-size: 0.95rem;"></textarea>
-          
-          <div style="text-align: center; margin-top: 8px;">
-            <button type="submit" id="submit-btn" style="background: #27ae60; color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-size: 1rem; width: auto; font-family: sans-serif;">Submit Report</button>
+          <div class="modern-form-group">
+            <label for="report-name"><i class="fa-regular fa-user" style="color: #10b981; margin-right: 4px;"></i> Your Name</label>
+            <input class="modern-input" id="report-name" name="name" type="text" placeholder="e.g. Rahul Verma" />
+          </div>
+
+          <div class="modern-form-group">
+            <label for="report-location"><i class="fa-solid fa-location-dot" style="color: #0284c7; margin-right: 4px;"></i> Incident Location</label>
+            <div style="display: flex; gap: 8px;">
+              <input class="modern-input" id="report-location" name="location" type="text" placeholder="Enter landmark or street address" style="flex:1;" />
+              <button id="btn-fetch-gps" class="btn-fetch-gps" type="button" onclick="getLocation()">
+                <i class="fa-solid fa-location-crosshairs"></i> <span id="gps-btn-text">Fetch GPS</span>
+              </button>
+            </div>
+            <div id="gps-coords-badge" class="gps-telemetry-badge" style="display: none;">
+              <i class="fa-solid fa-crosshairs"></i> <span id="gps-coords-text">Coordinates: 26.7431° N, 83.2733° E (Accuracy: ±4m)</span>
+            </div>
+            <div id="location-status" style="font-size: 0.8rem; color: #10b981; font-weight: 600; margin-top: 4px;"></div>
+          </div>
+
+          <div class="modern-form-group">
+            <label for="image"><i class="fa-solid fa-camera" style="color: #f59e0b; margin-right: 4px;"></i> Upload Waste Photo</label>
+            <input class="modern-input" id="image" name="image" type="file" accept="image/*" required style="padding: 10px;" onchange="handlePhotoSelect(this)" />
+            <div id="photo-preview-box" class="photo-file-preview" style="display: none;">
+              <i class="fa-solid fa-file-image" style="font-size: 26px; color: #0284c7;"></i>
+              <div style="flex: 1; min-width: 0;">
+                <div id="preview-file-name" style="font-size: 0.88rem; font-weight: 600; color: #1e293b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">waste_evidence.jpg</div>
+                <div id="preview-file-size" style="font-size: 0.75rem; color: #64748b;">1.8 MB • High Resolution RGB</div>
+              </div>
+              <span style="color: #10b981; font-weight: 700; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 4px;">
+                <i class="fa-solid fa-circle-check"></i> Ready
+              </span>
+            </div>
+          </div>
+
+          <div class="modern-form-group">
+            <label for="report-desc"><i class="fa-solid fa-align-left" style="color: #6366f1; margin-right: 4px;"></i> Description</label>
+            <textarea class="modern-input" id="report-desc" name="description" rows="3" placeholder="Describe the hazard (e.g. Heavy accumulation of plastic waste near roadside drain)..." style="resize: vertical; min-height: 80px;"></textarea>
+          </div>
+
+          <div style="margin-top: 10px;">
+            <button type="submit" id="submit-btn" class="btn-modern-submit">
+              <i class="fa-solid fa-paper-plane"></i> <span id="submit-btn-text">Submit Report</span>
+            </button>
           </div>
         </form>
       </div>
@@ -220,20 +258,21 @@
 
       <!-- VIEW: My Reports -->
       <div id="cit-view-reports" class="col-card" style="padding: 24px; display: none;">
-        <h2 style="margin-bottom: 16px; color: #1e293b;">History</h2>
+        <h2 style="margin-bottom: 16px; color: #1e293b;"><i class="fa-solid fa-clipboard-check" style="color: #10b981; margin-right: 8px;"></i>My Submitted Reports & Cleanup Proof</h2>
         <div style="overflow-x: auto;">
           <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
             <thead>
-              <tr style="border-bottom: 1px solid #e2e8f0; color: #64748b;">
-                <th style="padding: 12px; font-weight: 600;">ID</th>
+              <tr style="border-bottom: 2px solid #e2e8f0; color: #475569; background: #f8fafc;">
+                <th style="padding: 12px; font-weight: 600;">Report ID</th>
                 <th style="padding: 12px; font-weight: 600;">Date</th>
                 <th style="padding: 12px; font-weight: 600;">Category</th>
                 <th style="padding: 12px; font-weight: 600;">Status</th>
-                <th style="padding: 12px; font-weight: 600;">Proof</th>
+                <th style="padding: 12px; font-weight: 600;">Reported Photo</th>
+                <th style="padding: 12px; font-weight: 600;">Cleaned Place Proof</th>
               </tr>
             </thead>
             <tbody id="cit-reports-tbody">
-              <tr><td colspan="5" style="padding: 12px; text-align: center; color: #94a3b8;">Loading...</td></tr>
+              <tr><td colspan="6" style="padding: 16px; text-align: center; color: #94a3b8;">Loading reports...</td></tr>
             </tbody>
           </table>
         </div>
@@ -386,7 +425,7 @@
           </div>
           <div class="trend-badge positive"><i class="fa-solid fa-arrow-trend-up"></i> +8.1%</div>
           <div class="metric-label">VERIFIED CLEANUPS</div>
-          <div class="metric-value" id collector-reports>3</div>
+          <div class="metric-value" id="collected-reports">3</div>
           <div class="metric-subtext">Evidence approved</div>
         </article>
         <article class="metric-card">
@@ -591,7 +630,72 @@
     </div>
   </div>
 
-  <script src="app.js?v=27"></script>
+  <!-- Proof Image Preview Modal -->
+  <div id="proof-preview-modal" style="display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.75); backdrop-filter: blur(4px); z-index: 10000; align-items: center; justify-content: center; padding: 16px;">
+    <div style="background: white; border-radius: 16px; max-width: 560px; width: 100%; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.35); border: 1px solid #e2e8f0;">
+      <div style="padding: 16px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #f8fafc;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <i class="fa-solid fa-camera-retro" style="color: #10b981;"></i>
+          <h3 id="proof-modal-title" style="margin: 0; font-size: 1.05rem; color: #1e293b; font-weight: 600;">Cleanup Evidence Proof</h3>
+        </div>
+        <button type="button" onclick="document.getElementById('proof-preview-modal').style.display='none'" style="background: none; border: none; font-size: 22px; color: #64748b; cursor: pointer; padding: 2px 8px; border-radius: 6px;">&times;</button>
+      </div>
+      <div style="padding: 16px; text-align: center; background: #0f172a; min-height: 250px; display: flex; align-items: center; justify-content: center;">
+        <img id="proof-modal-img" src="" alt="Proof Evidence" style="max-width: 100%; max-height: 440px; border-radius: 8px; object-fit: contain; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.5);">
+      </div>
+      <div style="padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; background: #ffffff;">
+        <span id="proof-modal-badge" style="font-size: 0.8rem; background: #dcfce7; color: #15803d; padding: 4px 12px; border-radius: 20px; font-weight: 600;">
+          <i class="fa-solid fa-circle-check"></i> Cleaned Place Evidence Proof
+        </span>
+        <button type="button" onclick="document.getElementById('proof-preview-modal').style.display='none'" style="padding: 6px 16px; background: #0284c7; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600;">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI MULTIMODAL RESULT MODAL (from Video Scene 4) -->
+  <div id="ai-result-modal" class="ai-modal-overlay" style="display: none;">
+    <div class="ai-modal-card">
+      <div class="ai-modal-success-icon"><i class="fa-solid fa-check"></i></div>
+      <h2>Incident Successfully Reported!</h2>
+      <p>AI Engine verified the hazard and notified municipal collectors in real time.</p>
+      
+      <div class="ai-result-details-box">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+          <span class="ai-tag-pill"><i class="fa-solid fa-wand-magic-sparkles"></i> GEMINI MULTIMODAL AI CLASSIFICATION</span>
+          <span style="color: #10b981; font-weight: 700; font-size: 0.9rem;"><i class="fa-solid fa-bolt"></i> Latency: <span id="ai-modal-latency">184ms</span></span>
+        </div>
+        <div class="ai-meta-grid">
+          <div>
+            <strong>Report ID</strong>
+            <span id="ai-modal-report-id">#rpt-20261018-01</span>
+          </div>
+          <div>
+            <strong>Detected Category</strong>
+            <span id="ai-modal-category" style="color: #facc15;">Hazardous Plastic & Garbage Dump</span>
+          </div>
+          <div>
+            <strong>Confidence Score</strong>
+            <span id="ai-modal-confidence">96.4% Verified Match</span>
+          </div>
+          <div>
+            <strong>Priority Level</strong>
+            <span id="ai-modal-priority" style="color: #ef4444;"><i class="fa-solid fa-triangle-exclamation"></i> HIGH PRIORITY (Urgent)</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="ai-points-banner">
+        <i class="fa-solid fa-award" style="font-size: 22px;"></i> <span id="ai-modal-points">+20 Cleanliness Points Awarded to Citizen!</span>
+      </div>
+
+      <div class="ai-modal-btn-row">
+        <button type="button" class="btn-ai-primary" onclick="closeAiModal()"><i class="fa-solid fa-circle-check"></i> Continue</button>
+        <button type="button" class="btn-ai-secondary" onclick="closeAiModal(); showCitView('reports', document.querySelectorAll('.col-nav-link')[3]);"><i class="fa-solid fa-file-lines"></i> View in Reports</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js?v=28"></script>
   <script src="voice_assistant.js?v=1"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>

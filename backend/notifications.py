@@ -86,14 +86,39 @@ def send_otp_email(recipient: str, otp: str) -> str:
         f"Best regards,\n"
         f"CleanConnect AI Team"
     )
+    # Support HTTPS email delivery (Port 443 - works on Render Free Tier)
+    resend_api_key = os.getenv("RESEND_API_KEY")
+    if resend_api_key:
+        try:
+            import urllib.request
+            req = urllib.request.Request(
+                "https://api.resend.com/emails",
+                data=json.dumps({
+                    "from": "CleanConnect <onboarding@resend.dev>",
+                    "to": [recipient],
+                    "subject": f"CleanConnect Verification Code: {otp}",
+                    "text": f"Your CleanConnect verification code is: {otp}\n\nThis code will expire in 10 minutes.",
+                }).encode(),
+                headers={
+                    "Authorization": f"Bearer {resend_api_key}",
+                    "Content-Type": "application/json"
+                },
+                method="POST"
+            )
+            with urllib.request.urlopen(req, timeout=5):
+                return "email-sent"
+        except Exception as e:
+            print(f"[RESEND ERROR] {e}")
+
     try:
-        with smtplib.SMTP(smtp_host, smtp_port, timeout=12) as server:
+        # Port 587 with fast 3-second timeout so requests don't hang when cloud blocks SMTP
+        with smtplib.SMTP(smtp_host, smtp_port, timeout=3) as server:
             server.starttls()
             server.login(smtp_user, smtp_password)
             server.send_message(message)
         return "email-sent"
     except (OSError, smtplib.SMTPException) as e:
-        print(f"\n[SMTP ERROR] Failed to send email to {recipient}: {e}\n")
+        print(f"\n[SMTP ERROR] Outbound SMTP port blocked on host ({e}). Falling back to in-app OTP.\n")
         return "email-failed"
 
 

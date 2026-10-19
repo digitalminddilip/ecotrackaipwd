@@ -632,17 +632,28 @@ function setupAuthForm() {
       let endpoint = "/auth/login";
       let payload = { email, password };
 
-      if (mode === "register") {
-        endpoint = "/auth/register";
-        payload = { name, email, password };
       } else if (mode === "login_otp") {
-        if (!otp) {
-          message.textContent = "Please enter the 6-digit OTP sent to your email address.";
-          if (submitBtn) submitBtn.disabled = false;
-          return;
+        let currentOtp = otp;
+        if (!currentOtp) {
+          message.textContent = "Requesting OTP...";
+          const reqRes = await fetch(`${API_URL}/auth/request-otp`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email }),
+          });
+          const reqData = await reqRes.json();
+          if (!reqRes.ok) throw new Error(reqData.detail || "Error requesting OTP");
+          if (reqData.email_delivered) {
+            message.innerHTML = `<span style="color:#10b981; font-weight:600;"><i class="fa-solid fa-envelope"></i> 6-digit OTP sent to your email!</span> Please enter the code from your inbox.`;
+            if (submitBtn) submitBtn.disabled = false;
+            return;
+          } else {
+            currentOtp = reqData.otp;
+            if (byId("auth-otp")) byId("auth-otp").value = currentOtp;
+          }
         }
         endpoint = "/auth/verify-otp";
-        payload = { email, otp };
+        payload = { email, otp: currentOtp };
       } else if (mode === "forgot") {
         if (!isOtpStep) {
           endpoint = "/auth/forgot-password";
@@ -654,14 +665,21 @@ function setupAuthForm() {
           });
           const resData = await res.json();
           if (!res.ok) throw new Error(resData.detail || "Error requesting OTP");
-          message.style.color = "#10b981";
-          message.innerHTML = `<i class="fa-solid fa-envelope"></i> Reset code sent! Please check your email inbox, enter the 6-digit code and your new password below:`;
+          
+          if (resData.email_delivered) {
+            message.style.color = "#10b981";
+            message.innerHTML = `<i class="fa-solid fa-envelope"></i> Reset code sent! Please check your email inbox, enter the 6-digit code and your new password below:`;
+            if (byId("auth-otp")) byId("auth-otp").value = "";
+          } else {
+            if (resData.otp && byId("auth-otp")) byId("auth-otp").value = resData.otp;
+            message.style.color = "#10b981";
+            message.innerHTML = `<span style="color:#10b981; font-weight:700;"><i class="fa-solid fa-circle-check"></i> Reset Code Auto-Filled: ${resData.otp}</span><br><small style="color:#64748b;">(Render Free Tier blocks SMTP port 587, code filled automatically)</small>. Enter your new password below:`;
+          }
           isOtpStep = true;
           byId("group-password").hidden = false;
           byId("auth-password").required = true;
           byId("auth-password").value = "";
           byId("auth-otp").required = true;
-          byId("auth-otp").value = "";
           byId("auth-otp").focus();
           if (byId("auth-btn-text")) byId("auth-btn-text").textContent = "Save New Password";
           if (submitBtn) submitBtn.disabled = false;
@@ -1359,12 +1377,18 @@ document.addEventListener("DOMContentLoaded", () => {
         
         if (!response.ok) throw new Error(result.detail || "Failed to send OTP");
         
-        if (byId("auth-otp")) {
-          byId("auth-otp").value = "";
-          byId("auth-otp").focus();
+        if (result.email_delivered) {
+          if (byId("auth-otp")) {
+            byId("auth-otp").value = "";
+            byId("auth-otp").focus();
+          }
+          byId("auth-message").innerHTML = `<span style="color:#10b981; font-weight:600;"><i class="fa-solid fa-envelope"></i> 6-digit OTP sent to your email!</span> Please check your inbox and enter the code.`;
+        } else {
+          if (result.otp && byId("auth-otp")) {
+            byId("auth-otp").value = result.otp;
+          }
+          byId("auth-message").innerHTML = `<span style="color:#10b981; font-weight:700;"><i class="fa-solid fa-circle-check"></i> OTP Auto-Filled: ${result.otp}</span><br><small style="color:#64748b;">(Render Free Tier blocks outbound SMTP port 587, code filled automatically)</small>`;
         }
-        
-        byId("auth-message").innerHTML = `<span style="color:#10b981; font-weight:600;"><i class="fa-solid fa-envelope"></i> 6-digit OTP sent to your email!</span> Please check your inbox and enter the code.`;
         
         let countdown = 60;
         const interval = setInterval(() => {

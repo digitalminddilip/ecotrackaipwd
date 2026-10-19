@@ -73,50 +73,63 @@ def send_otp_email(recipient: str, otp: str) -> str:
     resend_api_key = os.getenv("RESEND_API_KEY")
     if resend_api_key:
         try:
-            import urllib.request
-            req = urllib.request.Request(
+            import requests
+            api_key = resend_api_key.strip().strip('"').strip("'")
+            resp = requests.post(
                 "https://api.resend.com/emails",
-                data=json.dumps({
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json",
+                    "User-Agent": "CleanConnect/1.0"
+                },
+                json={
                     "from": os.getenv("RESEND_FROM", "CleanConnect <onboarding@resend.dev>"),
                     "to": [recipient],
                     "subject": f"CleanConnect Verification Code: {otp}",
-                    "html": f"<p>Hello,</p><p>Your CleanConnect verification code is: <strong style='font-size:20px; color:#10b981;'>{otp}</strong></p><p>This code will expire in 10 minutes.</p>",
-                }).encode(),
-                headers={
-                    "Authorization": f"Bearer {resend_api_key}",
-                    "Content-Type": "application/json"
+                    "html": f"<p>Hello,</p><p>Your CleanConnect verification code is: <strong style='font-size:24px; color:#10b981;'>{otp}</strong></p><p>This code will expire in 10 minutes.</p><p>Best regards,<br>CleanConnect Team</p>",
                 },
-                method="POST"
+                timeout=10
             )
-            with urllib.request.urlopen(req, timeout=8):
+            if resp.status_code in (200, 201):
                 return "email-sent"
+            else:
+                err_msg = resp.text[:200]
+                print(f"[RESEND FAILED {resp.status_code}] {err_msg}")
+                return f"resend-error ({resp.status_code}): {err_msg}"
         except Exception as e:
-            print(f"[RESEND ERROR] {e}")
+            print(f"[RESEND EXCEPTION] {e}")
+            return f"resend-exception: {e}"
 
     # 2. Try Brevo HTTP API (Port 443 - 300 free emails/day - Works on Render Free Tier)
     brevo_api_key = os.getenv("BREVO_API_KEY")
     if brevo_api_key:
         try:
-            import urllib.request
-            req = urllib.request.Request(
+            import requests
+            api_key = brevo_api_key.strip().strip('"').strip("'")
+            resp = requests.post(
                 "https://api.brevo.com/v3/smtp/email",
-                data=json.dumps({
-                    "sender": {"name": "CleanConnect Security", "email": os.getenv("CLEANCONNECT_SMTP_USER", "ecotrackaipwd@gmail.com")},
-                    "to": [{"email": recipient}],
-                    "subject": f"CleanConnect Verification Code: {otp}",
-                    "htmlContent": f"<p>Hello,</p><p>Your CleanConnect verification code is: <strong style='font-size:20px; color:#10b981;'>{otp}</strong></p><p>This code will expire in 10 minutes.</p>",
-                }).encode(),
                 headers={
-                    "api-key": brevo_api_key,
+                    "api-key": api_key,
                     "Content-Type": "application/json",
                     "accept": "application/json"
                 },
-                method="POST"
+                json={
+                    "sender": {"name": "CleanConnect Security", "email": os.getenv("CLEANCONNECT_SMTP_USER", "ecotrackaipwd@gmail.com")},
+                    "to": [{"email": recipient}],
+                    "subject": f"CleanConnect Verification Code: {otp}",
+                    "htmlContent": f"<p>Hello,</p><p>Your CleanConnect verification code is: <strong style='font-size:24px; color:#10b981;'>{otp}</strong></p><p>This code will expire in 10 minutes.</p>",
+                },
+                timeout=10
             )
-            with urllib.request.urlopen(req, timeout=8):
+            if resp.status_code in (200, 201):
                 return "email-sent"
+            else:
+                err_msg = resp.text[:200]
+                print(f"[BREVO FAILED {resp.status_code}] {err_msg}")
+                return f"brevo-error ({resp.status_code}): {err_msg}"
         except Exception as e:
-            print(f"[BREVO ERROR] {e}")
+            print(f"[BREVO EXCEPTION] {e}")
+            return f"brevo-exception: {e}"
 
     # 3. Standard SMTP (Works locally or on paid cloud with open port 587)
     smtp_host = os.getenv("CLEANCONNECT_SMTP_HOST", "smtp.gmail.com")
@@ -145,7 +158,7 @@ def send_otp_email(recipient: str, otp: str) -> str:
         return "email-sent"
     except (OSError, smtplib.SMTPException) as e:
         print(f"\n[SMTP ERROR] Outbound SMTP failed: {e}\n")
-        return "email-failed"
+        return "smtp-port-blocked (Render Free Tier blocks port 587). Please ensure RESEND_API_KEY is configured in Render."
 
 
 def notify_report_created(report_id: str, reporter_id: str) -> dict[str, str]:

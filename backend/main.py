@@ -311,7 +311,7 @@ def request_otp(request: RequestOtpRequest) -> dict[str, str]:
     if send_status != "email-sent":
         raise HTTPException(
             status_code=500,
-            detail="Failed to deliver OTP to your email address. Please make sure RESEND_API_KEY or BREVO_API_KEY is configured in Render Environment Variables."
+            detail=f"Email delivery failed: {send_status}"
         )
     
     return {
@@ -336,7 +336,7 @@ def forgot_password(request: ForgotPasswordRequest) -> dict[str, str]:
     if send_status != "email-sent":
         raise HTTPException(
             status_code=500,
-            detail="Failed to send reset code. Please configure RESEND_API_KEY in Render."
+            detail=f"Reset code delivery failed: {send_status}"
         )
     
     return {

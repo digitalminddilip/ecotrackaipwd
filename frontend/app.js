@@ -529,7 +529,7 @@ function setAuthMode(mode) {
       btnTextNode.textContent = loginOtp ? "Login" : "Send Code";
     if (byId("auth-title")) byId("auth-title").textContent = loginOtp ? "Login with OTP" : "Forgot Password?";
     if (byId("auth-subtitle"))
-      byId("auth-subtitle").textContent = loginOtp ? "We will send a 6-digit OTP to your registered Gmail address." : "Enter your registered email to receive a password reset code.";
+      byId("auth-subtitle").textContent = loginOtp ? "We will send a 6-digit OTP to your registered email address." : "Enter your registered email to receive a password reset code.";
     if (byId("group-otp")) byId("group-otp").hidden = false;
     if (byId("auth-otp")) byId("auth-otp").required = false;
     isOtpStep = false;
@@ -636,21 +636,13 @@ function setupAuthForm() {
         endpoint = "/auth/register";
         payload = { name, email, password };
       } else if (mode === "login_otp") {
-        let currentOtp = otp;
-        if (!currentOtp) {
-          message.textContent = "Requesting OTP...";
-          const reqRes = await fetch(`${API_URL}/auth/request-otp`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email }),
-          });
-          const reqData = await reqRes.json();
-          if (!reqRes.ok) throw new Error(reqData.detail || "Error requesting OTP");
-          currentOtp = reqData.otp || "123456";
-          if (byId("auth-otp")) byId("auth-otp").value = currentOtp;
+        if (!otp) {
+          message.textContent = "Please enter the 6-digit OTP sent to your email address.";
+          if (submitBtn) submitBtn.disabled = false;
+          return;
         }
         endpoint = "/auth/verify-otp";
-        payload = { email, otp: currentOtp };
+        payload = { email, otp };
       } else if (mode === "forgot") {
         if (!isOtpStep) {
           endpoint = "/auth/forgot-password";
@@ -662,22 +654,26 @@ function setupAuthForm() {
           });
           const resData = await res.json();
           if (!res.ok) throw new Error(resData.detail || "Error requesting OTP");
-          if (resData.otp && byId("auth-otp")) {
-            byId("auth-otp").value = resData.otp;
-          }
           message.style.color = "#10b981";
-          message.innerHTML = `<i class="fa-solid fa-circle-check"></i> OTP Auto-Filled: <b>${resData.otp || '123456'}</b>. Now enter your new password below:`;
+          message.innerHTML = `<i class="fa-solid fa-envelope"></i> Reset code sent! Please check your email inbox, enter the 6-digit code and your new password below:`;
           isOtpStep = true;
           byId("group-password").hidden = false;
           byId("auth-password").required = true;
           byId("auth-password").value = "";
           byId("auth-otp").required = true;
+          byId("auth-otp").value = "";
+          byId("auth-otp").focus();
           if (byId("auth-btn-text")) byId("auth-btn-text").textContent = "Save New Password";
           if (submitBtn) submitBtn.disabled = false;
           return;
         } else {
+          if (!otp) {
+            message.textContent = "Please enter the 6-digit code received on your email.";
+            if (submitBtn) submitBtn.disabled = false;
+            return;
+          }
           endpoint = "/auth/reset-password";
-          payload = { email, otp: otp || "123456", new_password: password };
+          payload = { email, otp, new_password: password };
         }
       }
 
@@ -1363,11 +1359,12 @@ document.addEventListener("DOMContentLoaded", () => {
         
         if (!response.ok) throw new Error(result.detail || "Failed to send OTP");
         
-        if (result.otp && byId("auth-otp")) {
-          byId("auth-otp").value = result.otp;
+        if (byId("auth-otp")) {
+          byId("auth-otp").value = "";
+          byId("auth-otp").focus();
         }
         
-        byId("auth-message").innerHTML = `<span style="color:#10b981; font-weight:600;"><i class="fa-solid fa-circle-check"></i> OTP Auto-Filled: ${result.otp || '123456'}</span> (Master code: <b>123456</b>)`;
+        byId("auth-message").innerHTML = `<span style="color:#10b981; font-weight:600;"><i class="fa-solid fa-envelope"></i> 6-digit OTP sent to your email!</span> Please check your inbox and enter the code.`;
         
         let countdown = 60;
         const interval = setInterval(() => {

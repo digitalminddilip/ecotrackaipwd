@@ -308,12 +308,13 @@ def request_otp(request: RequestOtpRequest) -> dict[str, str]:
     otps[email] = {"otp": otp_code, "expires": time.time() + 600}
     
     send_status = send_otp_email(email, otp_code)
+    if send_status == "email-failed":
+        raise HTTPException(status_code=500, detail="Failed to deliver OTP to this email address. Please check your email spelling.")
     
     return {
         "status": "otp_sent",
         "email": email,
-        "detail": send_status,
-        "otp": otp_code,
+        "detail": "A 6-digit OTP has been sent to your email address.",
     }
 
 
@@ -333,12 +334,13 @@ def forgot_password(request: ForgotPasswordRequest) -> dict[str, str]:
     otps[email] = {"otp": otp_code, "expires": time.time() + 600}
     
     send_status = send_otp_email(email, otp_code)
+    if send_status == "email-failed":
+        raise HTTPException(status_code=500, detail="Failed to deliver reset code to this email address.")
     
     return {
         "status": "otp_sent",
         "email": email,
-        "detail": send_status,
-        "otp": otp_code,
+        "detail": "Password reset code sent to your email address.",
     }
 
 
@@ -349,18 +351,16 @@ def verify_otp(request: VerifyOtpRequest) -> dict[str, str]:
     stored_otp_data = otps.get(email)
     entered_otp = request.otp.strip()
     
-    is_master = (entered_otp == "123456")
-    if not is_master:
-        if not stored_otp_data:
-            raise HTTPException(status_code=401, detail="No OTP requested or OTP expired")
-            
-        if time.time() > stored_otp_data["expires"]:
-            if email in otps:
-                del otps[email]
-            raise HTTPException(status_code=401, detail="OTP expired")
-            
-        if entered_otp != stored_otp_data["otp"]:
-            raise HTTPException(status_code=401, detail="Invalid OTP")
+    if not stored_otp_data:
+        raise HTTPException(status_code=401, detail="No OTP requested or OTP has expired. Please request a new OTP.")
+        
+    if time.time() > stored_otp_data["expires"]:
+        if email in otps:
+            del otps[email]
+        raise HTTPException(status_code=401, detail="OTP has expired. Please request a new OTP.")
+        
+    if entered_otp != stored_otp_data["otp"]:
+        raise HTTPException(status_code=401, detail="Invalid OTP code. Please check your email inbox and enter the correct code.")
         
     if email in otps:
         del otps[email]
@@ -387,18 +387,16 @@ def reset_password(request: ResetPasswordRequest) -> dict[str, str]:
     stored_otp_data = otps.get(email)
     entered_otp = request.otp.strip()
     
-    is_master = (entered_otp == "123456")
-    if not is_master:
-        if not stored_otp_data:
-            raise HTTPException(status_code=401, detail="No OTP requested or OTP expired")
-            
-        if time.time() > stored_otp_data["expires"]:
-            if email in otps:
-                del otps[email]
-            raise HTTPException(status_code=401, detail="OTP expired")
-            
-        if entered_otp != stored_otp_data["otp"]:
-            raise HTTPException(status_code=401, detail="Invalid OTP")
+    if not stored_otp_data:
+        raise HTTPException(status_code=401, detail="No reset code requested or code has expired. Please request a new code.")
+        
+    if time.time() > stored_otp_data["expires"]:
+        if email in otps:
+            del otps[email]
+        raise HTTPException(status_code=401, detail="Reset code has expired. Please request a new code.")
+        
+    if entered_otp != stored_otp_data["otp"]:
+        raise HTTPException(status_code=401, detail="Invalid verification code. Please check your email.")
         
     if email in otps:
         del otps[email]

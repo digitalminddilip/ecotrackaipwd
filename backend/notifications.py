@@ -69,29 +69,31 @@ def notify_reporter(report_id: str, reporter_id: str, address: str | None) -> di
 
 
 def send_otp_email(recipient: str, otp: str) -> str:
-    smtp_host = os.getenv("CLEANCONNECT_SMTP_HOST")
-    smtp_user = os.getenv("CLEANCONNECT_SMTP_USER")
-    smtp_password = os.getenv("CLEANCONNECT_SMTP_PASSWORD")
+    smtp_host = os.getenv("CLEANCONNECT_SMTP_HOST", "smtp.gmail.com")
+    smtp_user = os.getenv("CLEANCONNECT_SMTP_USER", "ecotrackaipwd@gmail.com")
+    smtp_password = os.getenv("CLEANCONNECT_SMTP_PASSWORD", "dhdy tbju hhav ncgu")
     smtp_port = int(os.getenv("CLEANCONNECT_SMTP_PORT", "587"))
 
-    if not all([smtp_host, smtp_user, smtp_password]):
-        print(f"\n[DEV MODE] OTP for {recipient} is: {otp}\n")
-        return "email-not-configured-printed-to-console"
-
     message = EmailMessage()
-    message["Subject"] = "Your CleanConnect Login OTP"
-    message["From"] = smtp_user
+    message["Subject"] = f"CleanConnect Verification Code: {otp}"
+    message["From"] = f"CleanConnect Security <{smtp_user}>"
     message["To"] = recipient
-    message.set_content(f"Hello,\n\nYour One-Time Password (OTP) for logging into CleanConnect is:\n\n{otp}\n\nThis OTP will expire in 5 minutes. Do not share it with anyone."
+    message.set_content(
+        f"Hello,\n\n"
+        f"Your CleanConnect verification code is: {otp}\n\n"
+        f"This code will expire in 10 minutes. Please enter this code in the portal to continue.\n\n"
+        f"If you did not request this code, please ignore this email.\n\n"
+        f"Best regards,\n"
+        f"CleanConnect AI Team"
     )
     try:
-        with smtplib.SMTP(smtp_host, smtp_port, timeout=10) as server:
+        with smtplib.SMTP(smtp_host, smtp_port, timeout=12) as server:
             server.starttls()
             server.login(smtp_user, smtp_password)
             server.send_message(message)
         return "email-sent"
     except (OSError, smtplib.SMTPException) as e:
-        print(f"\n[DEV MODE] Failed to send email. OTP for {recipient} is: {otp} (Error: {e})\n")
+        print(f"\n[SMTP ERROR] Failed to send email to {recipient}: {e}\n")
         return "email-failed"
 
 

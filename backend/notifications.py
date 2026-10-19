@@ -69,6 +69,56 @@ def notify_reporter(report_id: str, reporter_id: str, address: str | None) -> di
 
 
 def send_otp_email(recipient: str, otp: str) -> str:
+    # 1. Try Resend HTTP API (Port 443 - Works on Render Free Tier)
+    resend_api_key = os.getenv("RESEND_API_KEY")
+    if resend_api_key:
+        try:
+            import urllib.request
+            req = urllib.request.Request(
+                "https://api.resend.com/emails",
+                data=json.dumps({
+                    "from": os.getenv("RESEND_FROM", "CleanConnect <onboarding@resend.dev>"),
+                    "to": [recipient],
+                    "subject": f"CleanConnect Verification Code: {otp}",
+                    "html": f"<p>Hello,</p><p>Your CleanConnect verification code is: <strong style='font-size:20px; color:#10b981;'>{otp}</strong></p><p>This code will expire in 10 minutes.</p>",
+                }).encode(),
+                headers={
+                    "Authorization": f"Bearer {resend_api_key}",
+                    "Content-Type": "application/json"
+                },
+                method="POST"
+            )
+            with urllib.request.urlopen(req, timeout=8):
+                return "email-sent"
+        except Exception as e:
+            print(f"[RESEND ERROR] {e}")
+
+    # 2. Try Brevo HTTP API (Port 443 - 300 free emails/day - Works on Render Free Tier)
+    brevo_api_key = os.getenv("BREVO_API_KEY")
+    if brevo_api_key:
+        try:
+            import urllib.request
+            req = urllib.request.Request(
+                "https://api.brevo.com/v3/smtp/email",
+                data=json.dumps({
+                    "sender": {"name": "CleanConnect Security", "email": os.getenv("CLEANCONNECT_SMTP_USER", "ecotrackaipwd@gmail.com")},
+                    "to": [{"email": recipient}],
+                    "subject": f"CleanConnect Verification Code: {otp}",
+                    "htmlContent": f"<p>Hello,</p><p>Your CleanConnect verification code is: <strong style='font-size:20px; color:#10b981;'>{otp}</strong></p><p>This code will expire in 10 minutes.</p>",
+                }).encode(),
+                headers={
+                    "api-key": brevo_api_key,
+                    "Content-Type": "application/json",
+                    "accept": "application/json"
+                },
+                method="POST"
+            )
+            with urllib.request.urlopen(req, timeout=8):
+                return "email-sent"
+        except Exception as e:
+            print(f"[BREVO ERROR] {e}")
+
+    # 3. Standard SMTP (Works locally or on paid cloud with open port 587)
     smtp_host = os.getenv("CLEANCONNECT_SMTP_HOST", "smtp.gmail.com")
     smtp_user = os.getenv("CLEANCONNECT_SMTP_USER", "ecotrackaipwd@gmail.com")
     smtp_password = os.getenv("CLEANCONNECT_SMTP_PASSWORD", "dhdy tbju hhav ncgu")
@@ -86,39 +136,15 @@ def send_otp_email(recipient: str, otp: str) -> str:
         f"Best regards,\n"
         f"CleanConnect AI Team"
     )
-    # Support HTTPS email delivery (Port 443 - works on Render Free Tier)
-    resend_api_key = os.getenv("RESEND_API_KEY")
-    if resend_api_key:
-        try:
-            import urllib.request
-            req = urllib.request.Request(
-                "https://api.resend.com/emails",
-                data=json.dumps({
-                    "from": "CleanConnect <onboarding@resend.dev>",
-                    "to": [recipient],
-                    "subject": f"CleanConnect Verification Code: {otp}",
-                    "text": f"Your CleanConnect verification code is: {otp}\n\nThis code will expire in 10 minutes.",
-                }).encode(),
-                headers={
-                    "Authorization": f"Bearer {resend_api_key}",
-                    "Content-Type": "application/json"
-                },
-                method="POST"
-            )
-            with urllib.request.urlopen(req, timeout=5):
-                return "email-sent"
-        except Exception as e:
-            print(f"[RESEND ERROR] {e}")
 
     try:
-        # Port 587 with fast 3-second timeout so requests don't hang when cloud blocks SMTP
-        with smtplib.SMTP(smtp_host, smtp_port, timeout=3) as server:
+        with smtplib.SMTP(smtp_host, smtp_port, timeout=4) as server:
             server.starttls()
             server.login(smtp_user, smtp_password)
             server.send_message(message)
         return "email-sent"
     except (OSError, smtplib.SMTPException) as e:
-        print(f"\n[SMTP ERROR] Outbound SMTP port blocked on host ({e}). Falling back to in-app OTP.\n")
+        print(f"\n[SMTP ERROR] Outbound SMTP failed: {e}\n")
         return "email-failed"
 
 

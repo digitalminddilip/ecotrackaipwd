@@ -293,7 +293,7 @@ def google_login(request: GoogleLoginRequest) -> dict[str, str]:
 
 
 @app.post("/auth/request-otp")
-def request_otp(request: RequestOtpRequest) -> dict[str, Any]:
+def request_otp(request: RequestOtpRequest) -> dict[str, str]:
     import uuid
     email = request.email.strip().lower()
     stored_user = find_user_by_email(email)
@@ -308,46 +308,42 @@ def request_otp(request: RequestOtpRequest) -> dict[str, Any]:
     otps[email] = {"otp": otp_code, "expires": time.time() + 600}
     
     send_status = send_otp_email(email, otp_code)
-    delivered = (send_status == "email-sent")
+    if send_status != "email-sent":
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to deliver OTP to your email address. Please make sure RESEND_API_KEY or BREVO_API_KEY is configured in Render Environment Variables."
+        )
     
-    res = {
+    return {
         "status": "otp_sent",
         "email": email,
-        "email_delivered": delivered,
-        "detail": "6-digit OTP sent to your email address." if delivered else "Render Free Tier blocks outbound SMTP port 587. Your generated OTP is provided for testing.",
+        "detail": "6-digit verification code has been sent to your email address.",
     }
-    if not delivered:
-        res["otp"] = otp_code
-    return res
 
 
 @app.post("/auth/forgot-password")
-def forgot_password(request: ForgotPasswordRequest) -> dict[str, Any]:
+def forgot_password(request: ForgotPasswordRequest) -> dict[str, str]:
     import uuid
     email = request.email.strip().lower()
     stored_user = find_user_by_email(email)
     if not stored_user:
-        new_id = f"usr-{uuid.uuid4().hex[:8]}"
-        name = email.split("@")[0].replace(".", " ").title()
-        save_user(new_id, name, email, "citizen", hash_password("Citizen@123"), datetime.utcnow().isoformat())
-        stored_user = find_user_by_email(email)
-        users[new_id] = User(user_id=new_id, name=name, email=email, role=Role.citizen, points=0)
+        raise HTTPException(status_code=404, detail="No registered account found with this email.")
         
     otp_code = "".join(secrets.choice("0123456789") for _ in range(6))
     otps[email] = {"otp": otp_code, "expires": time.time() + 600}
     
     send_status = send_otp_email(email, otp_code)
-    delivered = (send_status == "email-sent")
+    if send_status != "email-sent":
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to send reset code. Please configure RESEND_API_KEY in Render."
+        )
     
-    res = {
+    return {
         "status": "otp_sent",
         "email": email,
-        "email_delivered": delivered,
-        "detail": "Password reset code sent to your email address." if delivered else "Render Free Tier blocks outbound SMTP port 587. Your reset code is provided for testing.",
+        "detail": "Password reset verification code has been sent to your email address.",
     }
-    if not delivered:
-        res["otp"] = otp_code
-    return res
 
 
 @app.post("/auth/verify-otp", response_model=dict[str, str])

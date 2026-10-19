@@ -481,6 +481,12 @@ async function restoreSession() {
       const emailEl = document.getElementById("sidebar-workspace");
       if (nameEl) nameEl.textContent = currentUser.name;
       if (emailEl) emailEl.textContent = "Collector View";
+
+      // Directly open Report Queue view for Collector
+      const queueNavBtn = document.querySelector("#app-wrapper .sidebar-nav a:nth-child(2)");
+      if (typeof window.showAdminView === "function") {
+        window.showAdminView('queue', queueNavBtn);
+      }
     } else {
       // Citizen
       if (byId("app-wrapper")) byId("app-wrapper").hidden = true;

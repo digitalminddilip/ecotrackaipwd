@@ -353,7 +353,7 @@ function renderReports() {
 function actionMarkup(report) {
   if (!currentUser) return "";
   if (currentUser.role === "administrator") {
-    return `<a href="admin/index.html" class="table-action" style="text-decoration:none;">Admin Console</a>`;
+    return `<a href="admin/" class="table-action" style="text-decoration:none;">Admin Console</a>`;
   }
   if (currentUser.role === "collector") {
     if (report.collector_id === currentUser.user_id) {
@@ -468,7 +468,7 @@ async function restoreSession() {
     if (byId("guest-report-msg")) byId("guest-report-msg").style.display = "none";
     
     if (currentUser.role === "administrator") {
-      window.location.href = "admin/index.html";
+      window.location.href = "admin/";
       return;
     }
 

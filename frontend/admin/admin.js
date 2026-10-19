@@ -14,7 +14,7 @@ const authHeaders = () => ({ Authorization: `Bearer ${accessToken}` });
 
 document.addEventListener("DOMContentLoaded", async () => {
   if (!accessToken) {
-    window.location.href = "../index.html";
+    window.location.href = "../";
     return;
   }
 
@@ -26,7 +26,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     
     if (user.role !== "administrator") {
       alert("Access Denied: You must be an administrator to view this page.");
-      window.location.href = "../index.html";
+      window.location.href = "../";
       return;
     }
     
@@ -43,7 +43,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     
   } catch (err) {
     localStorage.removeItem("cleanconnect_token");
-    window.location.href = "../index.html";
+    window.location.href = "../";
   }
 
   // 2. Setup Listeners
@@ -51,7 +51,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   
   byId("logout-btn").onclick = () => {
     localStorage.removeItem("cleanconnect_token");
-    window.location.href = "../index.html";
+    window.location.href = "../";
   };
   
   byId("report-search").addEventListener("input", filterReports);

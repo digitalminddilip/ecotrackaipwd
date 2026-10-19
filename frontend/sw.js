@@ -1,7 +1,6 @@
 const CACHE_NAME = "cleanconnect-v1";
 const ASSETS = [
   "/",
-  "/index.html",
   "/styles.css",
   "/citizen.css",
   "/app.js",

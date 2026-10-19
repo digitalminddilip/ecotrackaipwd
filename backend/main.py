@@ -23,7 +23,7 @@ from pydantic import BaseModel, Field
 from .ai_analyzer import analyze_image
 from .image_comparison import compare_image_bytes
 from .auth import create_token, decode_token, hash_password, verify_password
-from .database import find_user_by_email, init_db, load_reports, load_users, save_report, save_user, update_user_password, get_report_image_data, get_report_evidence_data, update_user_picture
+from .database import find_user_by_email, find_user_by_id, init_db, load_reports, load_users, save_report, save_user, update_user_password, get_report_image_data, get_report_evidence_data, update_user_picture, add_user_points
 from .location_service import google_geolocate, google_reverse_geocode
 from .ip_location import lookup_ip_location
 from .notifications import notify_report_created, notify_reporter, send_otp_email, notify_report_rejected
@@ -53,6 +53,7 @@ class User(BaseModel):
     email: str
     role: Role
     picture: str = ""
+    points: int = 0
 
 
 class Report(BaseModel):
@@ -151,7 +152,12 @@ init_db()
 
 for stored_user in load_users():
     users[stored_user["user_id"]] = User(
-        user_id=stored_user["user_id"], name=stored_user["name"], email=stored_user.get("email", ""), role=stored_user["role"], picture=stored_user.get("picture", "") or ""
+        user_id=stored_user["user_id"],
+        name=stored_user["name"],
+        email=stored_user.get("email", ""),
+        role=stored_user["role"],
+        picture=stored_user.get("picture", "") or "",
+        points=stored_user.get("points", 0) or 0,
     )
 reports.update(load_reports())
 
@@ -159,7 +165,19 @@ reports.update(load_reports())
 def get_user(user_id: str) -> User:
     user = users.get(user_id)
     if user is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unknown user")
+        stored = find_user_by_id(user_id)
+        if stored:
+            user = User(
+                user_id=stored["user_id"],
+                name=stored["name"],
+                email=stored.get("email", ""),
+                role=stored["role"],
+                picture=stored.get("picture", "") or "",
+                points=stored.get("points", 0) or 0,
+            )
+            users[user_id] = user
+        else:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unknown user")
     return user
 
 
@@ -375,9 +393,12 @@ def current_user(authorization: Optional[str] = Header(None)) -> User:
     if not authorization or not authorization.lower().startswith("bearer "):
         raise HTTPException(status_code=401, detail="Bearer token is required")
     payload = decode_token(authorization[7:].strip())
-    if not payload or payload.get("sub") not in users:
+    if not payload:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
-    return users[payload["sub"]]
+    sub = payload.get("sub")
+    if not sub:
+        raise HTTPException(status_code=401, detail="Invalid token payload")
+    return get_user(sub)
 
 
 def authenticated_user(authorization: Optional[str]) -> User:
@@ -432,6 +453,13 @@ async def create_report(
     return report
 
 
+@app.get('/reports/community', response_model=list[Report])
+def community_reports():
+    result = list(reports.values())
+    result.sort(key=lambda r: r.timestamp, reverse=True)
+    return result
+
+
 @app.get("/reports/{report_id}", response_model=Report)
 def report_detail(report_id: str, authorization: Optional[str] = Header(None)) -> Report:
     user = authenticated_user(authorization)
@@ -449,16 +477,10 @@ def list_collectors(authorization: Optional[str] = Header(None)) -> list[User]:
 @app.get("/users/{user_id}", response_model=User)
 def get_user_by_id(user_id: str, authorization: Optional[str] = Header(None)) -> User:
     require_role(authenticated_user(authorization).user_id, Role.administrator, Role.collector)
-    if user_id not in users:
+    try:
+        return get_user(user_id)
+    except HTTPException:
         raise HTTPException(status_code=404, detail="User not found")
-    return users[user_id]
-
-
-@app.get('/reports/community', response_model=list[Report])
-def community_reports():
-    result = list(reports.values())
-    result.sort(key=lambda r: r.timestamp, reverse=True)
-    return result
 
 @app.get('/reports', response_model=list[Report])
 def list_reports(
@@ -521,10 +543,10 @@ async def submit_evidence(
     report = get_report(report_id)
     user = authenticated_user(authorization)
     require_role(user.user_id, Role.collector)
-    if report.collector_id != user.user_id or report.status not in {ReportStatus.collected, ReportStatus.rejected}:
+    if report.collector_id != user.user_id or report.status not in {ReportStatus.collected, ReportStatus.rejected, ReportStatus.in_progress}:
         raise HTTPException(status_code=400, detail="Report is not ready for evidence submission")
     
-    if report.status == ReportStatus.rejected:
+    if report.status in (ReportStatus.rejected, ReportStatus.in_progress):
         report.status = ReportStatus.collected
         
     evidence_bytes = None
@@ -551,6 +573,7 @@ def verify_report(report_id: str, approved: bool, authorization: Optional[str] =
     report.status = ReportStatus.verified if approved else ReportStatus.rejected
     save_report(report)
     if approved:
+        add_user_points(report.user_id, 10)
         notify_reporter(report.report_id, report.user_id, None)
     else:
         notify_report_rejected(report.report_id, report.user_id, report.collector_id, user.email)

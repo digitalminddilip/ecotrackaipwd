@@ -1,6 +1,7 @@
 const hostname = window.location.hostname;
 const isLocal = !hostname || hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.') || hostname.startsWith('10.');
-const API_URL = isLocal ? `http://${hostname || 'localhost'}:8000` : "";
+const API_URL = isLocal ? `http://${hostname || 'localhost'}:8000` : (window.BACKEND_API_URL || localStorage.getItem("cleanconnect_api_url") || "");
+window.API_URL = API_URL;
 
 let reports = [];
 let accessToken = localStorage.getItem("cleanconnect_token");

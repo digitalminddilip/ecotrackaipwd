@@ -209,7 +209,8 @@
     if (token) headers["Authorization"] = `Bearer ${token}`;
 
     try {
-      const response = await fetch("/api/voice-assistant", {
+      const apiBase = window.API_URL || "";
+      const response = await fetch(`${apiBase}/api/voice-assistant`, {
         method: "POST",
         headers: headers,
         body: JSON.stringify({ query: query })

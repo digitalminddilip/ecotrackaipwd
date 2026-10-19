@@ -293,7 +293,7 @@ def google_login(request: GoogleLoginRequest) -> dict[str, str]:
 
 
 @app.post("/auth/request-otp")
-def request_otp(request: RequestOtpRequest) -> dict[str, str]:
+def request_otp(request: RequestOtpRequest) -> dict[str, Any]:
     import uuid
     email = request.email.strip().lower()
     stored_user = find_user_by_email(email)
@@ -308,21 +308,21 @@ def request_otp(request: RequestOtpRequest) -> dict[str, str]:
     otps[email] = {"otp": otp_code, "expires": time.time() + 600}
     
     send_status = send_otp_email(email, otp_code)
-    if send_status != "email-sent":
-        raise HTTPException(
-            status_code=500,
-            detail=f"Email delivery failed: {send_status}"
-        )
+    delivered = (send_status == "email-sent")
     
-    return {
+    res = {
         "status": "otp_sent",
         "email": email,
-        "detail": "6-digit verification code has been sent to your email address.",
+        "email_delivered": delivered,
+        "detail": "6-digit verification code has been sent to your email inbox." if delivered else "Sandbox mode: Real emails are delivered to verified accounts. Your test code is provided below.",
     }
+    if not delivered:
+        res["otp"] = otp_code
+    return res
 
 
 @app.post("/auth/forgot-password")
-def forgot_password(request: ForgotPasswordRequest) -> dict[str, str]:
+def forgot_password(request: ForgotPasswordRequest) -> dict[str, Any]:
     import uuid
     email = request.email.strip().lower()
     stored_user = find_user_by_email(email)
@@ -333,17 +333,17 @@ def forgot_password(request: ForgotPasswordRequest) -> dict[str, str]:
     otps[email] = {"otp": otp_code, "expires": time.time() + 600}
     
     send_status = send_otp_email(email, otp_code)
-    if send_status != "email-sent":
-        raise HTTPException(
-            status_code=500,
-            detail=f"Reset code delivery failed: {send_status}"
-        )
+    delivered = (send_status == "email-sent")
     
-    return {
+    res = {
         "status": "otp_sent",
         "email": email,
-        "detail": "Password reset verification code has been sent to your email address.",
+        "email_delivered": delivered,
+        "detail": "Password reset code sent to your email." if delivered else "Sandbox mode: Reset code provided for testing.",
     }
+    if not delivered:
+        res["otp"] = otp_code
+    return res
 
 
 @app.post("/auth/verify-otp", response_model=dict[str, str])

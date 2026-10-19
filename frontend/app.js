@@ -655,14 +655,25 @@ function setupAuthForm() {
           const resData = await res.json();
           if (!res.ok) throw new Error(resData.detail || "Error requesting reset code");
           
-          message.style.color = "#10b981";
-          message.innerHTML = `<i class="fa-solid fa-envelope"></i> Reset code sent! Please check your email inbox, enter the 6-digit code and your new password below:`;
+          if (resData.email_delivered) {
+            message.style.color = "#10b981";
+            message.innerHTML = `<i class="fa-solid fa-envelope"></i> Reset code sent! Please check your email inbox, enter the 6-digit code and your new password below:`;
+            if (byId("auth-otp")) byId("auth-otp").value = "";
+          } else {
+            if (resData.otp && byId("auth-otp")) byId("auth-otp").value = resData.otp;
+            message.style.color = "#10b981";
+            message.innerHTML = `
+              <div style="font-size:0.8rem; color:#f59e0b; margin-bottom:4px; line-height:1.3;">
+                <i class="fa-solid fa-circle-info"></i> <b>Free Sandbox Notice:</b> Real emails deliver to <b>digitalminddilip0906@gmail.com</b>.
+              </div>
+              <span style="color:#10b981; font-weight:700;"><i class="fa-solid fa-circle-check"></i> Test Reset Code Auto-Filled: ${resData.otp}</span><br>Enter your new password below:
+            `;
+          }
           isOtpStep = true;
           byId("group-password").hidden = false;
           byId("auth-password").required = true;
           byId("auth-password").value = "";
           byId("auth-otp").required = true;
-          byId("auth-otp").value = "";
           byId("auth-otp").focus();
           if (byId("auth-btn-text")) byId("auth-btn-text").textContent = "Save New Password";
           if (submitBtn) submitBtn.disabled = false;
@@ -1360,11 +1371,24 @@ document.addEventListener("DOMContentLoaded", () => {
         
         if (!response.ok) throw new Error(result.detail || "Failed to send OTP");
         
-        if (byId("auth-otp")) {
-          byId("auth-otp").value = "";
-          byId("auth-otp").focus();
+        if (result.email_delivered) {
+          if (byId("auth-otp")) {
+            byId("auth-otp").value = "";
+            byId("auth-otp").focus();
+          }
+          byId("auth-message").innerHTML = `<span style="color:#10b981; font-weight:600;"><i class="fa-solid fa-envelope"></i> 6-digit OTP sent to your email!</span> Please check your inbox and enter the code.`;
+        } else {
+          if (byId("auth-otp") && result.otp) {
+            byId("auth-otp").value = result.otp;
+            byId("auth-otp").focus();
+          }
+          byId("auth-message").innerHTML = `
+            <div style="font-size:0.8rem; color:#f59e0b; margin-bottom:4px; line-height:1.3;">
+              <i class="fa-solid fa-circle-info"></i> <b>Resend Free Sandbox:</b> Real emails deliver to <b>digitalminddilip0906@gmail.com</b>.
+            </div>
+            <span style="color:#10b981; font-weight:700;"><i class="fa-solid fa-circle-check"></i> Test OTP Auto-Filled: ${result.otp || ""}</span>
+          `;
         }
-        byId("auth-message").innerHTML = `<span style="color:#10b981; font-weight:600;"><i class="fa-solid fa-envelope"></i> 6-digit OTP sent to your email!</span> Please check your inbox and enter the code.`;
         
         let countdown = 60;
         const interval = setInterval(() => {

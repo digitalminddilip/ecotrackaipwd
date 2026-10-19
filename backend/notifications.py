@@ -95,10 +95,8 @@ def send_otp_email(recipient: str, otp: str) -> str:
             else:
                 err_msg = resp.text[:200]
                 print(f"[RESEND FAILED {resp.status_code}] {err_msg}")
-                return f"resend-error ({resp.status_code}): {err_msg}"
         except Exception as e:
             print(f"[RESEND EXCEPTION] {e}")
-            return f"resend-exception: {e}"
 
     # 2. Try Brevo HTTP API (Port 443 - 300 free emails/day - Works on Render Free Tier)
     brevo_api_key = os.getenv("BREVO_API_KEY")
@@ -114,7 +112,7 @@ def send_otp_email(recipient: str, otp: str) -> str:
                     "accept": "application/json"
                 },
                 json={
-                    "sender": {"name": "CleanConnect Security", "email": os.getenv("CLEANCONNECT_SMTP_USER", "ecotrackaipwd@gmail.com")},
+                    "sender": {"name": "CleanConnect Security", "email": os.getenv("CLEANCONNECT_SMTP_USER", "digitalminddilip0906@gmail.com")},
                     "to": [{"email": recipient}],
                     "subject": f"CleanConnect Verification Code: {otp}",
                     "htmlContent": f"<p>Hello,</p><p>Your CleanConnect verification code is: <strong style='font-size:24px; color:#10b981;'>{otp}</strong></p><p>This code will expire in 10 minutes.</p>",
@@ -126,10 +124,10 @@ def send_otp_email(recipient: str, otp: str) -> str:
             else:
                 err_msg = resp.text[:200]
                 print(f"[BREVO FAILED {resp.status_code}] {err_msg}")
-                return f"brevo-error ({resp.status_code}): {err_msg}"
         except Exception as e:
             print(f"[BREVO EXCEPTION] {e}")
-            return f"brevo-exception: {e}"
+
+    return "email-not-sent"
 
     # 3. Standard SMTP (Works locally or on paid cloud with open port 587)
     smtp_host = os.getenv("CLEANCONNECT_SMTP_HOST", "smtp.gmail.com")

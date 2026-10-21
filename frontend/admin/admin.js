@@ -3,6 +3,17 @@ const isLocal = !hostname || hostname === 'localhost' || hostname === '127.0.0.1
 const API_URL = isLocal ? `http://${hostname || 'localhost'}:8000` : (window.BACKEND_API_URL || localStorage.getItem("cleanconnect_api_url") || "");
 window.API_URL = API_URL;
 
+try {
+  if (!sessionStorage.getItem("cleanconnect_visited")) {
+    sessionStorage.setItem("cleanconnect_visited", "true");
+    fetch(`${API_URL}/api/track-visit`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ path: window.location.pathname || "/admin/" })
+    }).catch(() => {});
+  }
+} catch (e) {}
+
 let accessToken = localStorage.getItem("cleanconnect_token");
 let allReports = [];
 let allCollectors = [];
@@ -125,6 +136,15 @@ async function fetchAnalytics() {
     byId("stat-ai").textContent = aiTotal;
     
     renderChart(catCounts);
+
+    if (data.user_stats) {
+      if (byId("stat-citizens")) byId("stat-citizens").textContent = data.user_stats.citizens ?? 0;
+      if (byId("stat-collectors")) byId("stat-collectors").textContent = data.user_stats.collectors ?? 0;
+      if (byId("stat-admins")) byId("stat-admins").textContent = data.user_stats.administrators ?? 0;
+      if (byId("stat-new-citizens")) byId("stat-new-citizens").textContent = data.user_stats.new_citizens_today ?? 0;
+      if (byId("stat-visitors")) byId("stat-visitors").textContent = data.user_stats.total_visits ?? 0;
+      if (byId("stat-unique-visitors")) byId("stat-unique-visitors").textContent = `${data.user_stats.unique_visitors ?? 0} unique (${data.user_stats.visits_today ?? 0} today)`;
+    }
   } catch (e) {
     console.error("Failed to load analytics", e);
   }

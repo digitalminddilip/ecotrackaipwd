@@ -3,6 +3,17 @@ const isLocal = !hostname || hostname === 'localhost' || hostname === '127.0.0.1
 const API_URL = isLocal ? `http://${hostname || 'localhost'}:8000` : (window.BACKEND_API_URL || localStorage.getItem("cleanconnect_api_url") || "");
 window.API_URL = API_URL;
 
+try {
+  if (!sessionStorage.getItem("cleanconnect_visited")) {
+    sessionStorage.setItem("cleanconnect_visited", "true");
+    fetch(`${API_URL}/api/track-visit`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ path: window.location.pathname || "/" })
+    }).catch(() => {});
+  }
+} catch (e) {}
+
 let reports = [];
 let accessToken = localStorage.getItem("cleanconnect_token");
 let currentUser = null;

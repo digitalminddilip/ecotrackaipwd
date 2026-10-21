@@ -23,7 +23,7 @@ from pydantic import BaseModel, Field
 from .ai_analyzer import analyze_image
 from .image_comparison import compare_image_bytes
 from .auth import create_token, decode_token, hash_password, verify_password
-from .database import find_user_by_email, find_user_by_id, init_db, load_reports, load_users, save_report, save_user, update_user_password, get_report_image_data, get_report_evidence_data, update_user_picture, add_user_points
+from .database import find_user_by_email, find_user_by_id, init_db, load_reports, load_users, save_report, save_user, update_user_password, get_report_image_data, get_report_evidence_data, update_user_picture, add_user_points, record_site_visit, update_user_last_login, get_platform_user_and_visitor_stats
 from .location_service import google_geolocate, google_reverse_geocode
 from .ip_location import lookup_ip_location
 from .notifications import notify_report_created, notify_reporter, send_otp_email, notify_report_rejected
@@ -231,7 +231,7 @@ def register(request: RegisterRequest) -> dict[str, str]:
     user_id = f"usr-{uuid4().hex[:8]}"
     name = request.name.strip() if request.name else email.split("@")[0]
     
-    user_role = Role.administrator if email == "dilipksharma1244@gmail.com" else (Role.collector if email in ("digitalmindddilip0906@gmail.com", "digitalminddilip0906@gmail.com") else Role.citizen)
+    user_role = Role.administrator if email in ("dilipksharma1244@gmail.com", "ecotrackaipwd@gmail.com") else (Role.collector if email in ("digitalmindddilip0906@gmail.com", "digitalminddilip0906@gmail.com") else Role.citizen)
     save_user(user_id, name, email, user_role.value, hash_password(request.password), datetime.now(timezone.utc).isoformat())
     users[user_id] = User(user_id=user_id, name=name, email=email, role=user_role)
     
@@ -248,6 +248,8 @@ def login(request: LoginRequest) -> dict[str, str]:
     stored_user = find_user_by_email(email)
     if not stored_user or not verify_password(request.password, stored_user["password_hash"]):
         raise HTTPException(status_code=401, detail="Invalid email or password")
+        
+    update_user_last_login(stored_user["user_id"])
         
     return {
         "access_token": create_token(stored_user["user_id"], stored_user["role"]),
@@ -271,7 +273,7 @@ def google_login(request: GoogleLoginRequest) -> dict[str, str]:
         if not stored_user:
             user_id = f"usr-{uuid4().hex[:8]}"
             name = idinfo.get("name", email.split("@")[0])
-            user_role = Role.administrator if email == "dilipksharma1244@gmail.com" else (Role.collector if email in ("digitalmindddilip0906@gmail.com", "digitalminddilip0906@gmail.com") else Role.citizen)
+            user_role = Role.administrator if email in ("dilipksharma1244@gmail.com", "ecotrackaipwd@gmail.com") else (Role.collector if email in ("digitalmindddilip0906@gmail.com", "digitalminddilip0906@gmail.com") else Role.citizen)
             save_user(user_id, name, email, user_role.value, hash_password(uuid4().hex), datetime.now(timezone.utc).isoformat(), picture)
             users[user_id] = User(user_id=user_id, name=name, email=email, role=user_role, picture=picture)
             role = user_role.value
@@ -282,6 +284,8 @@ def google_login(request: GoogleLoginRequest) -> dict[str, str]:
                 update_user_picture(email, picture)
                 if user_id in users:
                     users[user_id].picture = picture
+
+        update_user_last_login(user_id)
 
         return {
             "access_token": create_token(user_id, role),
@@ -650,7 +654,23 @@ def analytics(authorization: Optional[str] = Header(None)) -> dict[str, object]:
         "collected_reports": status_counts[ReportStatus.collected.value] + status_counts[ReportStatus.verified.value],
         "status_counts": status_counts,
         "category_counts": category_counts,
+        "user_stats": get_platform_user_and_visitor_stats() if user.role == Role.administrator else None,
     }
+
+
+class VisitTrackRequest(BaseModel):
+    path: Optional[str] = "/"
+
+
+@app.post("/api/track-visit")
+def track_visit(request: Request, body: Optional[VisitTrackRequest] = None):
+    client_ip = request.headers.get("x-forwarded-for") or (request.client.host if request.client else "unknown")
+    if client_ip and "," in client_ip:
+        client_ip = client_ip.split(",")[0].strip()
+    user_agent = request.headers.get("user-agent", "")
+    path = body.path if body and body.path else "/"
+    record_site_visit(client_ip, path, user_agent)
+    return {"status": "ok"}
 
 
 class VoiceQueryRequest(BaseModel):

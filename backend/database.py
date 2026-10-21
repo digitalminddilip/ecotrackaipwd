@@ -1,7 +1,7 @@
 from contextlib import closing
 import sqlite3
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 DB_PATH = os.getenv("CLEANCONNECT_DATABASE", "cleanconnect.db")
@@ -64,9 +64,30 @@ def init_db() -> None:
                 """
             )
 
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS site_visits (
+                    visit_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    ip_address TEXT,
+                    user_agent TEXT,
+                    path TEXT,
+                    timestamp TEXT NOT NULL
+                )
+                """
+            )
+
+            # Ensure last_login column exists in users table
+            cursor.execute("PRAGMA table_info(users)")
+            user_cols = [col["name"] for col in cursor.fetchall()]
+            if "last_login" not in user_cols:
+                try:
+                    cursor.execute("ALTER TABLE users ADD COLUMN last_login TEXT")
+                except Exception:
+                    pass
+
             connection.commit()
             
-            connection.commit()
+           
             
             # Seed or reset admin user to ensure login works for demo
             cursor.execute("SELECT user_id FROM users WHERE email = 'dilipksharma1244@gmail.com'")
@@ -83,6 +104,16 @@ def init_db() -> None:
                 )
             else:
                 cursor.execute("UPDATE users SET password_hash = ? WHERE email = 'dilipksharma1244@gmail.com'", (admin_hash,))
+            cursor.execute("SELECT user_id FROM users WHERE email = 'ecotrackaipwd@gmail.com'")
+            superadmin = cursor.fetchone()
+            if not superadmin:
+                sa_id = f"usr-{uuid.uuid4().hex[:8]}"
+                sa_hash = hash_password("EcoTrack@2026")
+                cursor.execute(
+                    "INSERT INTO users (user_id, name, email, role, password_hash, created_at, points, picture) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                    (sa_id, "EcoTrack Super Admin", "ecotrackaipwd@gmail.com", "administrator", sa_hash, datetime.utcnow().isoformat(), 0, "")
+                )
+
             connection.commit()
 
     except Exception as e:
@@ -307,4 +338,72 @@ def update_user_picture(email: str, picture: str) -> None:
             (picture, email.lower()),
         )
         connection.commit()
+
+def record_site_visit(ip_address: str, path: str = "/", user_agent: str = "") -> None:
+    try:
+        with closing(connect()) as connection, connection:
+            cursor = connection.cursor()
+            cursor.execute(
+                "INSERT INTO site_visits (ip_address, user_agent, path, timestamp) VALUES (?, ?, ?, ?)",
+                (ip_address or "unknown", (user_agent or "")[:250], path[:100], datetime.now(timezone.utc).isoformat()),
+            )
+            connection.commit()
+    except Exception as e:
+        print(f"Error recording visit: {e}")
+
+
+def update_user_last_login(user_id: str) -> None:
+    try:
+        with closing(connect()) as connection, connection:
+            cursor = connection.cursor()
+            cursor.execute(
+                "UPDATE users SET last_login = ? WHERE user_id = ?",
+                (datetime.now(timezone.utc).isoformat(), user_id),
+            )
+            connection.commit()
+    except Exception as e:
+        print(f"Error updating last login: {e}")
+
+
+def get_platform_user_and_visitor_stats() -> dict[str, Any]:
+    today_prefix = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    with closing(connect()) as connection, connection:
+        cursor = connection.cursor()
+        
+        # 1. Accounts count by role
+        cursor.execute("SELECT role, COUNT(*) as count FROM users GROUP BY role")
+        role_counts = {row["role"]: row["count"] for row in cursor.fetchall()}
+        citizen_count = role_counts.get("citizen", 0)
+        collector_count = role_counts.get("collector", 0)
+        admin_count = role_counts.get("administrator", 0)
+        total_users = sum(role_counts.values())
+        
+        # 2. Daily new citizens registered today
+        cursor.execute("SELECT COUNT(*) as count FROM users WHERE role = 'citizen' AND substr(created_at, 1, 10) = ?", (today_prefix,))
+        new_citizens_today = cursor.fetchone()["count"]
+        
+        # 3. Daily active citizens (logged in or registered today)
+        cursor.execute("SELECT COUNT(*) as count FROM users WHERE role = 'citizen' AND (substr(last_login, 1, 10) = ? OR substr(created_at, 1, 10) = ?)", (today_prefix, today_prefix))
+        active_citizens_today = cursor.fetchone()["count"]
+
+        # 4. Total and unique website visitors
+        cursor.execute("SELECT COUNT(*) as total_visits, COUNT(DISTINCT ip_address) as unique_visitors FROM site_visits")
+        visit_row = cursor.fetchone()
+        total_visits = visit_row["total_visits"] if visit_row else 0
+        unique_visitors = visit_row["unique_visitors"] if visit_row else 0
+
+        cursor.execute("SELECT COUNT(*) as count FROM site_visits WHERE substr(timestamp, 1, 10) = ?", (today_prefix,))
+        visits_today = cursor.fetchone()["count"]
+        
+        return {
+            "citizens": citizen_count,
+            "collectors": collector_count,
+            "administrators": admin_count,
+            "total_users": total_users,
+            "new_citizens_today": new_citizens_today,
+            "active_citizens_today": active_citizens_today,
+            "total_visits": total_visits,
+            "unique_visitors": unique_visitors,
+            "visits_today": visits_today,
+        }
 

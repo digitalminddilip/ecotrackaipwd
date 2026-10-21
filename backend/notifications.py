@@ -187,7 +187,7 @@ def notify_report_created(report_id: str, reporter_id: str) -> dict[str, str]:
     admin_message = EmailMessage()
     admin_message["Subject"] = f"CleanConnect: New Report {report_id} Submitted"
     admin_message["From"] = smtp_user
-    admin_message["To"] = "dilipksharma1244@gmail.com"
+    admin_message["To"] = "ecotrackaipwd@gmail.com, dilipksharma1244@gmail.com"
     admin_message.set_content(
         f"Hello Admin,\n\nA new report has been submitted by {reporter_email} with Tracking Reference Number: {report_id}.\n\nPlease check the dashboard for more details.\n\nBest,\nThe CleanConnect System"
     )

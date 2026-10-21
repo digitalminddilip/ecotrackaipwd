@@ -314,6 +314,16 @@ function renderAnalytics(data) {
   }
 }
 
+function escapeHtml(str) {
+  if (!str) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 function renderReports() {
   const searchEl = byId("search");
   const filterEl = byId("status-filter");
@@ -329,30 +339,108 @@ function renderReports() {
     return matchesSearch && matchesStatus;
   });
 
+  const countEl = byId("map-count");
+  if (countEl) countEl.textContent = `${visible.length} visible`;
+
   const body = byId("reports-body");
   if (!body) return;
   if (!visible.length) {
-    body.innerHTML = '<tr><td colspan="6" class="empty">No matching reports</td></tr>';
+    body.innerHTML = '<tr><td colspan="5" class="empty" style="text-align: center; padding: 28px; color: #94a3b8;"><i class="fa-solid fa-inbox" style="font-size: 24px; margin-bottom: 8px; display: block;"></i>No matching reports found</td></tr>';
     renderMapMarkers();
     return;
   }
 
   body.innerHTML = visible
-    .map(
-      (report) => `
-      <tr>
-        <td><strong>${report.report_id.slice(0, 8)}...</strong></td>
-        <td>${report.category ? report.category.replace('_', ' ') : 'General'}</td>
-        <td>${new Date(report.timestamp).toLocaleDateString()}</td>
-        <td>${report.ai_result ? report.ai_result.replace('_', ' ') : 'Pending'}</td>
-        <td><span class="status-pill status-${report.status}">${formatStatus(report.status)}</span></td>
-        <td>${actionMarkup(report)}</td>
+    .map((report) => {
+      const photoUrl = `${API_URL}/reports/${report.report_id}/image`;
+      const lat = Number(report.latitude) || 0;
+      const lng = Number(report.longitude) || 0;
+      const mapsDirUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+      const mapsViewUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+      const descSnippet = report.description ? escapeHtml(report.description) : "";
+
+      return `
+      <tr style="border-bottom: 1px solid var(--col-border); vertical-align: middle;">
+        <!-- 1. Report (Photo Thumbnail + ID + Date) -->
+        <td style="padding: 12px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="position: relative; width: 48px; height: 48px; flex-shrink: 0; cursor: pointer;" onclick="openCollectorTaskModal('${report.report_id}')" title="Click to view details and full photo">
+              <img src="${photoUrl}" 
+                   alt="Waste" 
+                   style="width: 48px; height: 48px; object-fit: cover; border-radius: 8px; border: 1px solid #cbd5e1; box-shadow: 0 1px 3px rgba(0,0,0,0.1);"
+                   onerror="this.src='logo.png'" />
+              <div style="position: absolute; bottom: 2px; right: 2px; background: rgba(0,0,0,0.65); color: white; border-radius: 3px; padding: 1px 3px; font-size: 0.6rem; pointer-events: none;">
+                <i class="fa-solid fa-magnifying-glass-plus"></i>
+              </div>
+            </div>
+            <div>
+              <strong style="color: #1e293b; font-family: monospace; font-size: 0.88rem; display: block;">${report.report_id.slice(0, 10)}...</strong>
+              <div style="font-size: 0.74rem; color: #64748b; margin-top: 2px;">
+                <i class="fa-regular fa-calendar" style="margin-right: 3px;"></i>${new Date(report.timestamp).toLocaleDateString()}
+              </div>
+              <button type="button" onclick="openCollectorTaskModal('${report.report_id}')" style="background: none; border: none; padding: 0; color: #2563eb; font-size: 0.74rem; cursor: pointer; text-decoration: underline; font-weight: 500; margin-top: 2px;">
+                <i class="fa-solid fa-eye"></i> Details
+              </button>
+            </div>
+          </div>
+        </td>
+
+        <!-- 2. Category & AI Result -->
+        <td style="padding: 12px;">
+          <div style="font-weight: 600; color: #0f172a; font-size: 0.88rem;">
+            ${report.category ? report.category.replace(/_/g, ' ').toUpperCase() : 'GENERAL WASTE'}
+          </div>
+          <div style="font-size: 0.76rem; color: #64748b; margin-top: 3px;">
+            ${report.ai_result ? `<span style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px; border: 1px solid #e2e8f0;"><i class="fa-solid fa-robot" style="color: #6366f1;"></i> ${report.ai_result}</span>` : '<span style="color: #94a3b8;">Pending AI</span>'}
+          </div>
+        </td>
+
+        <!-- 3. Location (Citizen GPS Coordinates + Citizen Notes + Google Maps Links) -->
+        <td style="padding: 12px; min-width: 250px;">
+          <div style="display: flex; flex-direction: column; gap: 5px;">
+            <!-- Exact Citizen GPS Coordinates -->
+            <div style="display: inline-flex; align-items: center; gap: 6px; font-family: monospace; font-size: 0.88rem; font-weight: 700; color: #0f172a; background: #fef2f2; border: 1px solid #fee2e2; padding: 3px 8px; border-radius: 6px; align-self: flex-start;">
+              <i class="fa-solid fa-location-crosshairs" style="color: #ef4444; font-size: 0.95rem;"></i>
+              <span>GPS: ${lat.toFixed(5)}°, ${lng.toFixed(5)}°</span>
+            </div>
+            
+            <!-- Citizen's Entered Location / Landmark -->
+            ${descSnippet ? `
+              <div style="font-size: 0.8rem; color: #334155; line-height: 1.35; max-width: 280px;" title="${descSnippet}">
+                <i class="fa-solid fa-map-pin" style="color: #3b82f6; margin-right: 4px;"></i>
+                <span style="color: #64748b; font-weight: 500;">Citizen Location:</span> ${descSnippet}
+              </div>
+            ` : ''}
+
+            <!-- Google Maps Links -->
+            <div style="display: flex; gap: 6px; margin-top: 4px; flex-wrap: wrap;">
+              <a href="${mapsDirUrl}" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px; background: #2563eb; color: #ffffff; border-radius: 6px; font-size: 0.78rem; text-decoration: none; font-weight: 600; box-shadow: 0 1px 3px rgba(37,99,235,0.3); transition: background 0.15s ease;" onmouseover="this.style.background='#1d4ed8'" onmouseout="this.style.background='#2563eb'" title="Open Turn-by-Turn Route Navigation in Google Maps">
+                <i class="fa-solid fa-diamond-turn-right"></i> Open Google Map
+              </a>
+              <a href="${mapsViewUrl}" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; gap: 4px; padding: 5px 8px; background: #f8fafc; color: #334155; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.75rem; text-decoration: none; font-weight: 500;" title="Pin Location on Map">
+                <i class="fa-solid fa-map"></i> Pin
+              </a>
+            </div>
+          </div>
+        </td>
+
+        <!-- 4. Status -->
+        <td style="padding: 12px;">
+          <span class="status-pill status-${report.status}">${formatStatus(report.status)}</span>
+        </td>
+
+        <!-- 5. Action -->
+        <td style="padding: 12px;">
+          <div style="display: flex; flex-direction: column; gap: 6px; min-width: 120px;">
+            ${actionMarkup(report)}
+          </div>
+        </td>
       </tr>
-    `
-    )
+    `;
+    })
     .join("");
 
-  body.querySelectorAll(".table-action").forEach((button) =>
+  body.querySelectorAll(".table-action[data-action]").forEach((button) =>
     button.addEventListener("click", () =>
       handleAction(button.dataset.action, button.dataset.id)
     )
@@ -369,22 +457,28 @@ function actionMarkup(report) {
   if (currentUser.role === "collector") {
     if (report.collector_id === currentUser.user_id) {
       if (report.status === "assigned") {
-        return `<button class="table-action" data-action="in_progress" data-id="${report.report_id}">Start Work</button>`;
+        return `<button class="table-action" data-action="in_progress" data-id="${report.report_id}" style="background: #2563eb; color: #ffffff; border: none; font-weight: 600;"><i class="fa-solid fa-play"></i> Start Work</button>`;
       }
       if (report.status === "in_progress") {
-        return `<button class="table-action" data-action="collected" data-id="${report.report_id}">Mark Collected</button>`;
+        return `<button class="table-action" data-action="collected" data-id="${report.report_id}" style="background: #0284c7; color: #ffffff; border: none; font-weight: 600;"><i class="fa-solid fa-check"></i> Mark Collected</button>`;
       }
       if (report.status === "collected" && !report.evidence_reference) {
-        return `<button class="table-action" data-action="evidence" data-id="${report.report_id}">Upload Proof</button>`;
+        return `<button class="table-action" data-action="evidence" data-id="${report.report_id}" style="background: #16a34a; color: #ffffff; border: none; font-weight: 600;"><i class="fa-solid fa-camera"></i> Upload Proof</button>`;
       }
       if (report.status === "rejected") {
-        return `<button class="table-action" data-action="evidence" data-id="${report.report_id}" style="color: #ef4444; border-color: #fca5a5;">Retry Proof</button>`;
+        return `<button class="table-action" data-action="evidence" data-id="${report.report_id}" style="color: #ef4444; border-color: #fca5a5; font-weight: 600;"><i class="fa-solid fa-rotate-right"></i> Retry Proof</button>`;
       }
-      return `<span style="color: #64748b; font-size: 0.85rem;">Assigned to you</span>`;
+      if (report.evidence_reference) {
+        return `<button type="button" class="table-action" onclick="openProofModal('${API_URL}/reports/${report.report_id}/evidence-image', 'Cleaned Proof', '${report.status}')" style="background: #dcfce7; color: #15803d; border: 1px solid #86efac; font-weight: 600;"><i class="fa-solid fa-circle-check"></i> Proof Uploaded</button>`;
+      }
+      if (report.status === "verified") {
+        return `<span style="display: inline-flex; align-items: center; gap: 5px; color: #16a34a; font-size: 0.82rem; font-weight: 600;"><i class="fa-solid fa-circle-check"></i> Cleaned & Verified</span>`;
+      }
+      return `<span style="color: #64748b; font-size: 0.85rem; font-weight: 500;">Assigned to you</span>`;
     }
     return report.collector_id
       ? `<span style="color: #94a3b8; font-size: 0.85rem;">Assigned</span>`
-      : `<button class="table-action" data-action="in_progress" data-id="${report.report_id}">Accept Task</button>`;
+      : `<button class="table-action" data-action="in_progress" data-id="${report.report_id}"><i class="fa-solid fa-hand-holding-hand"></i> Accept Task</button>`;
   }
   return "";
 }
@@ -442,7 +536,7 @@ async function loadDashboard() {
   } catch (error) {
     if (byId("reports-body")) {
       byId("reports-body").innerHTML =
-        '<tr><td colspan="6" class="empty">Unable to load live reports.</td></tr>';
+        '<tr><td colspan="5" class="empty">Unable to load live reports.</td></tr>';
     }
   }
 }
@@ -1465,3 +1559,146 @@ window.setAuthMode = setAuthMode;
 window.openSignIn = openSignIn;
 window.enterGuestMode = enterGuestMode;
 window.byId = byId;
+
+
+// Collector Task Details Modal Functions
+window.openCollectorTaskModal = async function(reportId) {
+  const report = reports.find(r => r.report_id === reportId);
+  if (!report) return;
+
+  const lat = Number(report.latitude) || 0;
+  const lng = Number(report.longitude) || 0;
+  const mapsDirUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+  const mapsViewUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+  const photoUrl = `${API_URL}/reports/${report.report_id}/image`;
+
+  const reportIdEl = byId("col-modal-report-id");
+  if (reportIdEl) reportIdEl.textContent = `Report #${report.report_id}`;
+  
+  const statusBadge = byId("col-modal-status-badge");
+  if (statusBadge) {
+    statusBadge.textContent = formatStatus(report.status);
+    statusBadge.className = `status-pill status-${report.status}`;
+  }
+
+  const photoEl = byId("col-modal-photo");
+  if (photoEl) {
+    photoEl.src = photoUrl;
+    photoEl.onclick = () => openProofModal(photoUrl, `Reported Waste Photo #${report.report_id}`, report.status);
+  }
+
+  const evidenceContainer = byId("col-modal-evidence-container");
+  const evidencePhoto = byId("col-modal-evidence-photo");
+  if (report.evidence_reference) {
+    const evidenceUrl = `${API_URL}/reports/${report.report_id}/evidence-image`;
+    if (evidencePhoto) {
+      evidencePhoto.src = evidenceUrl;
+      evidencePhoto.onclick = () => openProofModal(evidenceUrl, `Cleaned Place Evidence #${report.report_id}`, report.status);
+    }
+    if (evidenceContainer) evidenceContainer.style.display = "block";
+  } else {
+    if (evidenceContainer) evidenceContainer.style.display = "none";
+  }
+
+  const coordsEl = byId("col-modal-coords");
+  if (coordsEl) {
+    coordsEl.innerHTML = `<i class="fa-solid fa-crosshairs" style="color: #ef4444; margin-right: 6px;"></i> Latitude: ${lat.toFixed(6)}, Longitude: ${lng.toFixed(6)}`;
+  }
+
+  const navLink = byId("col-modal-nav-link");
+  if (navLink) navLink.href = mapsDirUrl;
+
+  const viewMapLink = byId("col-modal-view-map-link");
+  if (viewMapLink) viewMapLink.href = mapsViewUrl;
+
+  const addressEl = byId("col-modal-address");
+  if (addressEl) {
+    addressEl.textContent = "Fetching location details...";
+    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`)
+      .then(r => r.json())
+      .then(data => {
+        if (data && data.display_name) {
+          addressEl.innerHTML = `<i class="fa-solid fa-map-pin" style="color: #3b82f6; margin-right: 4px;"></i> ${escapeHtml(data.display_name)}`;
+        } else {
+          addressEl.innerHTML = `<i class="fa-solid fa-map-pin" style="color: #3b82f6; margin-right: 4px;"></i> ${escapeHtml(report.description || 'GPS Location Locked')}`;
+        }
+      })
+      .catch(() => {
+        addressEl.innerHTML = `<i class="fa-solid fa-map-pin" style="color: #3b82f6; margin-right: 4px;"></i> ${escapeHtml(report.description || 'GPS Location Locked')}`;
+      });
+  }
+
+  const catEl = byId("col-modal-category");
+  if (catEl) catEl.textContent = report.category ? report.category.replace(/_/g, ' ').toUpperCase() : "GENERAL WASTE";
+
+  const aiEl = byId("col-modal-ai");
+  if (aiEl) aiEl.textContent = report.ai_result || "Pending AI Analysis";
+
+  const descEl = byId("col-modal-desc");
+  if (descEl) descEl.textContent = report.description || "No citizen description notes provided.";
+
+  const dateEl = byId("col-modal-date");
+  if (dateEl) dateEl.textContent = `Reported: ${new Date(report.timestamp).toLocaleString()}`;
+
+  const reporterEl = byId("col-modal-reporter");
+  if (reporterEl) reporterEl.textContent = `Reporter: ${report.user_id || 'Citizen'}`;
+
+  // Action buttons inside modal
+  const actionContainer = byId("col-modal-action-buttons");
+  if (actionContainer) {
+    actionContainer.innerHTML = "";
+    if (currentUser && currentUser.role === "collector") {
+      if (report.collector_id === currentUser.user_id) {
+        if (report.status === "assigned") {
+          const btn = document.createElement("button");
+          btn.className = "col-btn-primary";
+          btn.innerHTML = `<i class="fa-solid fa-play"></i> Start Work`;
+          btn.onclick = async () => {
+            closeCollectorTaskModal();
+            await handleAction("in_progress", report.report_id);
+          };
+          actionContainer.appendChild(btn);
+        } else if (report.status === "in_progress") {
+          const btn = document.createElement("button");
+          btn.className = "col-btn-primary";
+          btn.style.background = "#0284c7";
+          btn.innerHTML = `<i class="fa-solid fa-check"></i> Mark Collected`;
+          btn.onclick = async () => {
+            closeCollectorTaskModal();
+            await handleAction("collected", report.report_id);
+          };
+          actionContainer.appendChild(btn);
+        } else if (report.status === "collected" && !report.evidence_reference) {
+          const btn = document.createElement("button");
+          btn.className = "col-btn-primary";
+          btn.style.background = "#16a34a";
+          btn.innerHTML = `<i class="fa-solid fa-camera"></i> Upload Proof`;
+          btn.onclick = () => {
+            closeCollectorTaskModal();
+            handleAction("evidence", report.report_id);
+          };
+          actionContainer.appendChild(btn);
+        }
+      } else if (!report.collector_id) {
+        const btn = document.createElement("button");
+        btn.className = "col-btn-primary";
+        btn.innerHTML = `<i class="fa-solid fa-hand-holding-hand"></i> Accept Task`;
+        btn.onclick = async () => {
+          closeCollectorTaskModal();
+          await handleAction("in_progress", report.report_id);
+        };
+        actionContainer.appendChild(btn);
+      }
+    }
+  }
+
+  const modal = byId("collector-task-modal");
+  if (modal) modal.style.display = "flex";
+};
+
+window.closeCollectorTaskModal = function() {
+  const modal = byId("collector-task-modal");
+  if (modal) modal.style.display = "none";
+};
+
+window.openProofModal = openProofModal;

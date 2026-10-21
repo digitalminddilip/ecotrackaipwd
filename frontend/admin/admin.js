@@ -214,6 +214,16 @@ async function fetchCollectors() {
         <td><strong>${col.name}</strong></td>
         <td>${col.email || "No Email"}</td>
         <td><span class="status-badge status-verified">Active</span></td>
+        <td>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <button class="btn-primary" style="padding: 6px 12px; font-size: 0.82rem; display: inline-flex; align-items: center; gap: 6px; border-radius: 6px;" onclick="openEditCollectorModal('${col.user_id}')">
+              <i class="fa-solid fa-pen-to-square"></i> Edit
+            </button>
+            <button class="btn-danger" style="padding: 6px 12px; font-size: 0.82rem; display: inline-flex; align-items: center; gap: 6px; border-radius: 6px; background: #ef4444; color: #ffffff; border: none; cursor: pointer;" onclick="removeCollector('${col.user_id}')">
+              <i class="fa-solid fa-trash"></i> Remove
+            </button>
+          </div>
+        </td>
       `;
       tbody.appendChild(tr);
       
@@ -509,3 +519,158 @@ window.viewDetails = async (reportId) => {
   }
 };
 
+
+
+window.openEditCollectorModal = (userId) => {
+  const col = allCollectors.find(c => c.user_id === userId);
+  if (!col) return;
+  byId("edit-col-id").value = col.user_id;
+  byId("edit-col-name").value = col.name || "";
+  byId("edit-col-email").value = col.email || "";
+  byId("edit-col-password").value = "";
+  byId("edit-col-error").style.display = "none";
+  byId("edit-col-error").textContent = "";
+  openModal("modal-edit-collector");
+};
+
+byId("btn-save-collector").onclick = async () => {
+  const userId = byId("edit-col-id").value;
+  const name = byId("edit-col-name").value.trim();
+  const email = byId("edit-col-email").value.trim();
+  const password = byId("edit-col-password").value.trim();
+  const errEl = byId("edit-col-error");
+
+  if (!name || !email) {
+    errEl.textContent = "Name and email are required.";
+    errEl.style.display = "block";
+    return;
+  }
+
+  const saveBtn = byId("btn-save-collector");
+  saveBtn.disabled = true;
+  saveBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Saving...`;
+
+  try {
+    const payload = { name, email };
+    if (password) payload.password = password;
+
+    const res = await fetch(`${API_URL}/admin/collectors/${userId}`, {
+      method: "PATCH",
+      headers: { ...authHeaders(), "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    if (res.ok) {
+      closeModal("modal-edit-collector");
+      await fetchCollectors();
+    } else {
+      const err = await res.json();
+      errEl.textContent = err.detail || "Failed to update collector details.";
+      errEl.style.display = "block";
+    }
+  } catch (e) {
+    errEl.textContent = "Network error. Please try again.";
+    errEl.style.display = "block";
+  } finally {
+    saveBtn.disabled = false;
+    saveBtn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> Save Changes`;
+  }
+};
+
+
+// --- Add & Remove Collector Handlers ---
+
+window.openAddCollectorModal = () => {
+  byId("add-col-name").value = "";
+  byId("add-col-email").value = "";
+  byId("add-col-password").value = "";
+  const errEl = byId("add-col-error");
+  if (errEl) {
+    errEl.style.display = "none";
+    errEl.textContent = "";
+  }
+  openModal("modal-add-collector");
+};
+
+const openAddBtn = byId("btn-open-add-collector");
+if (openAddBtn) {
+  openAddBtn.onclick = () => openAddCollectorModal();
+}
+
+const saveNewColBtn = byId("btn-save-new-collector");
+if (saveNewColBtn) {
+  saveNewColBtn.onclick = async () => {
+    const name = byId("add-col-name").value.trim();
+    const email = byId("add-col-email").value.trim();
+    const password = byId("add-col-password").value.trim();
+    const errEl = byId("add-col-error");
+
+    if (!name || !email || !password) {
+      errEl.textContent = "All fields (Name, Email, Password) are required.";
+      errEl.style.display = "block";
+      return;
+    }
+
+    if (password.length < 6) {
+      errEl.textContent = "Password must be at least 6 characters long.";
+      errEl.style.display = "block";
+      return;
+    }
+
+    saveNewColBtn.disabled = true;
+    saveNewColBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Adding...`;
+
+    try {
+      const res = await fetch(`${API_URL}/admin/collectors`, {
+        method: "POST",
+        headers: { ...authHeaders(), "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password })
+      });
+
+      if (res.ok) {
+        closeModal("modal-add-collector");
+        await fetchCollectors();
+        await fetchStats();
+      } else {
+        const err = await res.json();
+        errEl.textContent = err.detail || "Failed to add new collector.";
+        errEl.style.display = "block";
+      }
+    } catch (e) {
+      console.error(e);
+      errEl.textContent = "Network error. Please try again.";
+      errEl.style.display = "block";
+    } finally {
+      saveNewColBtn.disabled = false;
+      saveNewColBtn.innerHTML = `<i class="fa-solid fa-check"></i> Add Collector`;
+    }
+  };
+}
+
+window.removeCollector = async (userId) => {
+  const col = allCollectors.find(c => c.user_id === userId);
+  const name = col ? col.name : "this collector";
+  
+  if (!confirm(`Are you sure you want to remove collector "${name}"?\n\nThis will delete the account and unassign any active tasks assigned to them.`)) {
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_URL}/admin/collectors/${userId}`, {
+      method: "DELETE",
+      headers: authHeaders()
+    });
+
+    if (res.ok) {
+      await fetchCollectors();
+      await fetchReports();
+      await fetchStats();
+    } else {
+      const err = await res.json();
+      alert(err.detail || "Failed to remove collector.");
+    }
+  } catch (e) {
+    console.error("Error removing collector", e);
+    alert("Network error while removing collector.");
+  }
+};

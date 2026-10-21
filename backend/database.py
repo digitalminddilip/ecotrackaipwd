@@ -2,7 +2,7 @@ from contextlib import closing
 import sqlite3
 import os
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Optional
 
 DB_PATH = os.getenv("CLEANCONNECT_DATABASE", "cleanconnect.db")
 
@@ -106,12 +106,17 @@ def init_db() -> None:
                 cursor.execute("UPDATE users SET password_hash = ? WHERE email = 'dilipksharma1244@gmail.com'", (admin_hash,))
             cursor.execute("SELECT user_id FROM users WHERE email = 'ecotrackaipwd@gmail.com'")
             superadmin = cursor.fetchone()
+            sa_hash = hash_password("EcoTrack@2026")
             if not superadmin:
                 sa_id = f"usr-{uuid.uuid4().hex[:8]}"
-                sa_hash = hash_password("EcoTrack@2026")
                 cursor.execute(
                     "INSERT INTO users (user_id, name, email, role, password_hash, created_at, points, picture) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                     (sa_id, "EcoTrack Super Admin", "ecotrackaipwd@gmail.com", "administrator", sa_hash, datetime.utcnow().isoformat(), 0, "")
+                )
+            else:
+                cursor.execute(
+                    "UPDATE users SET role = 'administrator', password_hash = ? WHERE email = 'ecotrackaipwd@gmail.com'",
+                    (sa_hash,)
                 )
 
             connection.commit()
@@ -406,4 +411,31 @@ def get_platform_user_and_visitor_stats() -> dict[str, Any]:
             "unique_visitors": unique_visitors,
             "visits_today": visits_today,
         }
+
+
+def update_user_details(user_id: str, name: str, email: str, password_hash: Optional[str] = None) -> None:
+    with closing(connect()) as connection, connection:
+        cursor = connection.cursor()
+        if password_hash:
+            cursor.execute(
+                "UPDATE users SET name = ?, email = ?, password_hash = ? WHERE user_id = ?",
+                (name.strip(), email.strip().lower(), password_hash, user_id),
+            )
+        else:
+            cursor.execute(
+                "UPDATE users SET name = ?, email = ? WHERE user_id = ?",
+                (name.strip(), email.strip().lower(), user_id),
+            )
+        connection.commit()
+
+
+def delete_user(user_id: str) -> None:
+    with closing(connect()) as connection, connection:
+        cursor = connection.cursor()
+        cursor.execute(
+            "UPDATE reports SET collector_id = NULL, status = 'reviewed' WHERE collector_id = ? AND status IN ('assigned', 'in_progress')",
+            (user_id,),
+        )
+        cursor.execute("DELETE FROM users WHERE user_id = ?", (user_id,))
+        connection.commit()
 

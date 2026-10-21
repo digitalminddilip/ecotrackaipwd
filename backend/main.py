@@ -23,7 +23,7 @@ from pydantic import BaseModel, Field
 from .ai_analyzer import analyze_image
 from .image_comparison import compare_image_bytes
 from .auth import create_token, decode_token, hash_password, verify_password
-from .database import find_user_by_email, find_user_by_id, init_db, load_reports, load_users, save_report, save_user, update_user_password, get_report_image_data, get_report_evidence_data, update_user_picture, add_user_points, record_site_visit, update_user_last_login, get_platform_user_and_visitor_stats
+from .database import find_user_by_email, find_user_by_id, init_db, load_reports, load_users, save_report, save_user, update_user_password, get_report_image_data, get_report_evidence_data, update_user_picture, add_user_points, record_site_visit, update_user_last_login, get_platform_user_and_visitor_stats, update_user_details, delete_user
 from .location_service import google_geolocate, google_reverse_geocode
 from .ip_location import lookup_ip_location
 from .notifications import notify_report_created, notify_reporter, send_otp_email, notify_report_rejected
@@ -509,6 +509,104 @@ def report_detail(report_id: str, authorization: Optional[str] = Header(None)) -
 def list_collectors(authorization: Optional[str] = Header(None)) -> list[User]:
     require_role(authenticated_user(authorization).user_id, Role.administrator)
     return [user for user in users.values() if user.role == Role.collector]
+
+
+class UpdateCollectorRequest(BaseModel):
+    name: str = Field(min_length=1, max_length=100)
+    email: str = Field(min_length=3, max_length=150)
+    password: Optional[str] = None
+
+
+@app.patch("/admin/collectors/{user_id}", response_model=User)
+def update_collector(
+    user_id: str,
+    request: UpdateCollectorRequest,
+    authorization: Optional[str] = Header(None)
+) -> User:
+    require_role(authenticated_user(authorization).user_id, Role.administrator)
+    target = find_user_by_id(user_id)
+    if not target:
+        raise HTTPException(status_code=404, detail="Collector not found")
+    
+    new_email = request.email.strip().lower()
+    new_name = request.name.strip()
+    
+    if new_email != target["email"].lower():
+        existing = find_user_by_email(new_email)
+        if existing and existing["user_id"] != user_id:
+            raise HTTPException(status_code=400, detail="This email is already in use by another account.")
+            
+    new_hash = hash_password(request.password) if request.password and request.password.strip() else None
+    update_user_details(user_id, new_name, new_email, new_hash)
+    
+    if user_id in users:
+        users[user_id].name = new_name
+        users[user_id].email = new_email
+    else:
+        users[user_id] = get_user(user_id)
+        
+    return get_user(user_id)
+
+
+class CreateCollectorRequest(BaseModel):
+    name: str = Field(min_length=1, max_length=100)
+    email: str = Field(min_length=3, max_length=150)
+    password: str = Field(min_length=6, max_length=128)
+
+
+@app.post("/admin/collectors", response_model=User, status_code=status.HTTP_201_CREATED)
+def create_collector(
+    request: CreateCollectorRequest,
+    authorization: Optional[str] = Header(None)
+) -> User:
+    require_role(authenticated_user(authorization).user_id, Role.administrator)
+    email = request.email.strip().lower()
+    name = request.name.strip()
+    
+    existing = find_user_by_email(email)
+    if existing:
+        raise HTTPException(status_code=400, detail="A user with this email already exists.")
+        
+    user_id = f"usr-{uuid4().hex[:8]}"
+    pwd_hash = hash_password(request.password)
+    created_at = datetime.now(timezone.utc).isoformat()
+    save_user(user_id, name, email, Role.collector.value, pwd_hash, created_at, "")
+    
+    new_collector = User(
+        user_id=user_id,
+        name=name,
+        email=email,
+        role=Role.collector,
+        points=0,
+        picture=""
+    )
+    users[user_id] = new_collector
+    return new_collector
+
+
+@app.delete("/admin/collectors/{user_id}")
+def delete_collector(
+    user_id: str,
+    authorization: Optional[str] = Header(None)
+) -> dict[str, Any]:
+    require_role(authenticated_user(authorization).user_id, Role.administrator)
+    target = find_user_by_id(user_id)
+    if not target:
+        raise HTTPException(status_code=404, detail="Collector not found")
+    if target["role"] != Role.collector.value:
+        raise HTTPException(status_code=400, detail="User is not a collector")
+        
+    delete_user(user_id)
+    users.pop(user_id, None)
+    
+    # Also update any active reports in-memory
+    for r in reports.values():
+        if r.collector_id == user_id and r.status in (ReportStatus.assigned, ReportStatus.in_progress):
+            r.collector_id = None
+            r.status = ReportStatus.reviewed
+            
+    return {"status": "success", "message": "Collector removed successfully", "user_id": user_id}
+
 
 @app.get("/users/{user_id}", response_model=User)
 def get_user_by_id(user_id: str, authorization: Optional[str] = Header(None)) -> User:

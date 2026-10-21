@@ -220,7 +220,12 @@
         <!-- Tab: Collectors -->
         <div class="tab-content" id="tab-collectors">
           <div class="glass-card table-card">
-            <h3 style="margin-bottom: 20px;">Active Collection Teams</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+              <h3 style="margin: 0;">Active Collection Teams</h3>
+              <button class="btn-primary" id="btn-open-add-collector" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 8px; font-weight: 500; cursor: pointer;">
+                <i class="fa-solid fa-user-plus"></i> Add New Collector
+              </button>
+            </div>
             <div class="table-responsive">
               <table class="modern-table">
                 <thead>
@@ -228,6 +233,7 @@
                     <th>Collector Name</th>
                     <th>Email</th>
                     <th>Status</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody id="collectors-tbody">
@@ -364,9 +370,68 @@
     </div>
   </div>
 
+  <!-- 5. Edit Collector Modal -->
+  <div class="modal-overlay" id="modal-edit-collector">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Edit Collector Details</h3>
+        <button class="btn-close" onclick="closeModal('modal-edit-collector')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="edit-col-id">
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.9rem;">Collector Full Name</label>
+          <input type="text" id="edit-col-name" class="modern-input" style="width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-family: inherit;" placeholder="Full Name">
+        </div>
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.9rem;">Collector Email</label>
+          <input type="email" id="edit-col-email" class="modern-input" style="width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-family: inherit;" placeholder="collector@example.com">
+        </div>
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.9rem;">New Password <span style="font-weight: 400; color: #64748b;">(Leave blank to keep unchanged)</span></label>
+          <input type="password" id="edit-col-password" class="modern-input" style="width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-family: inherit;" placeholder="Optional new password">
+        </div>
+        <div id="edit-col-error" style="color: #ef4444; font-size: 0.85rem; display: none; margin-top: 8px;"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline" onclick="closeModal('modal-edit-collector')">Cancel</button>
+        <button class="btn-primary" id="btn-save-collector"><i class="fa-solid fa-floppy-disk"></i> Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. Add Collector Modal -->
+  <div class="modal-overlay" id="modal-add-collector">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-user-plus" style="color: var(--primary);"></i> Add New Collector</h3>
+        <button class="btn-close" onclick="closeModal('modal-add-collector')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.9rem;">Collector Full Name <span style="color: #ef4444;">*</span></label>
+          <input type="text" id="add-col-name" class="modern-input" style="width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-family: inherit;" placeholder="e.g. Ramesh Kumar">
+        </div>
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.9rem;">Collector Email <span style="color: #ef4444;">*</span></label>
+          <input type="email" id="add-col-email" class="modern-input" style="width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-family: inherit;" placeholder="e.g. collector@cleanconnect.in">
+        </div>
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label style="display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.9rem;">Password <span style="color: #ef4444;">*</span></label>
+          <input type="password" id="add-col-password" class="modern-input" style="width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-family: inherit;" placeholder="Minimum 6 characters">
+        </div>
+        <div id="add-col-error" style="color: #ef4444; font-size: 0.85rem; display: none; margin-top: 8px; padding: 8px 12px; background: #fef2f2; border-radius: 6px; border: 1px solid #fecaca;"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline" onclick="closeModal('modal-add-collector')">Cancel</button>
+        <button class="btn-primary" id="btn-save-new-collector"><i class="fa-solid fa-check"></i> Add Collector</button>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="/config.js"></script>
-  <script src="/admin/admin.js?v=8"></script>
+  <script src="/admin/admin.js?v=9"></script>
 </body>
 </html>
 

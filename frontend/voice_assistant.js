@@ -10,6 +10,7 @@
   let isSpeaking = false;
   let synth = window.speechSynthesis;
   let currentUtterance = null;
+  let currentLang = "hi-IN"; // Default to Hindi & Indian accent for Swachh Bharat
 
   // DOM Elements
   let fabBtn = null;
@@ -26,7 +27,7 @@
     recognition = new SpeechRecognition();
     recognition.continuous = false;
     recognition.interimResults = true;
-    recognition.lang = "en-IN"; // Good for English and Indian accent
+    recognition.lang = currentLang;
 
     recognition.onstart = () => {
       isListening = true;
@@ -129,9 +130,10 @@
 
     // Pick a natural voice if available
     const voices = synth.getVoices();
-    const preferredVoice = voices.find(
-      (v) => v.lang.startsWith("en-IN") || v.lang.startsWith("en-US") || v.lang.startsWith("en-GB")
-    );
+    const preferredVoice = voices.find((v) => {
+      if (currentLang === "hi-IN" && (v.lang.startsWith("hi") || v.lang.startsWith("en-IN"))) return true;
+      return v.lang.startsWith("en-IN") || v.lang.startsWith("en-US") || v.lang.startsWith("en-GB");
+    });
     if (preferredVoice) {
       currentUtterance.voice = preferredVoice;
     }
@@ -314,9 +316,10 @@
       <div class="cc-voice-header">
         <div class="cc-voice-header-title">
           <i class="fa-solid fa-robot"></i>
-          <span>CleanConnect Voice AI</span>
+          <span>EcoTrack Voice AI</span>
         </div>
         <div style="display:flex; align-items:center; gap:8px;">
+          <button id="cc-voice-lang-toggle" style="background:#e0f2fe; color:#0284c7; border:none; padding:4px 10px; border-radius:12px; font-size:0.75rem; font-weight:600; cursor:pointer;" title="Switch Language">🇮🇳 हिंदी / EN</button>
           <span class="cc-voice-status-pill" id="cc-voice-status">Ready</span>
           <button class="cc-voice-close-btn" id="cc-voice-close" title="Close">
             <i class="fa-solid fa-xmark"></i>
@@ -334,15 +337,16 @@
 
       <div class="cc-voice-body" id="cc-voice-chat-body">
         <div class="cc-bubble cc-bubble-ai">
-          Hello! I am your 100% Free Voice Assistant. Click the mic or tap a prompt below to speak!
+          Hello! Welcome to EcoTrack AI. How can I help you with waste reporting today?
         </div>
       </div>
 
       <div class="cc-voice-chips">
-        <button class="cc-chip" data-prompt="How do I report garbage?">How to report?</button>
-        <button class="cc-chip" data-prompt="Report garbage near Main Road">Report garbage</button>
-        <button class="cc-chip" data-prompt="What is the difference between wet and dry waste?">Wet vs Dry waste</button>
-        <button class="cc-chip" data-prompt="What is the status of my reports?">Check my status</button>
+        <button class="cc-chip" data-prompt="What is EcoTrack AI?">🌿 What is EcoTrack AI?</button>
+        <button class="cc-chip" data-prompt="Main waste report kaise karun?">📍 रिपोर्ट कैसे करें?</button>
+        <button class="cc-chip" data-prompt="How does AI detect plastic waste?">🤖 How AI detects waste?</button>
+        <button class="cc-chip" data-prompt="Meri complaint kab solve hogi?">🔍 मेरी शिकायत कब सॉल्व होगी?</button>
+        <button class="cc-chip" data-prompt="Who collects the reported waste?">🚛 Who collects waste?</button>
       </div>
 
       <div class="cc-voice-footer">
@@ -375,6 +379,26 @@
     document.getElementById("cc-voice-close").addEventListener("click", toggleModal);
     micControlBtn.addEventListener("click", toggleListening);
     document.getElementById("cc-voice-mute").addEventListener("click", stopSpeaking);
+
+    const langBtn = document.getElementById("cc-voice-lang-toggle");
+    if (langBtn) {
+      langBtn.addEventListener("click", () => {
+        if (currentLang === "hi-IN") {
+          currentLang = "en-IN";
+          langBtn.textContent = "🇬🇧 English";
+          langBtn.style.background = "#f1f5f9";
+          langBtn.style.color = "#334155";
+        } else {
+          currentLang = "hi-IN";
+          langBtn.textContent = "🇮🇳 हिंदी / EN";
+          langBtn.style.background = "#e0f2fe";
+          langBtn.style.color = "#0284c7";
+        }
+        if (recognition) {
+          recognition.lang = currentLang;
+        }
+      });
+    }
 
     // Send Button & Enter Key
     const submitText = () => {

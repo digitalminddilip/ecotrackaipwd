@@ -16,8 +16,9 @@
   <link rel="stylesheet" href="styles.css?v=18">
   <link rel="stylesheet" href="auth.css?v=2">
   <link rel="stylesheet" href="location.css">
-  <link rel="stylesheet" href="citizen.css?v=18">
+  <link rel="stylesheet" href="citizen.css?v=19">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <link rel="stylesheet" href="collector.css">
   <link rel="stylesheet" href="voice.css?v=1">
   <link rel="stylesheet" href="modern_video_ui.css?v=2">
@@ -250,9 +251,57 @@
 
         <!-- VIEW: Track Report -->
       <div id="cit-view-track" class="col-card" style="padding: 24px; display: none;">
-        <h2 style="margin-bottom: 16px; color: #1e293b;">Live Tracking</h2>
-        <div id="cit-map" style="height: 300px; background: #f1f5f9; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #94a3b8;">
-          <i class="fa-solid fa-map-location-dot" style="font-size: 32px;"></i>
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;">
+          <div>
+            <h2 style="margin: 0 0 6px 0; color: #1e293b; font-family: 'Outfit', sans-serif; font-size: 1.35rem; font-weight: 700;">
+              <i class="fa-solid fa-map-location-dot" style="color: #2563eb; margin-right: 8px;"></i>Live GIS Waste Tracking & Google Maps
+            </h2>
+            <p style="margin: 0; color: #64748b; font-size: 0.88rem;">
+              Real-time GPS geolocated map pinning every reported municipal waste incident and verified cleanup site.
+            </p>
+          </div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button type="button" class="col-btn-outline" onclick="centerCitizenOnMap()" title="Center map to your GPS location" style="display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 8px; font-weight: 600; cursor: pointer; background: #ffffff;">
+              <i class="fa-solid fa-crosshairs" style="color: #0284c7;"></i> My Location
+            </button>
+            <button type="button" class="col-btn-outline" onclick="fitAllReportPins()" title="Zoom to fit all reported pins" style="display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 8px; font-weight: 600; cursor: pointer; background: #ffffff;">
+              <i class="fa-solid fa-expand" style="color: #10b981;"></i> Fit All Pins
+            </button>
+            <button type="button" class="col-btn-outline" onclick="loadLiveTrackingMap(true)" title="Refresh live incidents from server" style="display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 8px; font-weight: 600; cursor: pointer; background: #ffffff;">
+              <i class="fa-solid fa-rotate" style="color: #6366f1;"></i> Refresh
+            </button>
+          </div>
+        </div>
+
+        <!-- Live Incident Telemetry Badges Strip -->
+        <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; font-size: 0.82rem;">
+          <span id="cit-map-total-badge" style="background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; padding: 5px 12px; border-radius: 20px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-location-dot" style="color: #2563eb;"></i> <span id="cit-map-total-count">0</span> Total Incidents Pinned
+          </span>
+          <span id="cit-map-pending-badge" style="background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; padding: 5px 12px; border-radius: 20px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-triangle-exclamation" style="color: #dc2626;"></i> <span id="cit-map-pending-count">0</span> Active / Pending
+          </span>
+          <span id="cit-map-verified-badge" style="background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; padding: 5px 12px; border-radius: 20px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-circle-check" style="color: #16a34a;"></i> <span id="cit-map-verified-count">0</span> Cleaned & Verified
+          </span>
+        </div>
+
+        <!-- Map Container -->
+        <div id="cit-map" style="height: 480px; width: 100%; border-radius: 12px; border: 1px solid #cbd5e1; box-shadow: 0 4px 12px rgba(0,0,0,0.06); position: relative; overflow: hidden; z-index: 1;">
+        </div>
+
+        <!-- Legend -->
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 14px; padding: 10px 14px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.8rem; color: #475569;">
+          <div style="display: flex; gap: 14px; flex-wrap: wrap; align-items: center;">
+            <span style="font-weight: 700; color: #1e293b;"><i class="fa-solid fa-layer-group"></i> Pin Legend:</span>
+            <span style="display: inline-flex; align-items: center; gap: 5px;"><span style="display: inline-block; width: 12px; height: 12px; background: #ef4444; border-radius: 50%; box-shadow: 0 0 0 2px white, 0 0 0 3px #ef4444;"></span> Active / Urgent</span>
+            <span style="display: inline-flex; align-items: center; gap: 5px;"><span style="display: inline-block; width: 12px; height: 12px; background: #f59e0b; border-radius: 50%; box-shadow: 0 0 0 2px white, 0 0 0 3px #f59e0b;"></span> In Progress</span>
+            <span style="display: inline-flex; align-items: center; gap: 5px;"><span style="display: inline-block; width: 12px; height: 12px; background: #10b981; border-radius: 50%; box-shadow: 0 0 0 2px white, 0 0 0 3px #10b981;"></span> Verified Cleaned</span>
+            <span style="display: inline-flex; align-items: center; gap: 5px;"><span style="display: inline-block; width: 12px; height: 12px; background: #2563eb; border-radius: 50%; box-shadow: 0 0 0 2px white, 0 0 0 3px #2563eb;"></span> Your GPS Location</span>
+          </div>
+          <div style="color: #64748b; font-size: 0.76rem;">
+            <i class="fa-solid fa-diamond-turn-right" style="color: #2563eb;"></i> Click any pin to open turn-by-turn navigation in Google Maps
+          </div>
         </div>
       </div>
 
@@ -802,7 +851,7 @@
   </div>
 
   <script src="config.js"></script>
-  <script src="app.js?v=32"></script>
+  <script src="app.js?v=33"></script>
   <script src="voice_assistant.js?v=1"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>

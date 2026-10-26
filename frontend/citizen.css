@@ -286,3 +286,19 @@
     max-width: 110px;
   }
 }
+
+#cit-map {
+  height: 480px;
+  width: 100%;
+  border-radius: 12px;
+}
+@media (max-width: 768px) {
+  #cit-map {
+    height: 380px !important;
+  }
+}
+@media (max-width: 480px) {
+  #cit-map {
+    height: 320px !important;
+  }
+}

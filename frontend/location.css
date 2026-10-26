@@ -91,3 +91,24 @@
   margin: 0 5px 0 10px;
 }
 
+
+
+/* Custom Map Pin Styles */
+.custom-map-pin {
+  background: transparent !important;
+  border: none !important;
+}
+.cit-user-location-pulse {
+  width: 18px;
+  height: 18px;
+  background: #2563eb;
+  border: 3px solid #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.4);
+  animation: pulse-user-dot 1.8s infinite;
+}
+@keyframes pulse-user-dot {
+  0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.7); }
+  70% { box-shadow: 0 0 0 14px rgba(37, 99, 235, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
+}

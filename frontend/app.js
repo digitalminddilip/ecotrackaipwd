@@ -873,6 +873,7 @@ function showCitView(viewName, el) {
   }
 
   if (viewName === 'community') loadCommunityFeed();
+  if (viewName === 'track') loadLiveTrackingMap();
   if (viewName === 'reports') loadMyReports();
   if (viewName === 'status') loadCitStatus();
   if (viewName === 'profile') populateCitProfile();
@@ -1714,3 +1715,289 @@ window.closeCollectorTaskModal = function() {
 };
 
 window.openProofModal = openProofModal;
+
+
+// ==========================================================================
+// LIVE GIS MAP & GOOGLE MAPS REPORT PINNING LOGIC
+// ==========================================================================
+let citMap = null;
+let citMarkersLayer = null;
+let citUserMarker = null;
+let citLiveReportsCache = [];
+
+async function loadLiveTrackingMap(forceRefresh = false) {
+  const mapContainer = document.getElementById('cit-map');
+  if (!mapContainer) return;
+  if (typeof L === 'undefined') {
+    console.warn('Leaflet library is not loaded');
+    return;
+  }
+
+  // 1. Initialize Map if not already initialized
+  if (!citMap) {
+    const initialLat = window.lastCitizenCoords ? window.lastCitizenCoords.lat : 26.85;
+    const initialLng = window.lastCitizenCoords ? window.lastCitizenCoords.lng : 80.95;
+
+    citMap = L.map('cit-map', {
+      center: [initialLat, initialLng],
+      zoom: 12,
+      zoomControl: true,
+      maxZoom: 20
+    });
+
+    // Google Maps Roadmap Layer (Standard roadmap with clean labels)
+    const googleRoadmap = L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+      maxZoom: 20,
+      subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+      attribution: '&copy; <a href="https://maps.google.com" target="_blank">Google Maps</a>'
+    });
+
+    // Google Maps Satellite / Hybrid Layer
+    const googleHybrid = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+      maxZoom: 20,
+      subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+      attribution: '&copy; Google Satellite'
+    });
+
+    // OpenStreetMap fallback
+    const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors'
+    });
+
+    // Add Google Roadmap by default
+    googleRoadmap.addTo(citMap);
+
+    // Layer switcher control
+    L.control.layers(
+      {
+        'Google Maps': googleRoadmap,
+        'Google Satellite': googleHybrid,
+        'OpenStreetMap': osmLayer
+      },
+      null,
+      { position: 'topright' }
+    ).addTo(citMap);
+
+    citMarkersLayer = L.featureGroup().addTo(citMap);
+  }
+
+  // Ensure Leaflet computes container size properly
+  setTimeout(() => {
+    if (citMap) {
+      citMap.invalidateSize();
+    }
+  }, 250);
+
+  // 2. Fetch live reports with GPS
+  try {
+    let reportsData = [];
+    if (!forceRefresh && citLiveReportsCache.length > 0) {
+      reportsData = citLiveReportsCache;
+    } else {
+      try {
+        const res = await fetch(API_URL + '/reports', { headers: authHeaders() });
+        if (res.ok) {
+          reportsData = await res.json();
+        } else {
+          const resComm = await fetch(API_URL + '/reports/community');
+          if (resComm.ok) reportsData = await resComm.json();
+        }
+      } catch (e) {
+        const resComm = await fetch(API_URL + '/reports/community');
+        if (resComm.ok) reportsData = await resComm.json();
+      }
+      citLiveReportsCache = reportsData;
+    }
+
+    if (!Array.isArray(reportsData)) reportsData = [];
+
+    // Filter valid GPS coords
+    const validReports = reportsData.filter(r => {
+      const lat = Number(r.latitude);
+      const lng = Number(r.longitude);
+      return !isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0 && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
+    });
+
+    // Update telemetry counts
+    let pendingCount = 0;
+    let verifiedCount = 0;
+    validReports.forEach(r => {
+      if (r.status === 'verified' || r.status === 'collected') {
+        verifiedCount++;
+      } else {
+        pendingCount++;
+      }
+    });
+
+    const totalCountEl = document.getElementById('cit-map-total-count');
+    const pendingCountEl = document.getElementById('cit-map-pending-count');
+    const verifiedCountEl = document.getElementById('cit-map-verified-count');
+    if (totalCountEl) totalCountEl.textContent = validReports.length;
+    if (pendingCountEl) pendingCountEl.textContent = pendingCount;
+    if (verifiedCountEl) verifiedCountEl.textContent = verifiedCount;
+
+    // Clear old markers
+    citMarkersLayer.clearLayers();
+
+    // 3. Add pins for all reports
+    validReports.forEach(r => {
+      const lat = Number(r.latitude);
+      const lng = Number(r.longitude);
+
+      let pinColor = '#ef4444'; // Red for urgent / pending
+      let pinIcon = 'fa-triangle-exclamation';
+
+      if (r.status === 'verified' || r.status === 'collected') {
+        pinColor = '#10b981'; // Green for verified
+        pinIcon = 'fa-circle-check';
+      } else if (r.status === 'in_progress' || r.status === 'assigned' || r.status === 'reviewed') {
+        pinColor = '#f59e0b'; // Orange for in progress
+        pinIcon = 'fa-clock';
+      }
+
+      const customHtml = `
+        <div style="
+          width: 34px;
+          height: 34px;
+          background: ${pinColor};
+          border: 2px solid #ffffff;
+          border-radius: 50% 50% 50% 0;
+          transform: rotate(-45deg);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 4px 10px rgba(0,0,0,0.35);
+          cursor: pointer;
+        ">
+          <i class="fa-solid ${pinIcon}" style="transform: rotate(45deg); color: #ffffff; font-size: 13px;"></i>
+        </div>
+      `;
+
+      const markerIcon = L.divIcon({
+        html: customHtml,
+        className: 'custom-map-pin',
+        iconSize: [34, 34],
+        iconAnchor: [17, 34],
+        popupAnchor: [0, -32]
+      });
+
+      const marker = L.marker([lat, lng], { icon: markerIcon });
+
+      const photoUrl = `${API_URL}/reports/${r.report_id}/image`;
+      const mapsDirUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+      const mapsPinUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+      const catText = r.category ? r.category.replace(/_/g, ' ').toUpperCase() : 'CIVIC WASTE HAZARD';
+      const dateText = r.timestamp ? new Date(r.timestamp).toLocaleDateString() : '';
+
+      const popupHtml = `
+        <div style="font-family: 'Inter', system-ui, sans-serif; min-width: 220px; max-width: 270px; padding: 4px;">
+          <div style="position: relative; width: 100%; height: 120px; background: #0f172a; border-radius: 8px; overflow: hidden; margin-bottom: 8px; display: flex; align-items: center; justify-content: center;">
+            <img src="${photoUrl}" alt="Waste" style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;" onclick="openProofModal('${photoUrl}', 'Waste Report Evidence #${r.report_id.slice(0, 8)}', '${r.status}')" onerror="this.src='logo.png'" title="Click to enlarge" />
+            <span style="position: absolute; top: 6px; right: 6px; background: ${pinColor}; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.68rem; font-weight: 700; text-transform: uppercase;">
+              ${r.status || 'reported'}
+            </span>
+          </div>
+
+          <div style="font-weight: 700; color: #0f172a; font-size: 0.92rem; margin-bottom: 2px;">
+            ${catText}
+          </div>
+          <div style="font-size: 0.74rem; color: #64748b; margin-bottom: 6px;">
+            Report ID: #${r.report_id.slice(0, 10)} • ${dateText}
+          </div>
+
+          ${r.description ? `<p style="font-size: 0.8rem; color: #334155; margin: 0 0 8px 0; line-height: 1.35; max-height: 48px; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(r.description)}</p>` : ''}
+
+          <div style="background: #eff6ff; padding: 5px 8px; border-radius: 6px; font-family: monospace; font-size: 0.78rem; color: #1e40af; margin-bottom: 8px; font-weight: 700; display: flex; align-items: center; gap: 4px;">
+            <i class="fa-solid fa-location-crosshairs" style="color: #ef4444;"></i> GPS: ${lat.toFixed(5)}°, ${lng.toFixed(5)}°
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 5px; margin-top: 6px;">
+            <a href="${mapsDirUrl}" target="_blank" rel="noopener noreferrer" style="display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 10px; background: #2563eb; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 0.78rem; box-shadow: 0 1px 3px rgba(37,99,235,0.3);">
+              <i class="fa-solid fa-diamond-turn-right"></i> Open Navigation in Google Maps
+            </a>
+            <a href="${mapsPinUrl}" target="_blank" rel="noopener noreferrer" style="display: flex; align-items: center; justify-content: center; gap: 6px; padding: 6px 10px; background: #ffffff; color: #334155; border: 1px solid #cbd5e1; text-decoration: none; border-radius: 6px; font-weight: 500; font-size: 0.76rem;">
+              <i class="fa-solid fa-map-pin" style="color: #ef4444;"></i> View Pin on Google Maps
+            </a>
+          </div>
+        </div>
+      `;
+
+      marker.bindPopup(popupHtml);
+      citMarkersLayer.addLayer(marker);
+    });
+
+    // 4. Also add or update Citizen's Current GPS Location marker
+    locateCitizenForMap();
+
+    // 5. Fit bounds to all markers if reports exist
+    if (citMarkersLayer.getLayers().length > 0) {
+      citMap.fitBounds(citMarkersLayer.getBounds(), { padding: [40, 40], maxZoom: 15 });
+    }
+  } catch (err) {
+    console.error('Failed to populate live tracking map:', err);
+  }
+}
+
+function locateCitizenForMap() {
+  if (!navigator.geolocation || !citMap) return;
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      const uLat = pos.coords.latitude;
+      const uLng = pos.coords.longitude;
+      window.lastCitizenCoords = { lat: uLat, lng: uLng };
+
+      const userIcon = L.divIcon({
+        html: '<div class="cit-user-location-pulse"></div>',
+        className: 'custom-map-pin',
+        iconSize: [18, 18],
+        iconAnchor: [9, 9],
+        popupAnchor: [0, -10]
+      });
+
+      if (citUserMarker) {
+        citUserMarker.setLatLng([uLat, uLng]);
+      } else {
+        citUserMarker = L.marker([uLat, uLng], { icon: userIcon, zIndexOffset: 1000 }).addTo(citMap);
+        citUserMarker.bindPopup('<strong style="font-family:sans-serif;font-size:12px;color:#1e40af;"><i class="fa-solid fa-user"></i> Your Current GPS Location</strong>');
+      }
+    },
+    (err) => {
+      console.warn('Live map geolocation error:', err.message);
+    },
+    { enableHighAccuracy: true, timeout: 7000 }
+  );
+}
+
+window.fitAllReportPins = function() {
+  if (!citMap || !citMarkersLayer) return;
+  const layers = citMarkersLayer.getLayers();
+  if (layers.length > 0) {
+    citMap.fitBounds(citMarkersLayer.getBounds(), { padding: [40, 40] });
+  } else if (citUserMarker) {
+    citMap.setView(citUserMarker.getLatLng(), 15);
+  } else {
+    alert('No incident pins to fit yet.');
+  }
+};
+
+window.centerCitizenOnMap = function() {
+  if (!citMap) return;
+  if (citUserMarker) {
+    citMap.setView(citUserMarker.getLatLng(), 16);
+    citUserMarker.openPopup();
+  } else if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const uLat = pos.coords.latitude;
+        const uLng = pos.coords.longitude;
+        locateCitizenForMap();
+        citMap.setView([uLat, uLng], 16);
+      },
+      (err) => {
+        alert('Could not fetch your GPS location. Please allow location permissions in your browser.');
+      },
+      { enableHighAccuracy: true }
+    );
+  }
+};

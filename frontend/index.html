@@ -202,7 +202,7 @@
 
           <div class="modern-form-group">
             <label for="report-location"><i class="fa-solid fa-location-dot" style="color: #0284c7; margin-right: 4px;"></i> Incident Location</label>
-            <div style="display: flex; gap: 8px;">
+            <div style="display: flex; gap: 8px;" class="location-input-group">
               <input class="modern-input" id="report-location" name="location" type="text" placeholder="Enter landmark or street address" style="flex:1;" />
               <button id="btn-fetch-gps" class="btn-fetch-gps" type="button" onclick="getLocation()">
                 <i class="fa-solid fa-location-crosshairs"></i> <span id="gps-btn-text">Fetch GPS</span>
@@ -259,7 +259,7 @@
       <!-- VIEW: My Reports -->
       <div id="cit-view-reports" class="col-card" style="padding: 24px; display: none;">
         <h2 style="margin-bottom: 16px; color: #1e293b;"><i class="fa-solid fa-clipboard-check" style="color: #10b981; margin-right: 8px;"></i>My Submitted Reports & Cleanup Proof</h2>
-        <div style="overflow-x: auto;">
+        <div style="overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%;">
           <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
             <thead>
               <tr style="border-bottom: 2px solid #e2e8f0; color: #475569; background: #f8fafc;">
@@ -705,7 +705,7 @@
             </div>
 
             <!-- Google Maps Navigation Buttons -->
-            <div style="display: flex; flex-direction: column; gap: 8px; min-width: 200px;">
+            <div style="display: flex; flex-direction: column; gap: 8px; min-width: 200px;" class="col-modal-nav-btn-col">
               <a id="col-modal-nav-link" href="#" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 18px; background: #2563eb; color: #ffffff; border-radius: 8px; font-weight: 600; font-size: 0.9rem; text-decoration: none; box-shadow: 0 4px 6px -1px rgba(37,99,235,0.3); transition: background 0.15s ease;">
                 <i class="fa-solid fa-diamond-turn-right" style="font-size: 1.05rem;"></i> Go to Location (Google Maps)
               </a>

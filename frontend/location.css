@@ -34,6 +34,20 @@
 .leaflet-popup-content {
   font-size: 12px;
   line-height: 1.5;
+  max-width: 260px;
+  word-break: break-word;
+}
+.leaflet-popup-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+}
+@media (max-width: 480px) {
+  .leaflet-popup-content {
+    max-width: 220px;
+    font-size: 11px;
+    margin: 8px 12px;
+  }
 }
 .table-action {
   border: 1px solid #bde5d1;

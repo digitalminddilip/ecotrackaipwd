@@ -831,6 +831,12 @@ function setupAuthForm() {
 
 // Citizen Portal View Navigation
 function showCitView(viewName, el) {
+  // Auto-close mobile sidebar drawer on selection
+  const citSidebar = document.querySelector('.col-sidebar');
+  const citOverlay = document.getElementById('cit-sidebar-overlay');
+  if (citSidebar) citSidebar.classList.remove('open');
+  if (citOverlay) citOverlay.classList.remove('show');
+
   const views = ['new-report', 'community', 'track', 'reports', 'status', 'profile'];
   views.forEach(v => {
     const elView = document.getElementById('cit-view-' + v);
@@ -1258,6 +1264,12 @@ function handleCredentialResponse(response) {
 
 // Admin View Switching
 window.showAdminView = function(viewId, el) { 
+  // Auto-close mobile sidebar drawer on selection
+  const sb = document.querySelector('.sidebar');
+  const sbo = document.getElementById('sidebar-overlay');
+  if (sb) sb.classList.remove('open');
+  if (sbo) sbo.classList.remove('show');
+
   document.querySelectorAll('#app-wrapper .sidebar-nav a').forEach(a => a.classList.remove('active'));
   if (el) el.classList.add('active');
   

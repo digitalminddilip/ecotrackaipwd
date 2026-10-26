@@ -416,3 +416,203 @@ body {
   cursor: pointer !important;
   font-size: 0.95rem !important;
 }
+
+
+/* ==========================================================================
+   MOBILE RESPONSIVE OVERRIDES (CleanConnect Video UI)
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  .col-sidebar {
+    width: 280px !important;
+    max-width: 85vw !important;
+    height: 100% !important;
+    height: 100dvh !important;
+    position: fixed !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    z-index: 10002 !important;
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15) !important;
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  }
+
+  .col-sidebar:not(.open) {
+    left: -100% !important;
+  }
+
+  .col-sidebar.open {
+    left: 0 !important;
+  }
+
+  .col-header {
+    max-width: 100% !important;
+    margin: 0 auto 14px auto !important;
+    padding: 0 4px !important;
+  }
+
+  .col-header h1, #cit-page-title {
+    font-size: 1.35rem !important;
+  }
+
+  .col-header p, #cit-page-subtitle {
+    font-size: 0.85rem !important;
+    margin-bottom: 12px !important;
+  }
+
+  .step-indicator {
+    font-size: 0.72rem !important;
+    padding: 6px 12px !important;
+    max-width: 100% !important;
+    white-space: normal !important;
+    text-align: center !important;
+    line-height: 1.3 !important;
+    letter-spacing: 0.2px !important;
+    margin-bottom: 12px !important;
+  }
+
+  #cit-view-new-report.col-card,
+  .col-card {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 auto 20px auto !important;
+    padding: 20px 16px !important;
+    border-radius: 14px !important;
+  }
+
+  #cit-view-new-report h2 {
+    font-size: 1.2rem !important;
+  }
+
+  .card-subtitle {
+    font-size: 0.82rem !important;
+    margin-bottom: 16px !important;
+  }
+
+  .modern-form-group {
+    margin-bottom: 16px !important;
+  }
+
+  .modern-input {
+    font-size: 16px !important; /* Prevents auto zoom on mobile */
+    padding: 11px 14px !important;
+  }
+
+  /* AI Multimodal Result Modal */
+  .ai-modal-overlay {
+    padding: 12px !important;
+  }
+
+  .ai-modal-card {
+    max-width: 520px !important;
+    padding: 24px 18px !important;
+    border-radius: 18px !important;
+    max-height: 90vh !important;
+    max-height: 90dvh !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .ai-modal-card h2 {
+    font-size: 1.4rem !important;
+  }
+
+  .ai-modal-card p {
+    font-size: 0.85rem !important;
+    margin-bottom: 16px !important;
+  }
+
+  .ai-result-details-box {
+    padding: 14px 12px !important;
+    margin-bottom: 14px !important;
+  }
+
+  .ai-points-banner {
+    font-size: 0.88rem !important;
+    padding: 10px 14px !important;
+    margin-bottom: 18px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    justify-content: center !important;
+  }
+}
+
+@media (max-width: 480px) {
+  #cit-view-new-report.col-card,
+  .col-card {
+    padding: 16px 12px !important;
+    border-radius: 12px !important;
+  }
+
+  .btn-fetch-gps {
+    padding: 10px 14px !important;
+    font-size: 0.85rem !important;
+    width: 100% !important;
+    justify-content: center !important;
+    height: 44px !important;
+  }
+
+  .gps-telemetry-badge {
+    font-size: 0.75rem !important;
+    padding: 5px 8px !important;
+    white-space: normal !important;
+    line-height: 1.3 !important;
+    word-break: break-all !important;
+  }
+
+  .btn-modern-submit {
+    padding: 12px 18px !important;
+    font-size: 0.95rem !important;
+    height: 48px !important;
+  }
+
+  .ai-modal-card {
+    padding: 20px 14px !important;
+    border-radius: 16px !important;
+  }
+
+  .ai-modal-success-icon {
+    width: 54px !important;
+    height: 54px !important;
+    font-size: 24px !important;
+    margin-bottom: 12px !important;
+  }
+
+  .ai-modal-card h2 {
+    font-size: 1.25rem !important;
+  }
+
+  .ai-meta-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .ai-modal-btn-row {
+    flex-direction: column !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+
+  .btn-ai-primary,
+  .btn-ai-secondary {
+    width: 100% !important;
+    height: 44px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 10px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .location-input-group {
+    flex-direction: column !important;
+  }
+  .col-modal-nav-btn-col {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+  .col-modal-nav-btn-col a {
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+}

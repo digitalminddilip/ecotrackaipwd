@@ -273,17 +273,24 @@
           </div>
         </div>
 
-        <!-- Live Incident Telemetry Badges Strip -->
-        <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; font-size: 0.82rem;">
-          <span id="cit-map-total-badge" style="background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; padding: 5px 12px; border-radius: 20px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
-            <i class="fa-solid fa-location-dot" style="color: #2563eb;"></i> <span id="cit-map-total-count">0</span> Total Incidents Pinned
-          </span>
-          <span id="cit-map-pending-badge" style="background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; padding: 5px 12px; border-radius: 20px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
-            <i class="fa-solid fa-triangle-exclamation" style="color: #dc2626;"></i> <span id="cit-map-pending-count">0</span> Active / Pending
-          </span>
-          <span id="cit-map-verified-badge" style="background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; padding: 5px 12px; border-radius: 20px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
-            <i class="fa-solid fa-circle-check" style="color: #16a34a;"></i> <span id="cit-map-verified-count">0</span> Cleaned & Verified
-          </span>
+        <!-- Filter Buttons & Telemetry Badges Strip -->
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 14px;">
+          <!-- Filter Tabs -->
+          <div style="display: flex; gap: 6px; flex-wrap: wrap;" id="cit-map-filter-buttons">
+            <button type="button" id="cit-btn-filter-pending" onclick="filterLiveTrackingMap('pending', this)" style="display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 700; cursor: pointer; border: 1px solid #ef4444; background: #ef4444; color: #ffffff; box-shadow: 0 2px 6px rgba(239,68,68,0.25);">
+              <i class="fa-solid fa-triangle-exclamation"></i> Pending Tasks (<span id="cit-map-pending-count">0</span>)
+            </button>
+            <button type="button" id="cit-btn-filter-all" onclick="filterLiveTrackingMap('all', this)" style="display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 600; cursor: pointer; border: 1px solid #cbd5e1; background: #ffffff; color: #334155;">
+              <i class="fa-solid fa-map-pin"></i> All Incidents (<span id="cit-map-total-count">0</span>)
+            </button>
+            <button type="button" id="cit-btn-filter-verified" onclick="filterLiveTrackingMap('verified', this)" style="display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 600; cursor: pointer; border: 1px solid #cbd5e1; background: #ffffff; color: #334155;">
+              <i class="fa-solid fa-circle-check" style="color: #10b981;"></i> Cleaned & Verified (<span id="cit-map-verified-count">0</span>)
+            </button>
+          </div>
+
+          <div style="font-size: 0.78rem; color: #64748b; font-weight: 500;">
+            <i class="fa-solid fa-circle-info" style="color: #3b82f6;"></i> Spidered offsets show all co-located tasks
+          </div>
         </div>
 
         <!-- Map Container -->
@@ -301,6 +308,27 @@
           </div>
           <div style="color: #64748b; font-size: 0.76rem;">
             <i class="fa-solid fa-diamond-turn-right" style="color: #2563eb;"></i> Click any pin to open turn-by-turn navigation in Google Maps
+          </div>
+        </div>
+
+        <!-- Pending Tasks List Section -->
+        <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
+            <div>
+              <h3 style="margin: 0; font-size: 1.1rem; color: #0f172a; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-clipboard-list" style="color: #ef4444;"></i> All Pending Tasks at Reported Locations (<span id="cit-pending-list-count">0</span>)
+              </h3>
+              <p style="margin: 4px 0 0 0; color: #64748b; font-size: 0.82rem;">Click "Locate Pin on Map" to focus on any pending task, or open turn-by-turn directions.</p>
+            </div>
+            <button type="button" onclick="loadLiveTrackingMap(true)" style="background: none; border: 1px solid #cbd5e1; border-radius: 6px; padding: 5px 10px; font-size: 0.78rem; font-weight: 600; color: #475569; cursor: pointer;">
+              <i class="fa-solid fa-arrows-rotate"></i> Refresh Tasks
+            </button>
+          </div>
+
+          <div id="cit-pending-tasks-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px;">
+            <div style="padding: 20px; text-align: center; color: #94a3b8; grid-column: 1 / -1; background: #f8fafc; border-radius: 8px;">
+              Loading pending task locations...
+            </div>
           </div>
         </div>
       </div>
@@ -851,7 +879,7 @@
   </div>
 
   <script src="config.js"></script>
-  <script src="app.js?v=33"></script>
+  <script src="app.js?v=34"></script>
   <script src="voice_assistant.js?v=1"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>

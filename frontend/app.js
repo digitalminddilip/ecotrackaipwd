@@ -1718,12 +1718,14 @@ window.openProofModal = openProofModal;
 
 
 // ==========================================================================
-// LIVE GIS MAP & GOOGLE MAPS REPORT PINNING LOGIC
+// LIVE GIS MAP & GOOGLE MAPS REPORT PINNING LOGIC (WITH PENDING TASK SPIDERING)
 // ==========================================================================
 let citMap = null;
 let citMarkersLayer = null;
 let citUserMarker = null;
 let citLiveReportsCache = [];
+let citReportMarkersMap = {};
+let currentMapFilter = 'all';
 
 async function loadLiveTrackingMap(forceRefresh = false) {
   const mapContainer = document.getElementById('cit-map');
@@ -1735,12 +1737,12 @@ async function loadLiveTrackingMap(forceRefresh = false) {
 
   // 1. Initialize Map if not already initialized
   if (!citMap) {
-    const initialLat = window.lastCitizenCoords ? window.lastCitizenCoords.lat : 26.85;
-    const initialLng = window.lastCitizenCoords ? window.lastCitizenCoords.lng : 80.95;
+    const initialLat = window.lastCitizenCoords ? window.lastCitizenCoords.lat : 26.8699;
+    const initialLng = window.lastCitizenCoords ? window.lastCitizenCoords.lng : 80.96;
 
     citMap = L.map('cit-map', {
       center: [initialLat, initialLng],
-      zoom: 12,
+      zoom: 13,
       zoomControl: true,
       maxZoom: 20
     });
@@ -1819,41 +1821,108 @@ async function loadLiveTrackingMap(forceRefresh = false) {
       return !isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0 && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
     });
 
-    // Update telemetry counts
+    // Count telemetry
     let pendingCount = 0;
     let verifiedCount = 0;
+    const pendingReports = [];
+
     validReports.forEach(r => {
-      if (r.status === 'verified' || r.status === 'collected') {
+      const isVerified = (r.status === 'verified');
+      if (isVerified) {
         verifiedCount++;
       } else {
         pendingCount++;
+        pendingReports.push(r);
       }
     });
 
     const totalCountEl = document.getElementById('cit-map-total-count');
     const pendingCountEl = document.getElementById('cit-map-pending-count');
     const verifiedCountEl = document.getElementById('cit-map-verified-count');
+    const pendingListCountEl = document.getElementById('cit-pending-list-count');
+
     if (totalCountEl) totalCountEl.textContent = validReports.length;
     if (pendingCountEl) pendingCountEl.textContent = pendingCount;
     if (verifiedCountEl) verifiedCountEl.textContent = verifiedCount;
+    if (pendingListCountEl) pendingListCountEl.textContent = pendingReports.length;
 
-    // Clear old markers
-    citMarkersLayer.clearLayers();
+    // Render all pins with spidering for co-located tasks
+    renderMapMarkers(validReports);
 
-    // 3. Add pins for all reports
-    validReports.forEach(r => {
-      const lat = Number(r.latitude);
-      const lng = Number(r.longitude);
+    // Render Pending Tasks list section under map
+    renderPendingTasksList(pendingReports);
 
-      let pinColor = '#ef4444'; // Red for urgent / pending
+    // Also locate citizen on map
+    locateCitizenForMap();
+
+  } catch (err) {
+    console.error('Failed to populate live tracking map:', err);
+  }
+}
+
+// Render markers with intelligent spidering so every task is visible
+function renderMapMarkers(allValidReports) {
+  if (!citMap || !citMarkersLayer) return;
+
+  citMarkersLayer.clearLayers();
+  citReportMarkersMap = {};
+
+  // Filter according to currentMapFilter
+  let reportsToDisplay = allValidReports;
+  if (currentMapFilter === 'pending') {
+    reportsToDisplay = allValidReports.filter(r => r.status !== 'verified');
+  } else if (currentMapFilter === 'verified') {
+    reportsToDisplay = allValidReports.filter(r => r.status === 'verified');
+  }
+
+  // Group by coordinates (within ~11 meters) to spider co-located reports
+  const coordGroups = {};
+  reportsToDisplay.forEach(r => {
+    const key = `${Number(r.latitude).toFixed(4)}_${Number(r.longitude).toFixed(4)}`;
+    if (!coordGroups[key]) coordGroups[key] = [];
+    coordGroups[key].push(r);
+  });
+
+  Object.values(coordGroups).forEach(group => {
+    const isMulti = group.length > 1;
+    const baseLat = Number(group[0].latitude);
+    const baseLng = Number(group[0].longitude);
+
+    group.forEach((r, idx) => {
+      let displayLat = Number(r.latitude);
+      let displayLng = Number(r.longitude);
+
+      // Spider co-located reports in a clean circular pattern
+      if (isMulti) {
+        const radius = group.length > 8 ? 0.00030 : 0.00020; // ~20-30 meters
+        const angle = (idx * 2 * Math.PI) / group.length;
+        displayLat = baseLat + radius * Math.cos(angle);
+        displayLng = baseLng + radius * Math.sin(angle);
+
+        // Subtle guide line connecting spidered pin to landmark center
+        const line = L.polyline(
+          [[baseLat, baseLng], [displayLat, displayLng]],
+          { color: '#94a3b8', weight: 1.5, dashArray: '3, 6', opacity: 0.6 }
+        );
+        citMarkersLayer.addLayer(line);
+      }
+
+      const isVerified = (r.status === 'verified');
+      const isUrgent = (r.status === 'reported' || r.status === 'ai_analyzed');
+      const isInProgress = (r.status === 'assigned' || r.status === 'in_progress' || r.status === 'collected' || r.status === 'reviewed');
+
+      let pinColor = '#ef4444'; // Red for urgent
       let pinIcon = 'fa-triangle-exclamation';
+      let zOffset = 1000; // Pending tasks on top!
 
-      if (r.status === 'verified' || r.status === 'collected') {
-        pinColor = '#10b981'; // Green for verified
+      if (isVerified) {
+        pinColor = '#10b981';
         pinIcon = 'fa-circle-check';
-      } else if (r.status === 'in_progress' || r.status === 'assigned' || r.status === 'reviewed') {
-        pinColor = '#f59e0b'; // Orange for in progress
+        zOffset = 100;
+      } else if (isInProgress) {
+        pinColor = '#f59e0b';
         pinIcon = 'fa-clock';
+        zOffset = 500;
       }
 
       const customHtml = `
@@ -1882,22 +1951,27 @@ async function loadLiveTrackingMap(forceRefresh = false) {
         popupAnchor: [0, -32]
       });
 
-      const marker = L.marker([lat, lng], { icon: markerIcon });
+      const marker = L.marker([displayLat, displayLng], {
+        icon: markerIcon,
+        zIndexOffset: zOffset
+      });
 
       const photoUrl = `${API_URL}/reports/${r.report_id}/image`;
-      const mapsDirUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
-      const mapsPinUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+      const mapsDirUrl = `https://www.google.com/maps/dir/?api=1&destination=${baseLat},${baseLng}`;
+      const mapsPinUrl = `https://www.google.com/maps?q=${baseLat},${baseLng}`;
       const catText = r.category ? r.category.replace(/_/g, ' ').toUpperCase() : 'CIVIC WASTE HAZARD';
       const dateText = r.timestamp ? new Date(r.timestamp).toLocaleDateString() : '';
 
       const popupHtml = `
-        <div style="font-family: 'Inter', system-ui, sans-serif; min-width: 220px; max-width: 270px; padding: 4px;">
-          <div style="position: relative; width: 100%; height: 120px; background: #0f172a; border-radius: 8px; overflow: hidden; margin-bottom: 8px; display: flex; align-items: center; justify-content: center;">
+        <div style="font-family: 'Inter', system-ui, sans-serif; min-width: 230px; max-width: 280px; padding: 4px;">
+          <div style="position: relative; width: 100%; height: 125px; background: #0f172a; border-radius: 8px; overflow: hidden; margin-bottom: 8px; display: flex; align-items: center; justify-content: center;">
             <img src="${photoUrl}" alt="Waste" style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;" onclick="openProofModal('${photoUrl}', 'Waste Report Evidence #${r.report_id.slice(0, 8)}', '${r.status}')" onerror="this.src='logo.png'" title="Click to enlarge" />
             <span style="position: absolute; top: 6px; right: 6px; background: ${pinColor}; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.68rem; font-weight: 700; text-transform: uppercase;">
               ${r.status || 'reported'}
             </span>
           </div>
+
+          ${isMulti ? `<div style="font-size: 0.72rem; color: #64748b; margin-bottom: 4px;"><i class="fa-solid fa-layer-group" style="color: #2563eb;"></i> Task ${idx + 1} of ${group.length} at this landmark</div>` : ''}
 
           <div style="font-weight: 700; color: #0f172a; font-size: 0.92rem; margin-bottom: 2px;">
             ${catText}
@@ -1909,7 +1983,7 @@ async function loadLiveTrackingMap(forceRefresh = false) {
           ${r.description ? `<p style="font-size: 0.8rem; color: #334155; margin: 0 0 8px 0; line-height: 1.35; max-height: 48px; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(r.description)}</p>` : ''}
 
           <div style="background: #eff6ff; padding: 5px 8px; border-radius: 6px; font-family: monospace; font-size: 0.78rem; color: #1e40af; margin-bottom: 8px; font-weight: 700; display: flex; align-items: center; gap: 4px;">
-            <i class="fa-solid fa-location-crosshairs" style="color: #ef4444;"></i> GPS: ${lat.toFixed(5)}°, ${lng.toFixed(5)}°
+            <i class="fa-solid fa-location-crosshairs" style="color: #ef4444;"></i> GPS: ${baseLat.toFixed(5)}°, ${baseLng.toFixed(5)}°
           </div>
 
           <div style="display: flex; flex-direction: column; gap: 5px; margin-top: 6px;">
@@ -1925,19 +1999,151 @@ async function loadLiveTrackingMap(forceRefresh = false) {
 
       marker.bindPopup(popupHtml);
       citMarkersLayer.addLayer(marker);
+
+      citReportMarkersMap[r.report_id] = {
+        marker: marker,
+        lat: displayLat,
+        lng: displayLng,
+        report: r
+      };
     });
+  });
 
-    // 4. Also add or update Citizen's Current GPS Location marker
-    locateCitizenForMap();
-
-    // 5. Fit bounds to all markers if reports exist
-    if (citMarkersLayer.getLayers().length > 0) {
-      citMap.fitBounds(citMarkersLayer.getBounds(), { padding: [40, 40], maxZoom: 15 });
-    }
-  } catch (err) {
-    console.error('Failed to populate live tracking map:', err);
+  // Fit bounds to visible markers
+  if (citMarkersLayer.getLayers().length > 0) {
+    citMap.fitBounds(citMarkersLayer.getBounds(), { padding: [40, 40], maxZoom: 16 });
   }
 }
+
+// Render the Pending Tasks cards list below the map
+function renderPendingTasksList(pendingReports) {
+  const container = document.getElementById('cit-pending-tasks-container');
+  if (!container) return;
+
+  if (pendingReports.length === 0) {
+    container.innerHTML = `
+      <div style="padding: 24px; text-align: center; color: #10b981; grid-column: 1 / -1; background: #f0fdf4; border-radius: 12px; font-weight: 600; border: 1px solid #bbf7d0;">
+        <i class="fa-solid fa-circle-check" style="font-size: 26px; margin-bottom: 8px; display: block;"></i>
+        All reported municipal tasks in this area have been verified & resolved!
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = pendingReports.map(r => {
+    const lat = Number(r.latitude);
+    const lng = Number(r.longitude);
+    const photoUrl = `${API_URL}/reports/${r.report_id}/image`;
+    const mapsDirUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+    const categoryName = r.category ? r.category.replace(/_/g, ' ').toUpperCase() : 'CIVIC WASTE HAZARD';
+
+    let statusBg = '#fee2e2';
+    let statusColor = '#991b1b';
+    let statusLabel = (r.status || 'PENDING').toUpperCase();
+
+    if (r.status === 'assigned' || r.status === 'in_progress') {
+      statusBg = '#fef3c7';
+      statusColor = '#92400e';
+    } else if (r.status === 'collected') {
+      statusBg = '#e0f2fe';
+      statusColor = '#0369a1';
+    }
+
+    return `
+      <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.03); display: flex; flex-direction: column; justify-content: space-between; gap: 10px;">
+        <div style="display: flex; gap: 12px; align-items: flex-start;">
+          <img src="${photoUrl}" style="width: 64px; height: 64px; border-radius: 8px; object-fit: cover; flex-shrink: 0; cursor: pointer; border: 1px solid #cbd5e1;" onclick="openProofModal('${photoUrl}', 'Pending Task Evidence #${r.report_id.slice(0, 8)}', '${r.status}')" onerror="this.src='logo.png'" title="Click to enlarge" />
+          <div style="flex: 1; min-width: 0;">
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 6px; margin-bottom: 4px;">
+              <span style="font-size: 0.68rem; background: ${statusBg}; color: ${statusColor}; padding: 2px 8px; border-radius: 12px; font-weight: 700;">
+                ${statusLabel}
+              </span>
+              <span style="font-size: 0.72rem; color: #94a3b8;">${new Date(r.timestamp).toLocaleDateString()}</span>
+            </div>
+            <strong style="font-size: 0.88rem; color: #0f172a; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+              ${categoryName}
+            </strong>
+            <div style="font-size: 0.75rem; color: #64748b; font-family: monospace; margin-top: 2px;">
+              <i class="fa-solid fa-location-crosshairs" style="color: #ef4444;"></i> ${lat.toFixed(4)}°, ${lng.toFixed(4)}°
+            </div>
+          </div>
+        </div>
+
+        ${r.description ? `<p style="font-size: 0.8rem; color: #334155; margin: 0; line-height: 1.35; max-height: 38px; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(r.description)}</p>` : ''}
+
+        <div style="display: flex; gap: 8px; margin-top: auto; padding-top: 6px; border-top: 1px solid #f1f5f9;">
+          <button type="button" onclick="locateReportOnMap('${r.report_id}')" style="flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 7px 10px; background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; border-radius: 6px; font-size: 0.78rem; font-weight: 600; cursor: pointer;">
+            <i class="fa-solid fa-crosshairs"></i> Locate Pin
+          </button>
+          <a href="${mapsDirUrl}" target="_blank" rel="noopener noreferrer" style="flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 7px 10px; background: #2563eb; color: #ffffff; border-radius: 6px; font-size: 0.78rem; font-weight: 600; text-decoration: none; box-shadow: 0 1px 3px rgba(37,99,235,0.3);">
+            <i class="fa-solid fa-diamond-turn-right"></i> Directions
+          </a>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// Locate specific report on map and open its popup
+window.locateReportOnMap = function(reportId) {
+  const item = citReportMarkersMap[reportId];
+  if (!item || !citMap) {
+    // If not found in current filter, reset filter to 'all' and retry
+    if (currentMapFilter !== 'all') {
+      window.filterLiveTrackingMap('all');
+      setTimeout(() => {
+        window.locateReportOnMap(reportId);
+      }, 300);
+      return;
+    }
+    alert('Location pin for report #' + reportId + ' could not be found.');
+    return;
+  }
+
+  // Pan and zoom smoothly to pin
+  citMap.setView([item.lat, item.lng], 17, { animate: true });
+  setTimeout(() => {
+    item.marker.openPopup();
+  }, 350);
+
+  // Smooth scroll up to map container so user sees pin
+  const mapEl = document.getElementById('cit-map');
+  if (mapEl) {
+    mapEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+};
+
+// Filter live tracking map (all, pending, verified)
+window.filterLiveTrackingMap = function(filterMode, btn) {
+  currentMapFilter = filterMode;
+
+  const btnAll = document.getElementById('cit-btn-filter-all');
+  const btnPending = document.getElementById('cit-btn-filter-pending');
+  const btnVerified = document.getElementById('cit-btn-filter-verified');
+
+  const defaultBtnStyle = 'display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 600; cursor: pointer; border: 1px solid #cbd5e1; background: #ffffff; color: #334155; box-shadow: none;';
+
+  if (btnAll) btnAll.style.cssText = defaultBtnStyle;
+  if (btnPending) btnPending.style.cssText = defaultBtnStyle;
+  if (btnVerified) btnVerified.style.cssText = defaultBtnStyle;
+
+  if (filterMode === 'pending' && btnPending) {
+    btnPending.style.cssText = 'display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 700; cursor: pointer; border: 1px solid #ef4444; background: #ef4444; color: #ffffff; box-shadow: 0 2px 6px rgba(239,68,68,0.25);';
+  } else if (filterMode === 'verified' && btnVerified) {
+    btnVerified.style.cssText = 'display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 700; cursor: pointer; border: 1px solid #10b981; background: #10b981; color: #ffffff; box-shadow: 0 2px 6px rgba(16,185,129,0.25);';
+  } else if (btnAll) {
+    btnAll.style.cssText = 'display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 700; cursor: pointer; border: 1px solid #2563eb; background: #2563eb; color: #ffffff; box-shadow: 0 2px 6px rgba(37,99,235,0.25);';
+  }
+
+  // Re-filter and render markers
+  const validReports = (citLiveReportsCache || []).filter(r => {
+    const lat = Number(r.latitude);
+    const lng = Number(r.longitude);
+    return !isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0;
+  });
+
+  renderMapMarkers(validReports);
+};
 
 function locateCitizenForMap() {
   if (!navigator.geolocation || !citMap) return;
@@ -1958,7 +2164,7 @@ function locateCitizenForMap() {
       if (citUserMarker) {
         citUserMarker.setLatLng([uLat, uLng]);
       } else {
-        citUserMarker = L.marker([uLat, uLng], { icon: userIcon, zIndexOffset: 1000 }).addTo(citMap);
+        citUserMarker = L.marker([uLat, uLng], { icon: userIcon, zIndexOffset: 2000 }).addTo(citMap);
         citUserMarker.bindPopup('<strong style="font-family:sans-serif;font-size:12px;color:#1e40af;"><i class="fa-solid fa-user"></i> Your Current GPS Location</strong>');
       }
     },

@@ -293,6 +293,20 @@
           </div>
         </div>
 
+        <!-- Pending Locations on Map Strip -->
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 14px; margin-bottom: 14px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">
+            <span style="font-size: 0.82rem; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 6px;">
+              <i class="fa-solid fa-map-location-dot" style="color: #ef4444;"></i>
+              Pending Locations on Map (<span id="cit-locations-count">0</span> Locations):
+            </span>
+            <span style="font-size: 0.74rem; color: #64748b;"><i class="fa-solid fa-hand-pointer"></i> Click any location to zoom on map</span>
+          </div>
+          <div id="cit-pending-locations-strip" style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch;">
+            <span style="font-size: 0.78rem; color: #94a3b8;"><i class="fa-solid fa-spinner fa-spin"></i> Loading pending locations...</span>
+          </div>
+        </div>
+
         <!-- Map Container -->
         <div id="cit-map" style="height: 480px; width: 100%; border-radius: 12px; border: 1px solid #cbd5e1; box-shadow: 0 4px 12px rgba(0,0,0,0.06); position: relative; overflow: hidden; z-index: 1;">
         </div>
@@ -879,7 +893,7 @@
   </div>
 
   <script src="config.js"></script>
-  <script src="app.js?v=34"></script>
+  <script src="app.js?v=35"></script>
   <script src="voice_assistant.js?v=1"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>

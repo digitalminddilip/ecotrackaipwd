@@ -1849,6 +1849,9 @@ async function loadLiveTrackingMap(forceRefresh = false) {
     // Render all pins with spidering for co-located tasks
     renderMapMarkers(validReports);
 
+    // Render pending locations strip according to pending reports on map
+    renderPendingLocationsStrip(pendingReports);
+
     // Render Pending Tasks list section under map
     renderPendingTasksList(pendingReports);
 
@@ -1861,6 +1864,104 @@ async function loadLiveTrackingMap(forceRefresh = false) {
 }
 
 // Render markers with intelligent spidering so every task is visible
+
+// Location helper to parse and extract human-readable location from report or GPS coords
+function extractReportLocation(r) {
+  if (!r) return 'Civic Ward Location';
+  if (r.location && typeof r.location === 'string' && r.location.trim()) {
+    return r.location.trim();
+  }
+  if (r.description) {
+    const match = r.description.match(/Location:\s*([^\r\n|]+)/i);
+    if (match && match[1] && match[1].trim()) {
+      return match[1].trim();
+    }
+  }
+  const lat = Number(r.latitude);
+  const lng = Number(r.longitude);
+  if (!isNaN(lat) && !isNaN(lng)) {
+    if (Math.abs(lat - 17.4488) < 0.05 && Math.abs(lng - 78.3065) < 0.05) {
+      return 'Municipal Zone, Hyderabad (Serilingampalle)';
+    }
+    if (Math.abs(lat - 26.8699) < 0.05 && Math.abs(lng - 80.96) < 0.05) {
+      return 'Sector 62 / GIDA Campus Zone, Lucknow';
+    }
+    return `${lat.toFixed(4)}° N, ${lng.toFixed(4)}° E`;
+  }
+  return 'Civic Ward Location';
+}
+
+function extractReportUserComment(desc) {
+  if (!desc) return '';
+  const lines = desc.split(/[\r\n]+/);
+  if (lines.length > 1 && lines[0].includes('Name:') && lines[0].includes('Location:')) {
+    return lines.slice(1).join(' ').trim();
+  }
+  if (desc.startsWith('Name:') && desc.includes('Location:')) {
+    const parts = desc.split('|');
+    if (parts.length > 2) return parts.slice(2).join('|').trim();
+  }
+  return desc.trim();
+}
+
+// Render dynamic pending locations strip on live map
+function renderPendingLocationsStrip(pendingReports) {
+  const strip = document.getElementById('cit-pending-locations-strip');
+  const locCountEl = document.getElementById('cit-locations-count');
+  if (!strip) return;
+
+  if (!pendingReports || pendingReports.length === 0) {
+    strip.innerHTML = '<span style="font-size: 0.78rem; color: #10b981; font-weight: 600;"><i class="fa-solid fa-circle-check"></i> All reported locations on map are verified & clean!</span>';
+    if (locCountEl) locCountEl.textContent = '0';
+    return;
+  }
+
+  const locMap = {};
+  pendingReports.forEach(r => {
+    const loc = extractReportLocation(r);
+    if (!locMap[loc]) {
+      locMap[loc] = {
+        name: loc,
+        reports: [],
+        lat: Number(r.latitude),
+        lng: Number(r.longitude)
+      };
+    }
+    locMap[loc].reports.push(r);
+  });
+
+  const uniqueLocations = Object.values(locMap);
+  if (locCountEl) locCountEl.textContent = uniqueLocations.length;
+
+  strip.innerHTML = uniqueLocations.map(item => {
+    const firstRepId = item.reports[0].report_id;
+    return `
+      <button type="button" 
+              onclick="focusLocationOnMap(${item.lat}, ${item.lng}, '${firstRepId}')" 
+              style="display: inline-flex; align-items: center; gap: 7px; padding: 7px 14px; background: #ffffff; border: 1.5px solid #fca5a5; border-radius: 20px; font-size: 0.8rem; font-weight: 700; color: #991b1b; cursor: pointer; white-space: nowrap; box-shadow: 0 1px 3px rgba(239,68,68,0.1); transition: all 0.15s ease;"
+              onmouseover="this.style.background='#fef2f2'; this.style.borderColor='#ef4444';" 
+              onmouseout="this.style.background='#ffffff'; this.style.borderColor='#fca5a5';"
+              title="Click to focus ${escapeHtml(item.name)} on map">
+        <i class="fa-solid fa-location-dot" style="color: #ef4444;"></i>
+        <span>${escapeHtml(item.name)}</span>
+        <span style="background: #ef4444; color: #ffffff; border-radius: 12px; padding: 1px 7px; font-size: 0.72rem; font-weight: 800;">
+          ${item.reports.length} pending
+        </span>
+      </button>
+    `;
+  }).join('');
+}
+
+window.focusLocationOnMap = function(lat, lng, reportId) {
+  if (!citMap) return;
+  citMap.setView([lat, lng], 17, { animate: true });
+  if (reportId && typeof window.locateReportOnMap === 'function') {
+    setTimeout(() => {
+      window.locateReportOnMap(reportId);
+    }, 400);
+  }
+};
+
 function renderMapMarkers(allValidReports) {
   if (!citMap || !citMarkersLayer) return;
 
@@ -1961,6 +2062,8 @@ function renderMapMarkers(allValidReports) {
       const mapsPinUrl = `https://www.google.com/maps?q=${baseLat},${baseLng}`;
       const catText = r.category ? r.category.replace(/_/g, ' ').toUpperCase() : 'CIVIC WASTE HAZARD';
       const dateText = r.timestamp ? new Date(r.timestamp).toLocaleDateString() : '';
+      const locName = extractReportLocation(r);
+      const userComment = extractReportUserComment(r.description);
 
       const popupHtml = `
         <div style="font-family: 'Inter', system-ui, sans-serif; min-width: 230px; max-width: 280px; padding: 4px;">
@@ -2036,6 +2139,8 @@ function renderPendingTasksList(pendingReports) {
     const photoUrl = `${API_URL}/reports/${r.report_id}/image`;
     const mapsDirUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
     const categoryName = r.category ? r.category.replace(/_/g, ' ').toUpperCase() : 'CIVIC WASTE HAZARD';
+    const locName = extractReportLocation(r);
+    const userComment = extractReportUserComment(r.description);
 
     let statusBg = '#fee2e2';
     let statusColor = '#991b1b';
@@ -2052,7 +2157,7 @@ function renderPendingTasksList(pendingReports) {
     return `
       <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.03); display: flex; flex-direction: column; justify-content: space-between; gap: 10px;">
         <div style="display: flex; gap: 12px; align-items: flex-start;">
-          <img src="${photoUrl}" style="width: 64px; height: 64px; border-radius: 8px; object-fit: cover; flex-shrink: 0; cursor: pointer; border: 1px solid #cbd5e1;" onclick="openProofModal('${photoUrl}', 'Pending Task Evidence #${r.report_id.slice(0, 8)}', '${r.status}')" onerror="this.src='logo.png'" title="Click to enlarge" />
+          <img src="${photoUrl}" style="width: 68px; height: 68px; border-radius: 8px; object-fit: cover; flex-shrink: 0; cursor: pointer; border: 1px solid #cbd5e1;" onclick="openProofModal('${photoUrl}', 'Pending Task Evidence #${r.report_id.slice(0, 8)}', '${r.status}')" onerror="this.src='logo.png'" title="Click to enlarge" />
           <div style="flex: 1; min-width: 0;">
             <div style="display: flex; justify-content: space-between; align-items: center; gap: 6px; margin-bottom: 4px;">
               <span style="font-size: 0.68rem; background: ${statusBg}; color: ${statusColor}; padding: 2px 8px; border-radius: 12px; font-weight: 700;">
@@ -2063,19 +2168,35 @@ function renderPendingTasksList(pendingReports) {
             <strong style="font-size: 0.88rem; color: #0f172a; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
               ${categoryName}
             </strong>
-            <div style="font-size: 0.75rem; color: #64748b; font-family: monospace; margin-top: 2px;">
-              <i class="fa-solid fa-location-crosshairs" style="color: #ef4444;"></i> ${lat.toFixed(4)}°, ${lng.toFixed(4)}°
+            <div style="font-size: 0.73rem; color: #64748b; margin-top: 2px;">
+              Task #${r.report_id.slice(0, 8)}
             </div>
           </div>
         </div>
 
-        ${r.description ? `<p style="font-size: 0.8rem; color: #334155; margin: 0; line-height: 1.35; max-height: 38px; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(r.description)}</p>` : ''}
+        <!-- Location Section for Pending Report on Map -->
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 3px solid #ef4444; border-radius: 8px; padding: 8px 10px;">
+          <div style="display: flex; align-items: flex-start; gap: 6px; font-size: 0.82rem; font-weight: 700; color: #0f172a; line-height: 1.35;">
+            <i class="fa-solid fa-location-dot" style="color: #ef4444; margin-top: 2px; flex-shrink: 0;"></i>
+            <span style="overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
+              ${escapeHtml(locName)}
+            </span>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 5px; font-size: 0.73rem; color: #64748b; font-family: monospace;">
+            <span><i class="fa-solid fa-location-crosshairs" style="color: #2563eb;"></i> GPS: ${lat.toFixed(4)}°, ${lng.toFixed(4)}°</span>
+            <span style="color: #2563eb; font-weight: 700; font-family: sans-serif; cursor: pointer;" onclick="locateReportOnMap('${r.report_id}')">
+              <i class="fa-solid fa-crosshairs"></i> Focus Pin
+            </span>
+          </div>
+        </div>
+
+        ${userComment ? `<p style="font-size: 0.8rem; color: #475569; margin: 0; line-height: 1.35; max-height: 38px; overflow: hidden; text-overflow: ellipsis;"><i class="fa-regular fa-comment-dots" style="color: #94a3b8; margin-right: 4px;"></i>${escapeHtml(userComment)}</p>` : ''}
 
         <div style="display: flex; gap: 8px; margin-top: auto; padding-top: 6px; border-top: 1px solid #f1f5f9;">
-          <button type="button" onclick="locateReportOnMap('${r.report_id}')" style="flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 7px 10px; background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; border-radius: 6px; font-size: 0.78rem; font-weight: 600; cursor: pointer;">
-            <i class="fa-solid fa-crosshairs"></i> Locate Pin
+          <button type="button" onclick="locateReportOnMap('${r.report_id}')" style="flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 10px; background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; border-radius: 6px; font-size: 0.78rem; font-weight: 700; cursor: pointer;">
+            <i class="fa-solid fa-crosshairs"></i> Focus on Map
           </button>
-          <a href="${mapsDirUrl}" target="_blank" rel="noopener noreferrer" style="flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 7px 10px; background: #2563eb; color: #ffffff; border-radius: 6px; font-size: 0.78rem; font-weight: 600; text-decoration: none; box-shadow: 0 1px 3px rgba(37,99,235,0.3);">
+          <a href="${mapsDirUrl}" target="_blank" rel="noopener noreferrer" style="flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 10px; background: #2563eb; color: #ffffff; border-radius: 6px; font-size: 0.78rem; font-weight: 700; text-decoration: none; box-shadow: 0 1px 3px rgba(37,99,235,0.3);">
             <i class="fa-solid fa-diamond-turn-right"></i> Directions
           </a>
         </div>

@@ -1,0 +1,9 @@
+{
+  "name": "cleanconnect-frontend",
+  "version": "1.0.0",
+  "description": "CleanConnect Frontend with Vercel Analytics",
+  "private": true,
+  "dependencies": {
+    "@vercel/analytics": "^1.1.1"
+  }
+}

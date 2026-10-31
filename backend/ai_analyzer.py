@@ -8,7 +8,7 @@ import numpy as np
 from PIL import Image
 
 
-AI_ENDPOINT = os.getenv("CLEANCONNECT_AI_ENDPOINT")
+AI_ENDPOINT = os.getenv("ECOTRACK_AI_ENDPOINT", os.getenv("CLEANCONNECT_AI_ENDPOINT"))
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 WEIGHTS_PATH = os.path.join(os.path.dirname(__file__), "garbage_model_weights.json")

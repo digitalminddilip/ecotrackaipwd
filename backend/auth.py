@@ -7,7 +7,7 @@ import time
 from typing import Any
 
 
-AUTH_SECRET = os.getenv("CLEANCONNECT_AUTH_SECRET", "change-this-development-secret").encode()
+AUTH_SECRET = os.getenv("ECOTRACK_AUTH_SECRET", os.getenv("CLEANCONNECT_AUTH_SECRET", "change-this-development-secret")).encode()
 TOKEN_LIFETIME_SECONDS = 60 * 60 * 24
 
 

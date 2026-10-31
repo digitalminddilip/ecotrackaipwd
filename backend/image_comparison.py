@@ -1,4 +1,4 @@
-"""General-purpose visual comparison used by the CleanConnect dashboard."""
+"""General-purpose visual comparison used by the EcoTrack AI dashboard."""
 
 from io import BytesIO
 

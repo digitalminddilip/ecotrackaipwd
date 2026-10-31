@@ -6,6 +6,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PORT=8000 \
     HOST=0.0.0.0 \
+    ECOTRACK_DATABASE=/app/cleanconnect.db \
     CLEANCONNECT_DATABASE=/app/cleanconnect.db
 
 WORKDIR /app

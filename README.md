@@ -1,4 +1,4 @@
-# 🌿 EcoTrack AI (CleanConnect)
+# 🌿 EcoTrack AI
 ### *Next-Gen AI-Powered Civic Cleanliness & Municipal Waste Intelligence Platform*
 #### **Built & Optimized for IBM Z® Datathon / IBM LinuxONE Community Cloud (s390x)**
 
@@ -11,7 +11,7 @@
 ---
 
 ## 📌 Executive Summary
-**EcoTrack AI (CleanConnect)** is an enterprise-grade civic cleanliness platform designed to streamline urban sanitation operations, empower citizens, and provide municipal authorities with real-time spatial analytics.
+**EcoTrack AI** is an enterprise-grade civic cleanliness platform designed to streamline urban sanitation operations, empower citizens, and provide municipal authorities with real-time spatial analytics.
 
 By leveraging **IBM Z (LinuxONE)** enterprise cloud infrastructure, the platform benefits from:
 - **Mission-Critical Reliability:** 99.999% uptime for civic reporting and emergency sanitation alerts.
@@ -42,8 +42,8 @@ By leveraging **IBM Z (LinuxONE)** enterprise cloud infrastructure, the platform
 ### Option A: 1-Click Automated Script (Recommended)
 On your IBM LinuxONE Community Cloud virtual machine:
 ```bash
-git clone https://github.com/dilipksharma1244-ops/Clean-Connect-AI.git
-cd Clean-Connect-AI
+git clone https://github.com/dilipksharma1244-ops/EcoTrack-AI.git
+cd EcoTrack-AI
 chmod +x deploy-ibm-z.sh
 ./deploy-ibm-z.sh
 ```
@@ -66,7 +66,7 @@ docker run -d -p 8000:8000 --name ecotrack-ai --restart always ecotrack-ai:ibm-z
 | :--- | :--- | :--- | :--- |
 | 🛡️ **Administrator** | `dilipksharma1244@gmail.com` | `Dilip@2006` | Access `/admin/` for executive analytics & management |
 | 🚛 **Sanitation Collector**| `digitalminddilip0906@gmail.com` | *(OTP Login)* | Collector mobile interface & pickup confirmation |
-| 👤 **Citizen / Public** | `citizen@cleanconnect.local` | `Citizen@123` | Public reporting, Voice AI, Leaderboard |
+| 👤 **Citizen / Public** | `citizen@ecotrackai.local` | `Citizen@123` | Public reporting, Voice AI, Leaderboard |
 
 ---
 

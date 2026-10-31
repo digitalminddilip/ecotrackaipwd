@@ -1,6 +1,6 @@
 {
-  "name": "CleanConnect",
-  "short_name": "CleanConnect",
+  "name": "EcoTrack AI",
+  "short_name": "EcoTrack AI",
   "description": "Report and track civic issues.",
   "start_url": "/",
   "display": "standalone",

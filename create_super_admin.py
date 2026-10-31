@@ -24,7 +24,7 @@ except ImportError:
 def get_db_path() -> str:
     from dotenv import load_dotenv
     load_dotenv()
-    return os.getenv("CLEANCONNECT_DATABASE", "cleanconnect.db")
+    return os.getenv("ECOTRACK_DATABASE", os.getenv("CLEANCONNECT_DATABASE", "cleanconnect.db"))
 
 
 def create_or_update_super_admin(email: str, password: str, name: str) -> dict:
@@ -98,7 +98,7 @@ def create_or_update_super_admin(email: str, password: str, name: str) -> dict:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Create or promote a Super Admin (Administrator) for CleanConnect.")
+    parser = argparse.ArgumentParser(description="Create or promote a Super Admin (Administrator) for EcoTrack AI.")
     parser.add_argument("--email", help="Super Admin email address", default=None)
     parser.add_argument("--name", help="Super Admin full name", default=None)
     parser.add_argument("--password", help="Super Admin password (optional via CLI, will prompt if omitted)", default=None)

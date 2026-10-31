@@ -1,4 +1,4 @@
-// CleanConnect Browser Voice AI Assistant (100% Free Lifetime)
+// EcoTrack AI Browser Voice AI Assistant (100% Free Lifetime)
 
 (function () {
   // Check Speech API Support
@@ -206,7 +206,7 @@
   async function processUserQuery(query) {
     updateUIState("thinking");
 
-    let token = localStorage.getItem("cleanconnect_token");
+    let token = localStorage.getItem("ecotrack_token") || localStorage.getItem("cleanconnect_token");
     let headers = { "Content-Type": "application/json" };
     if (token) headers["Authorization"] = `Bearer ${token}`;
 
@@ -296,7 +296,7 @@
     // 1. Create Floating Button
     fabBtn = document.createElement("button");
     fabBtn.className = "cc-voice-fab";
-    fabBtn.title = "CleanConnect Voice AI (100% Free)";
+    fabBtn.title = "EcoTrack AI Voice Assistant";
     fabBtn.innerHTML = `
       <i class="fa-solid fa-microphone"></i>
       <span class="cc-voice-badge">AI</span>

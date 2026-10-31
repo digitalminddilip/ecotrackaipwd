@@ -1,4 +1,4 @@
-const CACHE_NAME = "cleanconnect-v1";
+const CACHE_NAME = "ecotrack-v2";
 const ASSETS = [
   "/",
   "/styles.css",

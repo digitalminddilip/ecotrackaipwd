@@ -133,7 +133,7 @@ class CoordinatesRequest(BaseModel):
     longitude: float = Field(ge=-180, le=180)
 
 
-app = FastAPI(title="CleanConnect API", version="1.0.0")
+app = FastAPI(title="EcoTrack AI API", version="1.0.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -769,6 +769,14 @@ def track_visit(request: Request, body: Optional[VisitTrackRequest] = None):
     path = body.path if body and body.path else "/"
     record_site_visit(client_ip, path, user_agent)
     return {"status": "ok"}
+
+
+@app.get("/api/ip-location")
+def ip_location_endpoint(request: Request):
+    client_ip = request.headers.get("x-forwarded-for") or (request.client.host if request.client else None)
+    if client_ip and "," in client_ip:
+        client_ip = client_ip.split(",")[0].strip()
+    return lookup_ip_location(client_ip)
 
 
 class VoiceQueryRequest(BaseModel):

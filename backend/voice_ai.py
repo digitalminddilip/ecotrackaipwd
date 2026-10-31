@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
-VOICE_SYSTEM_PROMPT = """You are EcoTrack AI (CleanConnect) Voice Assistant, an intelligent, helpful, and friendly voice assistant for the EcoTrack AI civic waste reporting platform.
+VOICE_SYSTEM_PROMPT = """You are EcoTrack AI Voice Assistant, an intelligent, helpful, and friendly voice assistant for the EcoTrack AI civic waste reporting platform.
 
 ============================================================
 ECOTRACK AI — VOICE AGENT QUESTION & ANSWER TRAINING DATASET

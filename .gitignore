@@ -68,3 +68,5 @@ rewrite*.py
 script.py
 update_*.py
 
+
+scripts/patch_*.py

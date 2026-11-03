@@ -2,10 +2,33 @@
 <html lang="en">
 
 <head>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <script>
+    // Automatic Purge of legacy Clean Connect caches and Service Workers
+    (function() {
+      try {
+        if ('caches' in window) {
+          caches.keys().then(function(keys) {
+            keys.forEach(function(k) {
+              if (k.indexOf('cleanconnect') !== -1 || k.indexOf('ecotrack-v1') !== -1 || k.indexOf('ecotrack-v2') !== -1 || k.indexOf('ecotrack-v3') !== -1) {
+                caches.delete(k);
+              }
+            });
+          });
+        }
+        localStorage.removeItem('cleanconnect_token');
+        localStorage.removeItem('cleanconnect_api_url');
+        localStorage.removeItem('cleanconnect_visited');
+        sessionStorage.removeItem('cleanconnect_visited');
+      } catch(e) {}
+    })();
+  </script>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#138808">
-  <link rel="icon" type="image/png" href="logo.png?v=3">
-  <link rel="apple-touch-icon" href="logo.png?v=3">
+  <link rel="icon" type="image/png" href="logo.png?v=4">
+  <link rel="apple-touch-icon" href="logo.png?v=4">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>EcoTrack AI - Civic Cleanliness & Municipal Waste Intelligence Platform</title>
@@ -22,13 +45,13 @@
   <meta property="og:url" content="/">
   <meta property="og:title" content="EcoTrack AI - Civic Cleanliness & Municipal Waste Intelligence">
   <meta property="og:description" content="AI-Powered Civic Cleanliness Platform. Real-time hazard reporting, Gemini Multimodal AI verification, and live GIS geospatial routing.">
-  <meta property="og:image" content="/logo.png?v=3">
+  <meta property="og:image" content="/logo.png?v=4">
 
   <!-- Twitter Meta Card -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="EcoTrack AI - Civic Cleanliness & Waste Intelligence">
   <meta name="twitter:description" content="Empowering citizens and municipal collectors with AI-driven waste intelligence and GIS routing.">
-  <meta name="twitter:image" content="/logo.png?v=3">
+  <meta name="twitter:image" content="/logo.png?v=4">
 
   <!-- Structured JSON-LD Schema Indexing -->
   <script type="application/ld+json">
@@ -51,10 +74,10 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Lato:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap"
     rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=18">
+  <link rel="stylesheet" href="styles.css?v=20">
   <link rel="stylesheet" href="auth.css?v=2">
   <link rel="stylesheet" href="location.css">
-  <link rel="stylesheet" href="citizen.css?v=19">
+  <link rel="stylesheet" href="citizen.css?v=20">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <link rel="stylesheet" href="collector.css">
@@ -75,7 +98,7 @@
       </div>
 
       <div class="logo-container">
-        <img src="logo.png?v=3" alt="EcoTrack AI Logo" class="auth-main-logo">
+        <img src="logo.png?v=4" alt="EcoTrack AI Logo" class="auth-main-logo">
       </div>
 
       <!-- Header -->
@@ -168,7 +191,7 @@
     <aside class="col-sidebar">
       <div>
         <a href="#" class="col-brand">
-          <img src="logo.png?v=3" alt="EcoTrack AI" style="height: 32px; width: auto; object-fit: contain; margin-right: 8px; vertical-align: middle;">EcoTrack AI
+          <img src="logo.png?v=4" alt="EcoTrack AI" style="height: 32px; width: auto; object-fit: contain; margin-right: 8px; vertical-align: middle;">EcoTrack AI
         </a>
         
         <div class="col-menu-section">
@@ -582,7 +605,7 @@
           <button id="cit-logout-btn" class="col-logout-btn" style="margin-top: 0; padding: 8px 16px; width: auto;" onclick="enterGuestMode(); setAuthMode('login'); byId('citizen-wrapper').hidden=true; document.body.classList.remove('collector-mode'); openSignIn();"><i class="fa-solid fa-arrow-right-from-bracket"></i> Logout</button>
           <button id="cit-login-btn" class="col-logout-btn" style="margin-top: 0; padding: 8px 16px; width: auto; background: #3b82f6; display: none;" onclick="setAuthMode('login'); byId('citizen-wrapper').hidden=true; document.body.classList.remove('collector-mode'); openSignIn();"><i class="fa-solid fa-arrow-right-to-bracket"></i> Login</button>
         </div>
-        <img src="logo.png?v=3" alt="EcoTrack AI Logo" style="height: 48px; width: auto; object-fit: contain; display: inline-block;">
+        <img src="logo.png?v=4" alt="EcoTrack AI Logo" style="height: 48px; width: auto; object-fit: contain; display: inline-block;">
         <div style="font-size: 12px; color: var(--col-text-muted); margin-top: 8px;">Powered by EcoTrack AI</div>
       </footer>
     </main>
@@ -598,7 +621,7 @@
         <i class="fa-solid fa-bars"></i>
       </button>
       <div class="mobile-brand">
-        <img src="logo.png?v=3" alt="EcoTrack AI" style="height: 28px; width: auto; object-fit: contain; margin-right: 6px; vertical-align: middle;"> EcoTrack AI
+        <img src="logo.png?v=4" alt="EcoTrack AI" style="height: 28px; width: auto; object-fit: contain; margin-right: 6px; vertical-align: middle;"> EcoTrack AI
       </div>
     </header>
 
@@ -1073,13 +1096,15 @@
   </div>
 
   <script src="config.js"></script>
-  <script src="app.js?v=35"></script>
+  <script src="app.js?v=40"></script>
   <script src="voice_assistant.js?v=1"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js').catch(err => console.error('SW failed', err));
+        navigator.serviceWorker.register('sw.js?v=4').then(reg => {
+          reg.update();
+        }).catch(err => console.error('SW failed', err));
       });
     }
   </script>

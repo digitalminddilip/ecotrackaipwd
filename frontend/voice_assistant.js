@@ -206,7 +206,7 @@
   async function processUserQuery(query) {
     updateUIState("thinking");
 
-    let token = localStorage.getItem("ecotrack_token") || localStorage.getItem("cleanconnect_token");
+    let token = localStorage.getItem("ecotrack_token");
     let headers = { "Content-Type": "application/json" };
     if (token) headers["Authorization"] = `Bearer ${token}`;
 

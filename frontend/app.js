@@ -1,11 +1,22 @@
+// EcoTrack AI - Clean Initialization & Legacy Cache Cleanup
+try {
+  if (localStorage.getItem("cleanconnect_token") && !localStorage.getItem("ecotrack_token")) {
+    localStorage.setItem("ecotrack_token", localStorage.getItem("cleanconnect_token"));
+  }
+  localStorage.removeItem("cleanconnect_token");
+  localStorage.removeItem("cleanconnect_api_url");
+  localStorage.removeItem("cleanconnect_visited");
+  sessionStorage.removeItem("cleanconnect_visited");
+} catch(e) {}
+
 const hostname = window.location.hostname;
 const isLocal = !hostname || hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.') || hostname.startsWith('10.');
-const API_URL = isLocal ? `http://${hostname || 'localhost'}:8000` : (window.BACKEND_API_URL || (localStorage.getItem("ecotrack_api_url") || localStorage.getItem("cleanconnect_api_url")) || "");
+const API_URL = isLocal ? `http://${hostname || 'localhost'}:8000` : (window.BACKEND_API_URL || localStorage.getItem("ecotrack_api_url") || "");
 window.API_URL = API_URL;
 
 try {
-  if (!sessionStorage.getItem("ecotrack_visited") && !sessionStorage.getItem("cleanconnect_visited")) {
-    sessionStorage.setItem("ecotrack_visited", "true"); sessionStorage.setItem("cleanconnect_visited", "true");
+  if (!sessionStorage.getItem("ecotrack_visited")) {
+    sessionStorage.setItem("ecotrack_visited", "true");
     fetch(`${API_URL}/api/track-visit`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -15,7 +26,7 @@ try {
 } catch (e) {}
 
 let reports = [];
-let accessToken = localStorage.getItem("ecotrack_token") || localStorage.getItem("cleanconnect_token");
+let accessToken = localStorage.getItem("ecotrack_token");
 let currentUser = null;
 let campusScene;
 const GIDA_CENTER = [26.7430558, 83.2733427];
@@ -40,7 +51,7 @@ function updateSidebarProfile(name) {
 
 function enterGuestMode() {
   accessToken = null;
-  localStorage.removeItem("ecotrack_token"); localStorage.removeItem("cleanconnect_token");
+  localStorage.removeItem("ecotrack_token");
   currentUser = { name: "Guest", role: "citizen", isGuest: true };
   updateSidebarProfile("Guest");
   if (byId("session-label")) byId("session-label").textContent = "Guest mode";
@@ -837,7 +848,7 @@ function setupAuthForm() {
       }
 
       accessToken = result.access_token;
-      localStorage.setItem("ecotrack_token", accessToken); localStorage.setItem("cleanconnect_token", accessToken);
+      localStorage.setItem("ecotrack_token", accessToken);
       message.style.color = "#27ae60";
       message.textContent = "Success! Redirecting...";
 
@@ -1365,7 +1376,7 @@ function handleCredentialResponse(response) {
     if (!res.ok) throw new Error(res.body.detail || 'Google Auth Failed');
     
     accessToken = res.body.access_token;
-    localStorage.setItem('ecotrack_token', accessToken); localStorage.setItem('cleanconnect_token', accessToken);
+    localStorage.setItem('ecotrack_token', accessToken);
     
     restoreSession().then(() => {
       if (msg) msg.textContent = '';

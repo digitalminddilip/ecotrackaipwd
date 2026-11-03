@@ -260,7 +260,7 @@ function renderReportsTable(reportsToRender) {
   const tbody = byId("reports-tbody");
   tbody.innerHTML = "";
   
-  reportsToRender.forEach(r => {
+  reportsToRender.forEach((r, idx) => {
     const tr = document.createElement("tr");
     const dateStr = new Date(r.timestamp).toLocaleDateString();
     let actionHtml = `<button class="action-btn" onclick="viewDetails('${r.report_id}')">View</button>`;
@@ -273,6 +273,7 @@ function renderReportsTable(reportsToRender) {
     }
     
     tr.innerHTML = `
+      <td style="text-align: center; font-weight: 700; color: #0284c7; font-family: monospace;">#${idx + 1}</td>
       <td><strong>${r.report_id.substring(0,8)}...</strong></td>
       <td>${r.category || '-'}</td>
       <td>${dateStr}</td>

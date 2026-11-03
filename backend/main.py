@@ -15,6 +15,7 @@ import requests
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
 
+from fastapi.responses import FileResponse
 from fastapi import FastAPI, File, Form, Header, HTTPException, Request, UploadFile, status, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -824,6 +825,24 @@ def voice_assistant_endpoint(
 
 
 FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
+
+
+@app.get("/robots.txt", include_in_schema=False)
+def get_robots_txt():
+    robots_path = FRONTEND_DIR / "robots.txt"
+    if robots_path.exists():
+        return FileResponse(str(robots_path), media_type="text/plain")
+    return Response(content="User-agent: *\nAllow: /\n", media_type="text/plain")
+
+
+@app.get("/sitemap.xml", include_in_schema=False)
+def get_sitemap_xml():
+    sitemap_path = FRONTEND_DIR / "sitemap.xml"
+    if sitemap_path.exists():
+        return FileResponse(str(sitemap_path), media_type="application/xml")
+    raise HTTPException(status_code=404, detail="Sitemap not found")
+
+
 if FRONTEND_DIR.exists():
     app.mount("/", StaticFiles(directory=str(FRONTEND_DIR), html=True), name="frontend")
 

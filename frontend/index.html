@@ -8,7 +8,44 @@
   <link rel="apple-touch-icon" href="logo.png?v=3">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>EcoTrack AI</title>
+  <title>EcoTrack AI - Civic Cleanliness & Municipal Waste Intelligence Platform</title>
+  <!-- SEO & Search Engine Indexing Meta Directives -->
+  <meta name="robots" content="index, follow">
+  <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large">
+  <meta name="description" content="EcoTrack AI is a next-gen AI-powered civic cleanliness and municipal waste intelligence platform. Report civic hazards with GPS geotagging, Gemini Multimodal AI, and real-time GIS navigation.">
+  <meta name="keywords" content="EcoTrack AI, civic cleanliness, municipal waste management, Swachh Bharat, smart city, citizen reporting, GIS waste map, AI garbage detection, IBM LinuxONE">
+  <meta name="author" content="EcoTrack AI">
+  <link rel="canonical" href="/">
+
+  <!-- Open Graph / Social Indexing -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="/">
+  <meta property="og:title" content="EcoTrack AI - Civic Cleanliness & Municipal Waste Intelligence">
+  <meta property="og:description" content="AI-Powered Civic Cleanliness Platform. Real-time hazard reporting, Gemini Multimodal AI verification, and live GIS geospatial routing.">
+  <meta property="og:image" content="/logo.png?v=3">
+
+  <!-- Twitter Meta Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="EcoTrack AI - Civic Cleanliness & Waste Intelligence">
+  <meta name="twitter:description" content="Empowering citizens and municipal collectors with AI-driven waste intelligence and GIS routing.">
+  <meta name="twitter:image" content="/logo.png?v=3">
+
+  <!-- Structured JSON-LD Schema Indexing -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "EcoTrack AI",
+    "url": "/",
+    "description": "Next-Gen AI-Powered Civic Cleanliness & Municipal Waste Intelligence Platform.",
+    "applicationCategory": "GovernmentApplication",
+    "operatingSystem": "All",
+    "offers": {
+      "@type": "Offer",
+      "price": "0"
+    }
+  }
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
@@ -44,7 +81,7 @@
       <!-- Header -->
       <div class="auth-header-wrapper">
         <h2 id="auth-title">Welcome Back!</h2>
-        <p id="auth-subtitle">Sign in to access smart, personalized travel plans made for you.</p>
+        <p id="auth-subtitle">Sign in to report civic waste issues, track municipal cleanups, and earn green points.</p>
       </div>
 
       <form id="auth-form" class="auth-form">
@@ -172,9 +209,16 @@
         </div>
       </header>
       
-      <div style="display: flex; justify-content: center; width: 100%; margin-bottom: 8px;">
-        <div id="cit-step-indicator" class="step-indicator">
-          <i class="fa-solid fa-pen-to-square"></i> STEP 1: CITIZEN REPORTING FORM INITIALIZED
+      <!-- Citizen View Header & Dynamic Indexing Banner -->
+      <div class="cit-view-header-strip" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 18px; padding: 14px 20px; background: #ffffff; border: 1px solid var(--cit-border); border-radius: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
+        <div>
+          <h1 id="cit-page-title" style="margin: 0; font-family: 'Outfit', sans-serif; font-size: 1.4rem; color: #0f172a; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+            <i class="fa-solid fa-circle-dot" style="color: #10b981; font-size: 0.9rem;"></i> Report Civic Waste Hazard
+          </h1>
+          <p id="cit-page-subtitle" style="margin: 4px 0 0; color: #64748b; font-size: 0.88rem;">Help keep our community clean by reporting civic issues.</p>
+        </div>
+        <div id="cit-step-indicator" class="step-indicator" style="margin: 0;">
+          <i class="fa-solid fa-pen-to-square"></i> SECTION 1: CITIZEN REPORTING FORM INITIALIZED
         </div>
       </div>
       
@@ -243,11 +287,23 @@
         </form>
       </div>
 
-      <!-- VIEW: Community -->
-        <div id="cit-view-community" style="display: none;">
-          <h2 style="margin-bottom:16px; font-weight:600;">Community Feed</h2>
-          <div id="community-feed-container" style="display:flex; flex-direction:column; gap:16px;"></div>
+      <!-- VIEW: Community Feed -->
+      <div id="cit-view-community" class="col-card" style="display: none; padding: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid #e2e8f0;">
+          <div>
+            <h2 style="margin: 0; font-family: 'Outfit', sans-serif; font-size: 1.35rem; color: #0f172a; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+              <i class="fa-solid fa-users-viewfinder" style="color: #0284c7;"></i> Live Civic Community Stream
+            </h2>
+            <p style="margin: 4px 0 0; color: #64748b; font-size: 0.88rem;">Real-time feed of local cleanliness hazards, citizen posts, and verified cleanups.</p>
+          </div>
+          <button type="button" class="col-btn-outline" onclick="loadCommunityFeed()" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; font-weight: 600; cursor: pointer; background: #ffffff; border: 1px solid #cbd5e1; font-size: 0.85rem; color: #334155;">
+            <i class="fa-solid fa-rotate" style="color: #0284c7;"></i> Refresh Feed
+          </button>
         </div>
+        <div id="community-feed-container" style="display: flex; flex-direction: column; gap: 14px;">
+          <!-- Populated dynamically with numbered indexing -->
+        </div>
+      </div>
 
         <!-- VIEW: Track Report -->
       <div id="cit-view-track" class="col-card" style="padding: 24px; display: none;">
@@ -354,6 +410,7 @@
           <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
             <thead>
               <tr style="border-bottom: 2px solid #e2e8f0; color: #475569; background: #f8fafc;">
+                <th style="padding: 12px 14px; font-weight: 700; width: 45px; text-align: center; color: #0284c7;">#</th>
                 <th style="padding: 12px; font-weight: 600;">Report ID</th>
                 <th style="padding: 12px; font-weight: 600;">Date</th>
                 <th style="padding: 12px; font-weight: 600;">Category</th>
@@ -363,36 +420,160 @@
               </tr>
             </thead>
             <tbody id="cit-reports-tbody">
-              <tr><td colspan="6" style="padding: 16px; text-align: center; color: #94a3b8;">Loading reports...</td></tr>
+              <tr><td colspan="7" style="padding: 16px; text-align: center; color: #94a3b8;">Loading reports...</td></tr>
             </tbody>
           </table>
         </div>
       </div>
 
-      <!-- VIEW: Status -->
+      <!-- VIEW: Status / Impact Analytics -->
       <div id="cit-view-status" class="col-card" style="padding: 24px; display: none;">
-        <h2 style="margin-bottom: 16px; color: #1e293b;">Overall Impact</h2>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px;">
-          <div style="padding: 16px; background: #f1f5f9; border-radius: 8px; text-align: center;">
-            <div style="font-size: 24px; font-weight: bold; color: #10b981;" id="cit-stat-total">0</div>
-            <div style="color: #64748b; font-size: 0.85rem;">Total Reports</div>
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px; margin-bottom: 20px;">
+          <div>
+            <h2 style="margin: 0; font-family: 'Outfit', sans-serif; font-size: 1.35rem; color: #1e293b; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+              <i class="fa-solid fa-chart-pie" style="color: #10b981;"></i> Civic Cleanliness & Environmental Impact
+            </h2>
+            <p style="margin: 4px 0 0; color: #64748b; font-size: 0.88rem;">Live operational intelligence, verified municipal hazard clearances, and civic scorecards.</p>
           </div>
-          <div style="padding: 16px; background: #f1f5f9; border-radius: 8px; text-align: center;">
-            <div style="font-size: 24px; font-weight: bold; color: #3b82f6;" id="cit-stat-verified">0</div>
-            <div style="color: #64748b; font-size: 0.85rem;">Verified Cleanups</div>
+          <button type="button" class="col-btn-outline" onclick="loadCitStatus()" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; font-weight: 600; cursor: pointer; background: #ffffff; border: 1px solid #cbd5e1; font-size: 0.82rem; color: #334155;">
+            <i class="fa-solid fa-arrows-rotate" style="color: #10b981;"></i> Refresh Analytics
+          </button>
+        </div>
+
+        <!-- Metric Scorecards Grid -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 24px;">
+          <div style="padding: 18px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; text-align: left; border-left: 4px solid #10b981;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <span style="color: #64748b; font-size: 0.8rem; font-weight: 600; text-transform: uppercase;">Total Incidents</span>
+              <i class="fa-regular fa-clipboard" style="color: #10b981;"></i>
+            </div>
+            <div style="font-size: 28px; font-weight: 700; color: #0f172a; font-family: 'Outfit', sans-serif;" id="cit-stat-total">0</div>
+            <div style="color: #94a3b8; font-size: 0.75rem; margin-top: 4px;">Logged by citizens</div>
           </div>
+
+          <div style="padding: 18px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; text-align: left; border-left: 4px solid #3b82f6;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <span style="color: #64748b; font-size: 0.8rem; font-weight: 600; text-transform: uppercase;">Verified Cleanups</span>
+              <i class="fa-solid fa-circle-check" style="color: #3b82f6;"></i>
+            </div>
+            <div style="font-size: 28px; font-weight: 700; color: #0f172a; font-family: 'Outfit', sans-serif;" id="cit-stat-verified">0</div>
+            <div style="color: #10b981; font-size: 0.75rem; margin-top: 4px; font-weight: 600;"><i class="fa-solid fa-shield"></i> Evidence approved</div>
+          </div>
+
+          <div style="padding: 18px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; text-align: left; border-left: 4px solid #f59e0b;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <span style="color: #64748b; font-size: 0.8rem; font-weight: 600; text-transform: uppercase;">Resolution Rate</span>
+              <i class="fa-solid fa-percent" style="color: #f59e0b;"></i>
+            </div>
+            <div style="font-size: 28px; font-weight: 700; color: #0f172a; font-family: 'Outfit', sans-serif;" id="cit-stat-rate">0%</div>
+            <div style="color: #94a3b8; font-size: 0.75rem; margin-top: 4px;">Municipal efficiency</div>
+          </div>
+
+          <div style="padding: 18px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; text-align: left; border-left: 4px solid #8b5cf6;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <span style="color: #64748b; font-size: 0.8rem; font-weight: 600; text-transform: uppercase;">Cleanliness Points</span>
+              <i class="fa-solid fa-trophy" style="color: #8b5cf6;"></i>
+            </div>
+            <div style="font-size: 28px; font-weight: 700; color: #0f172a; font-family: 'Outfit', sans-serif;" id="cit-stat-points">0 Pts</div>
+            <div style="color: #94a3b8; font-size: 0.75rem; margin-top: 4px;">Awarded to active citizens</div>
+          </div>
+        </div>
+
+        <!-- Resolution Progress Meter -->
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px 20px; margin-bottom: 20px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <span style="font-size: 0.88rem; font-weight: 700; color: #1e293b;">Overall Municipal Clearance Progress</span>
+            <span id="cit-stat-rate-text" style="font-size: 0.85rem; font-weight: 700; color: #10b981;">Active Cleanliness Target</span>
+          </div>
+          <div style="width: 100%; height: 12px; background: #e2e8f0; border-radius: 20px; overflow: hidden;">
+            <div id="cit-stat-rate-bar" style="height: 100%; width: 0%; background: linear-gradient(90deg, #10b981, #059669); border-radius: 20px; transition: width 0.8s ease;"></div>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 0.75rem; color: #64748b;">
+            <span>0% (Reported)</span>
+            <span>Target: 100% Zero-Hazard Community</span>
+          </div>
+        </div>
+
+        <!-- Technology & Platform Badges -->
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; padding: 12px 16px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; font-size: 0.82rem; color: #1e40af;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <i class="fa-solid fa-server" style="color: #2563eb;"></i>
+            <strong>IBM LinuxONE (s390x) & Gemini Multimodal AI</strong> Enterprise Engine
+          </div>
+          <span style="background: #dbeafe; color: #1d4ed8; padding: 2px 10px; border-radius: 12px; font-weight: 600; font-size: 0.75rem;">
+            99.999% Reliability
+          </span>
         </div>
       </div>
 
-      <!-- VIEW: My Profile -->
+      <!-- VIEW: Citizen Profile & Gamification -->
       <div id="cit-view-profile" class="col-card" style="padding: 24px; display: none;">
-        <h2 style="margin-bottom: 16px; color: #1e293b;">Profile Info</h2>
-        <div style="display: flex; gap: 16px; align-items: center; margin-bottom: 24px;">
-          <div id="cit-profile-avatar" style="width: 80px; height: 80px; border-radius: 50%; background: #e2e8f0;"></div>
-          <div>
-            <h3 id="cit-profile-name" style="margin: 0; color: #1e293b;">Citizen</h3>
-            <p id="cit-profile-email" style="margin: 4px 0 0; color: #64748b;">citizen@ecotrackai.local</p>
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px; margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid #e2e8f0;">
+          <div style="display: flex; gap: 18px; align-items: center;">
+            <div id="cit-profile-avatar" style="width: 84px; height: 84px; border-radius: 50%; background: #e2e8f0; border: 3px solid #10b981; box-shadow: 0 4px 12px rgba(16,185,129,0.25); overflow: hidden; display: flex; align-items: center; justify-content: center;">
+              <i class="fa-solid fa-user" style="font-size: 36px; color: #94a3b8;"></i>
+            </div>
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <h2 id="cit-profile-name" style="margin: 0; color: #0f172a; font-family: 'Outfit', sans-serif; font-size: 1.45rem; font-weight: 700;">Citizen</h2>
+                <span id="cit-profile-role-badge" style="background: #dcfce7; color: #15803d; padding: 2px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">
+                  Verified Citizen
+                </span>
+              </div>
+              <p id="cit-profile-email" style="margin: 4px 0 6px; color: #64748b; font-size: 0.9rem;">citizen@ecotrackai.local</p>
+              <div id="cit-profile-id" style="font-size: 0.75rem; color: #94a3b8; font-family: monospace;">Citizen ID: usr-xxxx</div>
+            </div>
           </div>
+          
+          <div style="background: linear-gradient(135deg, #059669 0%, #10b981 100%); color: white; padding: 14px 20px; border-radius: 14px; text-align: center; box-shadow: 0 4px 14px rgba(16,185,129,0.3); min-width: 140px;">
+            <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.9;">Green Reward Points</div>
+            <div style="font-size: 26px; font-weight: 800; font-family: 'Outfit', sans-serif; margin-top: 2px;" id="cit-profile-points">140 Pts</div>
+            <div style="font-size: 0.72rem; margin-top: 4px; opacity: 0.95;" id="cit-profile-tier"><i class="fa-solid fa-medal"></i> Eco Warrior Tier</div>
+          </div>
+        </div>
+
+        <!-- Badges & Achievements -->
+        <h3 style="margin: 0 0 14px 0; font-size: 1rem; color: #1e293b; font-weight: 700;">Civic Cleanliness Badges</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin-bottom: 24px;">
+          <div style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px;">
+            <div style="width: 40px; height: 40px; border-radius: 8px; background: #dcfce7; color: #15803d; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+              <i class="fa-solid fa-leaf"></i>
+            </div>
+            <div>
+              <div style="font-weight: 700; font-size: 0.85rem; color: #0f172a;">Community Guardian</div>
+              <div style="font-size: 0.74rem; color: #64748b;">Reported local civic hazards</div>
+            </div>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px;">
+            <div style="width: 40px; height: 40px; border-radius: 8px; background: #e0f2fe; color: #0284c7; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+              <i class="fa-solid fa-camera-retro"></i>
+            </div>
+            <div>
+              <div style="font-weight: 700; font-size: 0.85rem; color: #0f172a;">AI Evidence Reporter</div>
+              <div style="font-size: 0.74rem; color: #64748b;">Gemini Multimodal AI verified</div>
+            </div>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px;">
+            <div style="width: 40px; height: 40px; border-radius: 8px; background: #fef3c7; color: #d97706; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+              <i class="fa-solid fa-award"></i>
+            </div>
+            <div>
+              <div style="font-weight: 700; font-size: 0.85rem; color: #0f172a;">Swachh Bharat Contributor</div>
+              <div style="font-size: 0.74rem; color: #64748b;">Clean community champion</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Actions Row -->
+        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+          <button type="button" class="col-btn-outline" onclick="showCitView('new-report', document.querySelectorAll('.col-nav-link')[0])" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 8px; font-weight: 600; cursor: pointer; background: #10b981; color: white; border: none;">
+            <i class="fa-solid fa-plus-circle"></i> File New Incident Report
+          </button>
+          <button type="button" class="col-btn-outline" onclick="showCitView('track', document.querySelectorAll('.col-nav-link')[1])" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 8px; font-weight: 600; cursor: pointer; background: #ffffff; color: #2563eb; border: 1px solid #bfdbfe;">
+            <i class="fa-solid fa-location-crosshairs"></i> Open Live GIS Map
+          </button>
         </div>
       </div>
       
@@ -450,10 +631,10 @@
         </div>
         <div class="user-profile" style="display: flex; justify-content: space-between; align-items: center;">
           <div style="display: flex; gap: 12px; align-items: center;">
-            <div class="user-avatar" id="sidebar-avatar">AM</div>
+            <div class="user-avatar" id="sidebar-avatar">CO</div>
             <div class="user-info">
-              <span class="name" id="sidebar-name">Alex Morgan</span>
-              <span class="workspace" id="sidebar-workspace">Demo workspace</span>
+              <span class="name" id="sidebar-name">Sanitation Collector</span>
+              <span class="workspace" id="sidebar-workspace">Municipal Operations</span>
             </div>
           </div>
           <button id="sidebar-logout-btn" style="background: transparent; border: none; color: #a1a1aa; cursor: pointer; padding: 8px;" title="Logout" onclick="document.getElementById('logout').click();">
@@ -471,13 +652,12 @@
       <!-- TOPBAR -->
       <header class="topbar">
         <div class="breadcrumbs">
-          WORKSPACE &nbsp;&gt;&nbsp; <span>Admin view</span>
+          OPERATIONS &nbsp;&gt;&nbsp; <span>Collector Dispatch Command</span>
         </div>
-        <div class="role-toggle">
-          <button class="active">Citizen</button>
-          <button>Collector</button>
-          <button style="padding:6px;width:32px"><i class="fa-solid fa-mobile-screen"></i></button>
-          <button style="padding:6px;width:32px"><i class="fa-solid fa-gear"></i></button>
+        <div class="role-toggle" style="display: flex; align-items: center; gap: 8px;">
+          <span style="background: #dcfce7; color: #15803d; font-size: 0.78rem; font-weight: 700; padding: 4px 10px; border-radius: 12px; display: inline-flex; align-items: center; gap: 5px;">
+            <i class="fa-solid fa-circle" style="font-size: 7px; color: #10b981;"></i> On Duty (Ready)
+          </span>
           <button id="logout" hidden>Logout</button>
         </div>
       </header>
@@ -699,7 +879,7 @@
     </main>
   </div>
 
-  <div id="evidence-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center;">
+  <div id="evidence-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100010; align-items: center; justify-content: center;">
     <div style="background: white; padding: 24px; border-radius: 12px; width: 90%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
       <h3 style="margin-bottom: 16px; font-family: sans-serif; margin-top: 0;">Upload Collection Evidence</h3>
       <form id="evidence-form">
@@ -718,7 +898,7 @@
   </div>
 
   <!-- Proof Image Preview Modal -->
-  <div id="proof-preview-modal" style="display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.75); backdrop-filter: blur(4px); z-index: 10000; align-items: center; justify-content: center; padding: 16px;">
+  <div id="proof-preview-modal" style="display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.75); backdrop-filter: blur(4px); z-index: 100011; align-items: center; justify-content: center; padding: 16px;">
     <div style="background: white; border-radius: 16px; max-width: 560px; width: 100%; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.35); border: 1px solid #e2e8f0;">
       <div style="padding: 16px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #f8fafc;">
         <div style="display: flex; align-items: center; gap: 8px;">
@@ -740,7 +920,7 @@
   </div>
 
   <!-- Collector Task Details Modal -->
-  <div id="collector-task-modal" style="display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.75); backdrop-filter: blur(4px); z-index: 10000; align-items: center; justify-content: center; padding: 16px;">
+  <div id="collector-task-modal" style="display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.75); backdrop-filter: blur(4px); z-index: 100012; align-items: center; justify-content: center; padding: 16px;">
     <div style="background: white; border-radius: 16px; max-width: 680px; width: 100%; max-height: 90vh; overflow-y: auto; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.35); border: 1px solid #e2e8f0; font-family: inherit;">
       
       <!-- Modal Header -->

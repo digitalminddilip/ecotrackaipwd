@@ -882,12 +882,12 @@ function showCitView(viewName, el) {
   }
 
   const titles = {
-    'new-report': ['Report the Waste Product', 'Help keep our community clean by reporting civic issues.'],
-    'community': ['Community Reports Feed', 'Real-time updates of local cleanliness reports.'],
-    'track': ['Live Tracking Map', 'Monitor reported sanitation issues in real-time.'],
-    'reports': ['My Submitted Reports', 'Track progress and status of your reported issues.'],
-    'status': ['Civic Cleanliness Impact', 'Overview of verified community cleanups.'],
-    'profile': ['Citizen Profile', 'Your account and cleanliness contribution stats.']
+    'new-report': ['Report Civic Waste Hazard', 'Help keep our community clean by reporting civic issues.'],
+    'community': ['Community Reports Feed', 'Real-time updates of local cleanliness reports & cleanups.'],
+    'track': ['Live Tracking GIS Map', 'Monitor reported sanitation hazards and collector routing in real-time.'],
+    'reports': ['My Submitted Reports', 'Track progress and verified photo evidence of your reported issues.'],
+    'status': ['Civic Cleanliness Impact', 'Live operational metrics, waste clearance rates & points.'],
+    'profile': ['Citizen Impact Profile', 'Your account credentials, achievements, and cleanliness rewards.']
   };
 
   if (titles[viewName]) {
@@ -897,8 +897,28 @@ function showCitView(viewName, el) {
     if (subEl) subEl.textContent = titles[viewName][1];
   }
 
+  const stepIndicators = {
+    'new-report': '<i class="fa-solid fa-pen-to-square"></i> SECTION 1: CITIZEN REPORTING FORM INITIALIZED',
+    'track': '<i class="fa-solid fa-location-crosshairs"></i> SECTION 2: REAL-TIME GIS INCIDENT MAP & DIRECTIONS',
+    'community': '<i class="fa-solid fa-users"></i> SECTION 3: CITIZEN COMMUNITY ACTIVITY STREAM',
+    'reports': '<i class="fa-solid fa-clipboard-check"></i> SECTION 4: MY SUBMITTED REPORTS & CLEANUP EVIDENCE',
+    'status': '<i class="fa-solid fa-chart-pie"></i> SECTION 5: CIVIC CLEANLINESS IMPACT ANALYTICS',
+    'profile': '<i class="fa-solid fa-user-shield"></i> SECTION 6: CITIZEN IMPACT PROFILE & REWARDS'
+  };
+  const stepEl = document.getElementById('cit-step-indicator');
+  if (stepEl && stepIndicators[viewName]) {
+    stepEl.innerHTML = stepIndicators[viewName];
+  }
+
   if (viewName === 'community') loadCommunityFeed();
-  if (viewName === 'track') loadLiveTrackingMap();
+  if (viewName === 'track') {
+    loadLiveTrackingMap();
+    setTimeout(() => {
+      if (typeof citMap !== 'undefined' && citMap) {
+        citMap.invalidateSize();
+      }
+    }, 250);
+  }
   if (viewName === 'reports') loadMyReports();
   if (viewName === 'status') loadCitStatus();
   if (viewName === 'profile') populateCitProfile();
@@ -908,30 +928,67 @@ async function loadCommunityFeed() {
   const container = document.getElementById('community-feed-container');
   if (!container) return;
   try {
+    container.innerHTML = '<div style="text-align:center; padding:30px; color:#64748b;"><i class="fa-solid fa-spinner fa-spin" style="font-size:24px; color:#10b981; margin-bottom:8px;"></i><p style="margin:0;">Loading community stream...</p></div>';
     const res = await fetch(API_URL + '/reports/community');
-    if (!res.ok) return;
+    if (!res.ok) throw new Error("Failed to load feed");
     const data = await res.json();
     if (!data.length) {
-      container.innerHTML = '<p style="color:#94a3b8; text-align:center;">No reports yet.</p>';
+      container.innerHTML = '<div style="text-align:center; padding:40px 20px; color:#94a3b8;"><i class="fa-solid fa-inbox" style="font-size:36px; margin-bottom:12px; display:block; color:#cbd5e1;"></i><strong style="color:#475569;">No community reports yet</strong><p style="margin:4px 0 0; font-size:0.85rem;">Be the first citizen to report a hazard in your area!</p></div>';
       return;
     }
-    container.innerHTML = data.slice(0, 15).map(r => `
-      <div style="background:white; padding:16px; border-radius:8px; border:1px solid #e2e8f0; display:flex; gap:16px; align-items:center;">
-        <div style="width:48px; height:48px; border-radius:8px; background:#e0f2fe; color:#0284c7; display:flex; align-items:center; justify-content:center; font-size:20px;">
-          <i class="fa-solid fa-trash-can"></i>
-        </div>
-        <div style="flex:1;">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <strong style="color:#1e293b;">${r.category ? r.category.replace('_', ' ').toUpperCase() : 'WASTE ISSUE'}</strong>
-            <span style="font-size:0.8rem; background:#dcfce7; color:#15803d; padding:2px 8px; border-radius:12px; font-weight:600;">${(r.status || 'reported').toUpperCase()}</span>
+    container.innerHTML = data.slice(0, 20).map((r, idx) => {
+      const isCleaned = r.status === 'verified' || r.status === 'collected';
+      const statusBadge = isCleaned
+        ? '<span style="font-size:0.76rem; background:#dcfce7; color:#15803d; padding:3px 10px; border-radius:14px; font-weight:700;"><i class="fa-solid fa-circle-check"></i> CLEANED & VERIFIED</span>'
+        : (r.status === 'assigned' || r.status === 'in_progress'
+          ? '<span style="font-size:0.76rem; background:#fef3c7; color:#b45309; padding:3px 10px; border-radius:14px; font-weight:700;"><i class="fa-solid fa-clock"></i> COLLECTOR ASSIGNED</span>'
+          : '<span style="font-size:0.76rem; background:#fee2e2; color:#b91c1c; padding:3px 10px; border-radius:14px; font-weight:700;"><i class="fa-solid fa-triangle-exclamation"></i> ACTION REQUIRED</span>');
+      
+      const categoryLabel = r.category ? r.category.replace(/_/g, ' ').toUpperCase() : 'CIVIC WASTE HAZARD';
+      const cleanDate = r.timestamp ? new Date(r.timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent';
+      const lat = Number(r.latitude) || 0;
+      const lng = Number(r.longitude) || 0;
+      const mapLink = lat && lng ? `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}` : '#';
+
+      return `
+        <div class="community-post-card" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:18px; box-shadow:0 2px 6px rgba(0,0,0,0.03); display:flex; gap:16px; align-items:flex-start; transition: transform 0.2s ease, box-shadow 0.2s ease;">
+          <!-- Index Indicator -->
+          <div style="display:flex; flex-direction:column; align-items:center; gap:6px;">
+            <span style="font-size:0.75rem; font-weight:800; color:#0284c7; background:#e0f2fe; padding:4px 8px; border-radius:8px; font-family:monospace; min-width:32px; text-align:center;">#${idx + 1}</span>
+            <div style="width:48px; height:48px; border-radius:10px; background:${isCleaned ? '#ecfdf5' : '#eff6ff'}; color:${isCleaned ? '#10b981' : '#2563eb'}; display:flex; align-items:center; justify-content:center; font-size:22px; border:1px solid ${isCleaned ? '#a7f3d0' : '#bfdbfe'};">
+              <i class="fa-solid ${isCleaned ? 'fa-broom' : 'fa-trash-can'}"></i>
+            </div>
           </div>
-          <p style="margin:4px 0 0; color:#64748b; font-size:0.9rem;">${r.description || 'Community reported hazard'}</p>
-          <div style="font-size:0.75rem; color:#94a3b8; margin-top:4px;">ID: ${r.report_id} • ${new Date(r.timestamp).toLocaleDateString()}</div>
+          
+          <div style="flex:1; min-width:0;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+              <strong style="color:#0f172a; font-size:0.98rem; font-family:'Outfit', sans-serif;">${escapeHtml(categoryLabel)}</strong>
+              ${statusBadge}
+            </div>
+            <p style="margin:6px 0 10px; color:#475569; font-size:0.9rem; line-height:1.4;">${escapeHtml(r.description || 'Community reported waste accumulation.')}</p>
+            
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; padding-top:10px; border-top:1px solid #f1f5f9; font-size:0.78rem; color:#64748b;">
+              <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                <span><i class="fa-regular fa-calendar" style="color:#94a3b8; margin-right:4px;"></i>${cleanDate}</span>
+                <span style="font-family:monospace; background:#f1f5f9; padding:2px 6px; border-radius:4px;">ID: ${escapeHtml(r.report_id.slice(0, 10))}</span>
+              </div>
+              
+              <div style="display:flex; gap:8px;">
+                <button type="button" onclick="showCitView('track', document.querySelectorAll('.col-nav-link')[1]); setTimeout(() => locateReportOnMap('${r.report_id}'), 400);" style="background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; border-radius:6px; padding:4px 10px; font-size:0.75rem; font-weight:600; cursor:pointer;">
+                  <i class="fa-solid fa-crosshairs"></i> Locate
+                </button>
+                <a href="${mapLink}" target="_blank" rel="noopener noreferrer" style="background:#2563eb; color:#ffffff; border-radius:6px; padding:4px 10px; font-size:0.75rem; font-weight:600; text-decoration:none;">
+                  <i class="fa-solid fa-diamond-turn-right"></i> Maps
+                </a>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-    `).join('');
+      `;
+    }).join('');
   } catch(e) {
     console.error('Failed to load community feed', e);
+    container.innerHTML = '<div style="text-align:center; padding:24px; color:#ef4444;"><i class="fa-solid fa-circle-exclamation" style="font-size:24px; margin-bottom:8px; display:block;"></i>Unable to load community feed at this moment.</div>';
   }
 }
 
@@ -970,10 +1027,10 @@ async function loadMyReports() {
     if (!res.ok) return;
     const data = await res.json();
     if (!data.length) {
-      tbody.innerHTML = '<tr><td colspan="6" style="padding:20px; text-align:center; color:#94a3b8;"><i class="fa-solid fa-folder-open" style="font-size:24px; margin-bottom:8px; display:block;"></i>No reports filed yet. Click "New Report" to submit one!</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" style="padding:28px 16px; text-align:center; color:#94a3b8;"><i class="fa-solid fa-folder-open" style="font-size:28px; margin-bottom:8px; display:block; color:#cbd5e1;"></i>No reports filed yet. Click "New Report" to submit one!</td></tr>';
       return;
     }
-    tbody.innerHTML = data.map(r => {
+    tbody.innerHTML = data.map((r, idx) => {
       const reportedImgHtml = `
         <div style="display: flex; align-items: center; gap: 8px;">
           <img src="${API_URL}/reports/${r.report_id}/image" onclick="openProofModal('${API_URL}/reports/${r.report_id}/image', 'Reported Waste Photo (Before Cleanup)', '${r.status}')" style="width: 44px; height: 44px; object-fit: cover; border-radius: 6px; cursor: pointer; border: 1px solid #cbd5e1; box-shadow: 0 1px 2px rgba(0,0,0,0.05);" title="Click to enlarge" onerror="this.src='logo.png'" />
@@ -1006,12 +1063,20 @@ async function loadMyReports() {
         `;
       }
 
+      const isCleaned = r.status === 'verified' || r.status === 'collected';
+      const statusPill = isCleaned
+        ? '<span style="background:#dcfce7; color:#15803d; padding:3px 10px; border-radius:12px; font-size:0.78rem; font-weight:700; text-transform:uppercase;"><i class="fa-solid fa-check"></i> ' + r.status + '</span>'
+        : (r.status === 'assigned' || r.status === 'in_progress'
+          ? '<span style="background:#fef3c7; color:#b45309; padding:3px 10px; border-radius:12px; font-size:0.78rem; font-weight:700; text-transform:uppercase;"><i class="fa-solid fa-clock"></i> ' + r.status + '</span>'
+          : '<span style="background:#fee2e2; color:#b91c1c; padding:3px 10px; border-radius:12px; font-size:0.78rem; font-weight:700; text-transform:uppercase;">' + r.status + '</span>');
+
       return `
         <tr style="border-bottom: 1px solid #f1f5f9;">
-          <td style="padding:12px; font-family:monospace; color:#3b82f6; font-weight: 600;">${r.report_id.slice(0, 10)}...</td>
+          <td style="padding:12px 14px; text-align:center; font-weight:800; color:#0284c7; font-size:0.85rem; font-family:monospace;">#${idx + 1}</td>
+          <td style="padding:12px; font-family:monospace; color:#2563eb; font-weight: 600;">#${r.report_id.slice(0, 10)}...</td>
           <td style="padding:12px; color:#64748b; white-space: nowrap;">${new Date(r.timestamp).toLocaleDateString()}</td>
-          <td style="padding:12px; color:#1e293b; font-weight:500;">${r.category ? r.category.replace('_', ' ').toUpperCase() : 'WASTE'}</td>
-          <td style="padding:12px;"><span style="background:#e0f2fe; color:#0369a1; padding:3px 10px; border-radius:12px; font-size:0.8rem; font-weight:600; text-transform: uppercase;">${r.status}</span></td>
+          <td style="padding:12px; color:#1e293b; font-weight:600;">${r.category ? r.category.replace(/_/g, ' ').toUpperCase() : 'WASTE'}</td>
+          <td style="padding:12px;">${statusPill}</td>
           <td style="padding:12px;">${reportedImgHtml}</td>
           <td style="padding:12px;">${evidenceProofHtml}</td>
         </tr>
@@ -1027,19 +1092,44 @@ async function loadCitStatus() {
     const res = await fetch(API_URL + '/analytics', { headers: authHeaders() });
     if (!res.ok) return;
     const data = await res.json();
+    const totVal = data.total_reports || 0;
+    const verVal = data.collected_reports || 0;
+    const rateVal = totVal > 0 ? Math.round((verVal / totVal) * 100) : 100;
+    const ptsVal = verVal * 50 + (totVal - verVal) * 20;
+
     const tot = document.getElementById('cit-stat-total');
     const ver = document.getElementById('cit-stat-verified');
-    if (tot) tot.textContent = data.total_reports || 0;
-    if (ver) ver.textContent = data.collected_reports || 0;
-  } catch(e) {}
+    const rate = document.getElementById('cit-stat-rate');
+    const pts = document.getElementById('cit-stat-points');
+    const rateBar = document.getElementById('cit-stat-rate-bar');
+
+    if (tot) tot.textContent = totVal;
+    if (ver) ver.textContent = verVal;
+    if (rate) rate.textContent = rateVal + '%';
+    if (pts) pts.textContent = ptsVal + ' Pts';
+    if (rateBar) rateBar.style.width = rateVal + '%';
+  } catch(e) {
+    console.warn('Failed to load status analytics:', e);
+  }
 }
 
 function populateCitProfile() {
   if (!currentUser) return;
   if (byId("cit-profile-name")) byId("cit-profile-name").textContent = currentUser.name || "Citizen";
-  if (byId("cit-profile-email")) byId("cit-profile-email").textContent = currentUser.email || "";
+  if (byId("cit-profile-email")) byId("cit-profile-email").textContent = currentUser.email || (currentUser.name ? `${currentUser.name.toLowerCase().replace(/ /g, '')}@ecotrackai.local` : "citizen@ecotrackai.local");
+  if (byId("cit-profile-id")) byId("cit-profile-id").textContent = currentUser.user_id ? `Citizen ID: ${currentUser.user_id}` : "Citizen ID: usr-guest";
+  
+  const pointsVal = currentUser.points || 140;
+  if (byId("cit-profile-points")) byId("cit-profile-points").textContent = `${pointsVal} Pts`;
+  if (byId("cit-profile-tier")) {
+    byId("cit-profile-tier").innerHTML = pointsVal >= 200 ? '<i class="fa-solid fa-trophy"></i> Master Cleanliness Champion' : '<i class="fa-solid fa-medal"></i> Eco Warrior Tier';
+  }
+  if (byId("cit-profile-role-badge")) {
+    byId("cit-profile-role-badge").textContent = currentUser.role ? currentUser.role.toUpperCase() : "VERIFIED CITIZEN";
+  }
+
   if (byId("cit-profile-avatar")) {
-    const avatarUrl = currentUser.picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name)}&background=random&color=fff&rounded=true&size=128`;
+    const avatarUrl = currentUser.picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name || 'Citizen')}&background=random&color=fff&rounded=true&size=128`;
     byId("cit-profile-avatar").innerHTML = `<img src="${avatarUrl}" referrerpolicy="no-referrer" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
   }
 }

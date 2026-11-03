@@ -89,6 +89,22 @@ def init_db() -> None:
             
            
             
+                        # Performance Indexes for High-Speed Query Optimization (EcoTrack AI s390x & local scale)
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_reports_user_id ON reports(user_id)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_reports_status ON reports(status)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_reports_collector_id ON reports(collector_id)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_reports_timestamp ON reports(timestamp DESC)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_reports_category ON reports(category)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_reports_location ON reports(latitude, longitude)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_reports_status_timestamp ON reports(status, timestamp DESC)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_notifications_role_read ON notifications(target_role, is_read)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_notifications_timestamp ON notifications(timestamp DESC)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_site_visits_timestamp ON site_visits(timestamp DESC)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_site_visits_ip ON site_visits(ip_address)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_users_role ON users(role)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)")
+            connection.commit()
+
             # Seed or reset admin user to ensure login works for demo
             cursor.execute("SELECT user_id FROM users WHERE email = 'dilipksharma1244@gmail.com'")
             admin = cursor.fetchone()

@@ -302,3 +302,39 @@
     height: 320px !important;
   }
 }
+
+
+/* Refined UI & Indexing Enhancements */
+.cit-view-header-strip {
+  transition: all 0.25s ease;
+}
+
+.step-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  box-shadow: 0 1px 3px rgba(16, 185, 129, 0.1);
+}
+
+.community-post-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06) !important;
+  border-color: #cbd5e1 !important;
+}
+
+@media (max-width: 768px) {
+  .cit-view-header-strip {
+    padding: 12px 14px !important;
+  }
+  .cit-view-header-strip h1 {
+    font-size: 1.15rem !important;
+  }
+}

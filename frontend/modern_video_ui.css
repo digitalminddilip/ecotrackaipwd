@@ -1,4 +1,4 @@
-/* modern_video_ui.css - Exact UI from the CleanConnect Demonstration Video */
+/* modern_video_ui.css - EcoTrack AI Modern Responsive UI */
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
@@ -483,7 +483,7 @@ body {
 
 
 /* ==========================================================================
-   MOBILE RESPONSIVE OVERRIDES (CleanConnect Video UI)
+   MOBILE RESPONSIVE OVERRIDES (EcoTrack AI Modern UI)
    ========================================================================== */
 
 @media (max-width: 768px) {

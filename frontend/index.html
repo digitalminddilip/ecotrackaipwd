@@ -79,13 +79,8 @@
         <div class="auth-icon-btn"><i class="fa-solid fa-arrows-rotate"></i></div>
       </div>
 
-      <div class="logo-container" style="display: flex; flex-direction: column; align-items: center; gap: 8px; margin-bottom: 20px;">
-        <div style="width: 58px; height: 58px; border-radius: 16px; background: #ecfdf5; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25); border: 1px solid #a7f3d0;">
-          <i class="fa-solid fa-leaf" style="color: #10b981; font-size: 30px;"></i>
-        </div>
-        <div style="font-size: 1.7rem; font-weight: 800; color: #0f172a; font-family: 'Outfit', sans-serif; letter-spacing: -0.5px;">
-          EcoTrack AI
-        </div>
+      <div class="logo-container" style="text-align: center; margin-bottom: 20px;">
+        <img src="logo.png?v=2" alt="EcoTrack AI" style="max-width: 250px; width: 100%; height: auto; object-fit: contain; filter: drop-shadow(0 4px 12px rgba(16, 185, 129, 0.18));">
       </div>
 
       <!-- Header -->
@@ -178,7 +173,7 @@
     <aside class="col-sidebar">
       <div>
         <a href="#" class="col-brand" style="display: flex; align-items: center; gap: 10px; text-decoration: none;">
-          <i class="fa-solid fa-leaf" style="color: #10b981; font-size: 24px;"></i>
+          <img src="logo_icon.png?v=2" alt="EcoTrack AI" style="width: 34px; height: 34px; object-fit: contain;">
           <span style="font-weight: 800; font-size: 1.35rem; color: #0f172a; font-family: 'Outfit', sans-serif; letter-spacing: -0.3px;">EcoTrack AI</span>
         </a>
         
@@ -649,11 +644,10 @@
           <button id="cit-logout-btn" class="col-logout-btn" style="margin-top: 0; padding: 8px 16px; width: auto;" onclick="enterGuestMode(); setAuthMode('login'); byId('citizen-wrapper').hidden=true; document.body.classList.remove('collector-mode'); openSignIn();"><i class="fa-solid fa-arrow-right-from-bracket"></i> Logout</button>
           <button id="cit-login-btn" class="col-logout-btn" style="margin-top: 0; padding: 8px 16px; width: auto; background: #3b82f6; display: none;" onclick="setAuthMode('login'); byId('citizen-wrapper').hidden=true; document.body.classList.remove('collector-mode'); openSignIn();"><i class="fa-solid fa-arrow-right-to-bracket"></i> Login</button>
         </div>
-        <div style="display: inline-flex; align-items: center; gap: 8px; font-weight: 800; font-size: 1.25rem; color: #0f172a; font-family: 'Outfit', sans-serif;">
-          <i class="fa-solid fa-leaf" style="color: #10b981; font-size: 24px;"></i>
-          <span>EcoTrack AI</span>
+        <div style="display: inline-flex; flex-direction: column; align-items: center; gap: 8px;">
+          <img src="logo.png?v=2" alt="EcoTrack AI" style="max-width: 180px; height: auto; object-fit: contain;">
+          <div style="font-size: 12px; color: var(--col-text-muted);">Civic Cleanliness & Municipal Waste Intelligence Platform</div>
         </div>
-        <div style="font-size: 12px; color: var(--col-text-muted); margin-top: 6px;">Civic Cleanliness & Municipal Waste Intelligence Platform</div>
       </footer>
     </main>
   </div>
@@ -668,7 +662,7 @@
         <i class="fa-solid fa-bars"></i>
       </button>
       <div class="mobile-brand" style="display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 1.25rem; color: #0f172a; font-family: 'Outfit', sans-serif;">
-        <i class="fa-solid fa-leaf" style="color: #10b981; font-size: 22px;"></i>
+        <img src="logo_icon.png?v=2" alt="EcoTrack AI" style="width: 28px; height: 28px; object-fit: contain;">
         <span>EcoTrack AI</span>
       </div>
     </header>
@@ -676,9 +670,7 @@
     <!-- SIDEBAR -->
     <aside class="sidebar">
       <a href="#" class="sidebar-brand" style="display: flex; align-items: center; gap: 10px; text-decoration: none;">
-        <div class="sidebar-brand-icon" style="width: 36px; height: 36px; border-radius: 10px; background: #ecfdf5; display: flex; align-items: center; justify-content: center; border: 1px solid #a7f3d0;">
-          <i class="fa-solid fa-leaf" style="color: #10b981; font-size: 20px;"></i>
-        </div>
+        <img src="logo_icon.png?v=2" alt="EcoTrack AI" style="width: 36px; height: 36px; object-fit: contain;">
         <div class="sidebar-brand-text">
           <span style="font-weight: 800; font-size: 1.2rem; color: #0f172a; font-family: 'Outfit', sans-serif;">EcoTrack AI</span>
           <span class="subtitle" style="font-size: 0.72rem; color: #64748b; font-weight: 600; letter-spacing: 0.5px;">ACTION LEDGER</span>
@@ -1147,7 +1139,7 @@
   </div>
 
   <script src="config.js"></script>
-  <script src="app.js?v=39"></script>
+  <script src="app.js?v=40"></script>
   <script src="voice_assistant.js?v=1"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>

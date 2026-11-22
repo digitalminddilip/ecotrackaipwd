@@ -92,7 +92,7 @@ def generate_executive_briefing(stats: dict[str, Any], recent_reports: list[dict
                 )
 
             prompt = f"""
-            You are the Chief AI Municipal Advisor & Civic Intelligence Officer for EcoTrack AI (CleanConnect).
+            You are the Chief AI Municipal Advisor & Civic Intelligence Officer for EcoTrack AI.
             Analyze the following real-time municipal cleanliness telemetry:
             - Total Registered Incidents: {total}
             - Pending Operational Reports: {pending}

@@ -1,11 +1,11 @@
 const hostname = window.location.hostname;
 const isLocal = !hostname || hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.') || hostname.startsWith('10.');
-const API_URL = isLocal ? `http://${hostname || 'localhost'}:8000` : (window.BACKEND_API_URL || localStorage.getItem("cleanconnect_api_url") || "");
+const API_URL = isLocal ? `http://${hostname || 'localhost'}:8000` : (window.BACKEND_API_URL || localStorage.getItem("ecotrack_api_url") || localStorage.getItem("cleanconnect_api_url") || "");
 window.API_URL = API_URL;
 
 try {
-  if (!sessionStorage.getItem("cleanconnect_visited")) {
-    sessionStorage.setItem("cleanconnect_visited", "true");
+  if (!sessionStorage.getItem("ecotrack_visited") && !sessionStorage.getItem("cleanconnect_visited")) {
+    sessionStorage.setItem("ecotrack_visited", "true");
     fetch(`${API_URL}/api/track-visit`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -14,7 +14,7 @@ try {
   }
 } catch (e) {}
 
-let accessToken = localStorage.getItem("cleanconnect_token");
+let accessToken = localStorage.getItem("ecotrack_token") || localStorage.getItem("cleanconnect_token");
 let allReports = [];
 let allCollectors = [];
 let currentReportId = null;
@@ -53,6 +53,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }, 500);
     
   } catch (err) {
+    localStorage.removeItem("ecotrack_token");
     localStorage.removeItem("cleanconnect_token");
     window.location.href = "../";
   }
@@ -61,6 +62,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   setupNavigation();
   
   byId("logout-btn").onclick = () => {
+    localStorage.removeItem("ecotrack_token");
     localStorage.removeItem("cleanconnect_token");
     window.location.href = "../";
   };
@@ -630,7 +632,7 @@ window.viewDetails = async (reportId) => {
   const source = report.location_source === 'manual' ? 'Manually Adjusted Pin' : 'Satellite Device GPS';
 
   if (byId("view-cat")) byId("view-cat").textContent = report.category ? report.category.replace(/_/g, ' ').toUpperCase() : "GENERAL WASTE";
-  if (byId("view-ai-result")) byId("view-ai-result").textContent = report.ai_result || "Verified by CleanConnect AI";
+  if (byId("view-ai-result")) byId("view-ai-result").textContent = report.ai_result || "Verified by EcoTrack AI";
   if (byId("view-coords")) byId("view-coords").textContent = `${lat.toFixed(6)}° N, ${lng.toFixed(6)}° E`;
   if (byId("view-accuracy")) byId("view-accuracy").textContent = acc;
   if (byId("view-source")) byId("view-source").textContent = source;

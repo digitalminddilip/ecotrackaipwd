@@ -1,11 +1,11 @@
 const hostname = window.location.hostname;
 const isLocal = !hostname || hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.') || hostname.startsWith('10.');
-const API_URL = isLocal ? `http://${hostname || 'localhost'}:8000` : (window.BACKEND_API_URL || localStorage.getItem("cleanconnect_api_url") || "");
+const API_URL = isLocal ? `http://${hostname || 'localhost'}:8000` : (window.BACKEND_API_URL || localStorage.getItem("ecotrack_api_url") || localStorage.getItem("cleanconnect_api_url") || "");
 window.API_URL = API_URL;
 
 try {
-  if (!sessionStorage.getItem("cleanconnect_visited")) {
-    sessionStorage.setItem("cleanconnect_visited", "true");
+  if (!sessionStorage.getItem("ecotrack_visited") && !sessionStorage.getItem("cleanconnect_visited")) {
+    sessionStorage.setItem("ecotrack_visited", "true");
     fetch(`${API_URL}/api/track-visit`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -15,7 +15,7 @@ try {
 } catch (e) {}
 
 let reports = [];
-let accessToken = localStorage.getItem("cleanconnect_token");
+let accessToken = localStorage.getItem("ecotrack_token") || localStorage.getItem("cleanconnect_token");
 let currentUser = null;
 let campusScene;
 const GIDA_CENTER = [26.7430558, 83.2733427];
@@ -40,6 +40,7 @@ function updateSidebarProfile(name) {
 
 function enterGuestMode() {
   accessToken = null;
+  localStorage.removeItem("ecotrack_token");
   localStorage.removeItem("cleanconnect_token");
   currentUser = { name: "Guest", role: "citizen", isGuest: true };
   updateSidebarProfile("Guest");
@@ -1355,7 +1356,7 @@ async function restoreSession() {
       if (byId("citizen-wrapper")) byId("citizen-wrapper").hidden = false;
       document.body.classList.remove("collector-mode");
       if (byId("cit-user-name")) byId("cit-user-name").textContent = currentUser.name;
-      if (byId("cit-user-email")) byId("cit-user-email").textContent = currentUser.email || `${currentUser.name.toLowerCase().replace(' ', '')}@cleanconnect.local`;
+      if (byId("cit-user-email")) byId("cit-user-email").textContent = currentUser.email || `${currentUser.name.toLowerCase().replace(' ', '')}@ecotrack.ai`;
       const avatarUrl = currentUser.picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name)}&background=random&color=fff&rounded=true&size=128`;
       if (byId("cit-user-avatar")) {
         byId("cit-user-avatar").innerHTML = `<img src="${avatarUrl}" referrerpolicy="no-referrer" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
@@ -1414,7 +1415,7 @@ function setAuthMode(mode) {
       byId("auth-title").textContent = registering ? "Create Account" : "Welcome Back!";
     if (byId("auth-subtitle"))
       byId("auth-subtitle").textContent = registering
-        ? "Join CleanConnect to help report and track cleanliness in your community."
+        ? "Join EcoTrack AI to help report and track cleanliness in your community."
         : "Sign in to report civic waste issues, track complaints, and earn green points.";
   }
 
@@ -1568,6 +1569,7 @@ function setupAuthForm() {
       }
 
       accessToken = result.access_token;
+      localStorage.setItem("ecotrack_token", accessToken);
       localStorage.setItem("cleanconnect_token", accessToken);
       message.style.color = "#27ae60";
       message.textContent = "Success! Redirecting...";
@@ -2012,6 +2014,7 @@ function handleCredentialResponse(response) {
     if (!res.ok) throw new Error(res.body.detail || 'Google Auth Failed');
     
     accessToken = res.body.access_token;
+    localStorage.setItem('ecotrack_token', accessToken);
     localStorage.setItem('cleanconnect_token', accessToken);
     
     restoreSession().then(() => {

@@ -1,7 +1,7 @@
 {
-  "name": "CleanConnect",
-  "short_name": "CleanConnect",
-  "description": "Report and track civic issues.",
+  "name": "EcoTrack AI",
+  "short_name": "EcoTrack AI",
+  "description": "Next-Gen AI-Powered Civic Cleanliness & Municipal Waste Intelligence Platform",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

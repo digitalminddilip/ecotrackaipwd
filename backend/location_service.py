@@ -46,7 +46,7 @@ def parse_google_address_components(components: list[dict[str, Any]]) -> dict[st
 
 def fallback_nominatim_reverse_geocode(latitude: float, longitude: float) -> dict[str, Any]:
     url = f"https://nominatim.openstreetmap.org/reverse?lat={latitude}&lon={longitude}&format=json&addressdetails=1"
-    req = Request(url, headers={"User-Agent": "EcoTrackAI-CleanConnect/2.0 (CleanConnect Waste Management Platform)"})
+    req = Request(url, headers={"User-Agent": "EcoTrackAI/2.0 (EcoTrack AI Municipal Waste Intelligence Platform)"})
     try:
         with urlopen(req, timeout=6) as resp:
             data = json.loads(resp.read().decode())

@@ -1,4 +1,4 @@
-"""Computer Vision & Gemini Multimodal Verification Engine for EcoTrack AI (CleanConnect)."""
+"""Computer Vision & Gemini Multimodal Verification Engine for EcoTrack AI."""
 
 import os
 import json

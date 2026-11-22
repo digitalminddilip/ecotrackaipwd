@@ -4,7 +4,9 @@ import os
 from datetime import datetime, timezone
 from typing import Any, Optional
 
-DB_PATH = os.getenv("CLEANCONNECT_DATABASE", "cleanconnect.db")
+DB_PATH = os.getenv("ECOTRACK_DATABASE") or os.getenv("CLEANCONNECT_DATABASE")
+if not DB_PATH:
+    DB_PATH = "ecotrack.db" if os.path.exists("ecotrack.db") else ("cleanconnect.db" if os.path.exists("cleanconnect.db") else "ecotrack.db")
 
 def connect():
     connection = sqlite3.connect(DB_PATH, check_same_thread=False)

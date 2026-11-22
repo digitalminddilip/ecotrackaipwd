@@ -140,7 +140,7 @@ class CoordinatesRequest(BaseModel):
     longitude: float = Field(ge=-180, le=180)
 
 
-app = FastAPI(title="CleanConnect API", version="1.0.0")
+app = FastAPI(title="EcoTrack AI API", version="2.0.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -487,7 +487,7 @@ def get_public_config():
     return {
         "google_maps_configured": bool(gmaps_browser_key),
         "google_maps_api_key": gmaps_browser_key,
-        "app_name": "EcoTrack AI (CleanConnect)",
+        "app_name": "EcoTrack AI",
         "version": "2.0.0",
         "default_center": [26.7606, 83.3732],
     }

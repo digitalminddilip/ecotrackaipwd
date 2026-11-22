@@ -62,15 +62,15 @@ body {
 }
 
 .sidebar-brand-icon {
-  background: #f69446;
-  color: #19382b;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.1rem;
+  object-fit: contain;
+  background: transparent;
+  flex-shrink: 0;
 }
 
 .sidebar-brand-text span {

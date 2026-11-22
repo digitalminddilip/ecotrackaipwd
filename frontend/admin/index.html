@@ -30,9 +30,14 @@
   <div class="dashboard-layout" id="dashboard-layout" style="display: none;">
     <!-- Sidebar -->
     <aside class="sidebar">
-      <div class="sidebar-header" style="justify-content: flex-start; padding-left: 20px;">
-        <img src="/logo.png" alt="EcoTrack AI" style="height: 32px; margin-right: 8px;">
-        <span style="font-size: 1.25rem; font-weight: 700; color: #1f2937;">EcoTrack AI</span>
+      <div class="sidebar-header" style="justify-content: flex-start; padding-left: 20px; display: flex; align-items: center; gap: 10px;">
+        <div style="width: 38px; height: 38px; border-radius: 10px; background: #ecfdf5; display: flex; align-items: center; justify-content: center; border: 1px solid #a7f3d0;">
+          <i class="fa-solid fa-leaf" style="color: #10b981; font-size: 22px;"></i>
+        </div>
+        <div>
+          <div style="font-size: 1.25rem; font-weight: 800; color: #0f172a; font-family: 'Outfit', sans-serif;">EcoTrack AI</div>
+          <div style="font-size: 0.72rem; color: #059669; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">MUNICIPAL ADMIN</div>
+        </div>
       </div>
       
       <nav class="sidebar-nav">
@@ -60,7 +65,12 @@
       <header class="topbar">
         <div class="topbar-left" style="display: flex; align-items: center; gap: 12px;">
           <button id="mobile-menu-btn" class="mobile-menu-btn"><i class="fa-solid fa-bars"></i></button>
-          <h2 class="page-title" id="page-title">Dashboard Overview</h2>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <i class="fa-solid fa-leaf" style="color: #10b981; font-size: 20px;"></i>
+            <span style="font-weight: 800; font-size: 1.15rem; color: #0f172a; font-family: 'Outfit', sans-serif;">EcoTrack AI</span>
+          </div>
+          <span style="color: #cbd5e1; font-size: 1.2rem;">|</span>
+          <h2 class="page-title" id="page-title" style="margin: 0; font-size: 1.15rem;">Dashboard Overview</h2>
         </div>
         <div class="topbar-right">
           <button id="btn-open-briefing" class="btn-briefing" style="display: flex; align-items: center; gap: 8px; background: linear-gradient(135deg, #6366f1, #4f46e5); color: #ffffff; border: none; padding: 8px 14px; border-radius: 8px; font-weight: 600; font-size: 0.85rem; cursor: pointer; box-shadow: 0 4px 6px -1px rgba(99,102,241,0.25); transition: transform 0.15s, box-shadow 0.15s;">

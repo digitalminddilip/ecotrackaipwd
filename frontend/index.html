@@ -13,13 +13,13 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Lato:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap"
     rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=18">
+  <link rel="stylesheet" href="styles.css?v=19">
   <link rel="stylesheet" href="auth.css?v=2">
   <link rel="stylesheet" href="location.css?v=3">
   <link rel="stylesheet" href="citizen.css?v=19">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-  <link rel="stylesheet" href="collector.css">
+  <link rel="stylesheet" href="collector.css?v=2">
   <link rel="stylesheet" href="voice.css?v=1">
   <link rel="stylesheet" href="modern_video_ui.css?v=2">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -79,14 +79,19 @@
         <div class="auth-icon-btn"><i class="fa-solid fa-arrows-rotate"></i></div>
       </div>
 
-      <div class="logo-container">
-        <img src="logo.png" alt="EcoTrack AI Logo" class="auth-main-logo">
+      <div class="logo-container" style="display: flex; flex-direction: column; align-items: center; gap: 8px; margin-bottom: 20px;">
+        <div style="width: 58px; height: 58px; border-radius: 16px; background: #ecfdf5; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25); border: 1px solid #a7f3d0;">
+          <i class="fa-solid fa-leaf" style="color: #10b981; font-size: 30px;"></i>
+        </div>
+        <div style="font-size: 1.7rem; font-weight: 800; color: #0f172a; font-family: 'Outfit', sans-serif; letter-spacing: -0.5px;">
+          EcoTrack AI
+        </div>
       </div>
 
       <!-- Header -->
       <div class="auth-header-wrapper">
-        <h2 id="auth-title">Welcome Back!</h2>
-        <p id="auth-subtitle">Sign in to access smart, personalized travel plans made for you.</p>
+        <h2 id="auth-title">Welcome to EcoTrack AI</h2>
+        <p id="auth-subtitle">Sign in to report civic waste hazards, track resolutions, and earn eco reward points.</p>
       </div>
 
       <form id="auth-form" class="auth-form">
@@ -172,9 +177,9 @@
   <div id="citizen-wrapper">
     <aside class="col-sidebar">
       <div>
-        <a href="#" class="col-brand">
-          <i class="fa-solid fa-leaf" style="color:#10b981; font-size: 24px; margin-right: 8px;"></i>
-          EcoTrack AI
+        <a href="#" class="col-brand" style="display: flex; align-items: center; gap: 10px; text-decoration: none;">
+          <i class="fa-solid fa-leaf" style="color: #10b981; font-size: 24px;"></i>
+          <span style="font-weight: 800; font-size: 1.35rem; color: #0f172a; font-family: 'Outfit', sans-serif; letter-spacing: -0.3px;">EcoTrack AI</span>
         </a>
         
         <div class="col-menu-section">
@@ -644,8 +649,11 @@
           <button id="cit-logout-btn" class="col-logout-btn" style="margin-top: 0; padding: 8px 16px; width: auto;" onclick="enterGuestMode(); setAuthMode('login'); byId('citizen-wrapper').hidden=true; document.body.classList.remove('collector-mode'); openSignIn();"><i class="fa-solid fa-arrow-right-from-bracket"></i> Logout</button>
           <button id="cit-login-btn" class="col-logout-btn" style="margin-top: 0; padding: 8px 16px; width: auto; background: #3b82f6; display: none;" onclick="setAuthMode('login'); byId('citizen-wrapper').hidden=true; document.body.classList.remove('collector-mode'); openSignIn();"><i class="fa-solid fa-arrow-right-to-bracket"></i> Login</button>
         </div>
-        <img src="logo.png" alt="EcoTrack AI Logo" style="height: 40px; display: inline-block;">
-        <div style="font-size: 12px; color: var(--col-text-muted); margin-top: 8px;">Powered by EcoTrack AI</div>
+        <div style="display: inline-flex; align-items: center; gap: 8px; font-weight: 800; font-size: 1.25rem; color: #0f172a; font-family: 'Outfit', sans-serif;">
+          <i class="fa-solid fa-leaf" style="color: #10b981; font-size: 24px;"></i>
+          <span>EcoTrack AI</span>
+        </div>
+        <div style="font-size: 12px; color: var(--col-text-muted); margin-top: 6px;">Civic Cleanliness & Municipal Waste Intelligence Platform</div>
       </footer>
     </main>
   </div>
@@ -659,18 +667,21 @@
         onclick="document.querySelector('.sidebar').classList.add('open'); document.getElementById('sidebar-overlay').classList.add('show');">
         <i class="fa-solid fa-bars"></i>
       </button>
-      <div class="mobile-brand">
-        <i class="fa-solid fa-leaf" style="color: #f69446; margin-right: 6px;"></i> EcoTrack AI
+      <div class="mobile-brand" style="display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 1.25rem; color: #0f172a; font-family: 'Outfit', sans-serif;">
+        <i class="fa-solid fa-leaf" style="color: #10b981; font-size: 22px;"></i>
+        <span>EcoTrack AI</span>
       </div>
     </header>
 
     <!-- SIDEBAR -->
     <aside class="sidebar">
-      <a href="#" class="sidebar-brand">
-        <div class="sidebar-brand-icon"><i class="fa-solid fa-leaf"></i></div>
+      <a href="#" class="sidebar-brand" style="display: flex; align-items: center; gap: 10px; text-decoration: none;">
+        <div class="sidebar-brand-icon" style="width: 36px; height: 36px; border-radius: 10px; background: #ecfdf5; display: flex; align-items: center; justify-content: center; border: 1px solid #a7f3d0;">
+          <i class="fa-solid fa-leaf" style="color: #10b981; font-size: 20px;"></i>
+        </div>
         <div class="sidebar-brand-text">
-          <span>EcoTrack AI</span>
-          <span class="subtitle">ACTION LEDGER</span>
+          <span style="font-weight: 800; font-size: 1.2rem; color: #0f172a; font-family: 'Outfit', sans-serif;">EcoTrack AI</span>
+          <span class="subtitle" style="font-size: 0.72rem; color: #64748b; font-weight: 600; letter-spacing: 0.5px;">ACTION LEDGER</span>
         </div>
       </a>
 
@@ -1136,7 +1147,7 @@
   </div>
 
   <script src="config.js"></script>
-  <script src="app.js?v=38"></script>
+  <script src="app.js?v=39"></script>
   <script src="voice_assistant.js?v=1"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>

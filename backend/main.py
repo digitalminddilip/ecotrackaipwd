@@ -15,13 +15,14 @@ import requests
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
 
-from fastapi import FastAPI, File, Form, Header, HTTPException, Request, UploadFile, status, Response
+from fastapi import FastAPI, File, Form, Header, HTTPException, Query, Request, UploadFile, status, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from .ai_analyzer import analyze_image
-from .image_comparison import compare_image_bytes
+from .image_comparison import compare_image_bytes, gemini_audit_cleanup
+from .ai_executive import generate_executive_briefing
 from .auth import create_token, decode_token, hash_password, verify_password
 from .database import find_user_by_email, find_user_by_id, init_db, load_reports, load_users, save_report, save_user, update_user_password, get_report_image_data, get_report_evidence_data, update_user_picture, add_user_points, record_site_visit, update_user_last_login, get_platform_user_and_visitor_stats, update_user_details, delete_user
 from .location_service import google_geolocate, google_reverse_geocode
@@ -69,6 +70,12 @@ class Report(BaseModel):
     status: ReportStatus
     collector_id: Optional[str] = None
     evidence_reference: Optional[str] = None
+    gps_accuracy: Optional[float] = None
+    location_timestamp: Optional[str] = None
+    formatted_address: Optional[str] = None
+    ai_confidence: Optional[float] = None
+    location_source: Optional[str] = "gps"
+    is_manually_confirmed: Optional[bool] = False
 
 
 class StatusUpdate(BaseModel):
@@ -217,7 +224,10 @@ async def image_compare(
     if len(first_bytes) > 10 * 1024 * 1024 or len(second_bytes) > 10 * 1024 * 1024:
         raise HTTPException(status_code=413, detail="Each image must be smaller than 10 MB")
     try:
-        return compare_image_bytes(first_bytes, second_bytes)
+        heuristic_res = compare_image_bytes(first_bytes, second_bytes)
+        audit_res = gemini_audit_cleanup(first_bytes, second_bytes)
+        heuristic_res["gemini_audit"] = audit_res
+        return heuristic_res
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error)) from error
 
@@ -441,31 +451,124 @@ def authenticated_user(authorization: Optional[str]) -> User:
     return current_user(authorization)
 
 
+async def validate_and_read_image(image: UploadFile, max_size_mb: int = 10) -> tuple[bytes, str]:
+    filename = Path(image.filename or "upload.jpg").name
+    allowed_types = {"image/jpeg", "image/png", "image/webp"}
+    if image.content_type and image.content_type.lower() not in allowed_types:
+        raise HTTPException(status_code=400, detail="Only JPEG, PNG, and WebP images are supported")
+
+    image_bytes = await image.read()
+    if not image_bytes:
+        raise HTTPException(status_code=400, detail="Uploaded image is empty")
+    if len(image_bytes) > max_size_mb * 1024 * 1024:
+        raise HTTPException(status_code=413, detail=f"Image must be smaller than {max_size_mb} MB")
+
+    # Magic byte signature check
+    is_jpeg = image_bytes[:3] == b"\xff\xd8\xff"
+    is_png = image_bytes[:8] == b"\x89PNG\r\n\x1a\n"
+    is_webp = len(image_bytes) > 12 and image_bytes[:4] == b"RIFF" and image_bytes[8:12] == b"WEBP"
+    if not (is_jpeg or is_png or is_webp):
+        raise HTTPException(status_code=400, detail="Invalid image file signature. Only JPEG, PNG, and WebP are allowed.")
+
+    from io import BytesIO
+    from PIL import Image
+    try:
+        with Image.open(BytesIO(image_bytes)) as img:
+            img.verify()
+    except Exception as err:
+        raise HTTPException(status_code=400, detail="Uploaded image is corrupted or invalid") from err
+
+    return image_bytes, filename
+
+
+@app.get("/api/config")
+def get_public_config():
+    gmaps_browser_key = os.getenv("GOOGLE_MAPS_BROWSER_KEY") or os.getenv("GOOGLE_MAPS_API_KEY") or ""
+    return {
+        "google_maps_configured": bool(gmaps_browser_key),
+        "google_maps_api_key": gmaps_browser_key,
+        "app_name": "EcoTrack AI (CleanConnect)",
+        "version": "2.0.0",
+        "default_center": [26.7606, 83.3732],
+    }
+
+
+@app.get("/api/location/reverse-geocode")
+def reverse_geocode_api(
+    latitude: float = Query(..., ge=-90, le=90),
+    longitude: float = Query(..., ge=-180, le=180),
+):
+    return google_reverse_geocode(latitude, longitude)
+
+
+@app.post("/reports/analyze-waste")
+async def analyze_waste_preview(
+    image: UploadFile = File(...),
+    authorization: Optional[str] = Header(None),
+):
+    user = authenticated_user(authorization)
+    image_bytes, filename = await validate_and_read_image(image)
+    try:
+        analysis = analyze_image(image_bytes, filename)
+    except Exception as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+
+    conf = analysis.get("confidence", 0.95)
+    try:
+        conf = round(float(conf), 3)
+    except Exception:
+        conf = 0.95
+
+    return {
+        "status": "success",
+        "category": analysis.get("category", "garbage_dumps"),
+        "ai_result": analysis.get("ai_result", "issue_detected"),
+        "confidence": conf,
+        "material": analysis.get("material", "mixed"),
+        "disposal_bin": analysis.get("disposal_bin", "blue_bin"),
+        "class_probabilities": analysis.get("class_probabilities", {}),
+        "provider": analysis.get("provider", "trained-model"),
+    }
+
+
 @app.post("/reports", response_model=Report, status_code=status.HTTP_201_CREATED)
 async def create_report(
     user_id: Optional[str] = Form(None),
     latitude: float = Form(..., ge=-90, le=90),
     longitude: float = Form(..., ge=-180, le=180),
     description: Optional[str] = Form(None, max_length=1000),
+    gps_accuracy: Optional[float] = Form(None),
+    location_timestamp: Optional[str] = Form(None),
+    formatted_address: Optional[str] = Form(None),
+    location_source: Optional[str] = Form("gps"),
+    is_manually_confirmed: Optional[bool] = Form(False),
     image: UploadFile = File(...),
     authorization: Optional[str] = Header(None),
 ) -> Report:
     user = authenticated_user(authorization)
     if user.role != Role.citizen:
         raise HTTPException(status_code=403, detail="Only citizens can submit reports")
-    allowed_types = {"image/jpeg", "image/png", "image/webp"}
-    if image.content_type not in allowed_types:
-        raise HTTPException(status_code=400, detail="Only JPEG, PNG, and WebP images are supported")
-    filename = Path(image.filename or "upload").name
-    image_bytes = await image.read()
-    if not image_bytes:
-        raise HTTPException(status_code=400, detail="Uploaded image is empty")
-    if len(image_bytes) > 10 * 1024 * 1024:
-        raise HTTPException(status_code=413, detail="Image must be smaller than 10 MB")
+
+    image_bytes, filename = await validate_and_read_image(image)
+
     try:
         analysis = analyze_image(image_bytes, filename)
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error)) from error
+
+    if not formatted_address:
+        try:
+            geo_info = google_reverse_geocode(latitude, longitude)
+            formatted_address = geo_info.get("formatted_address") or geo_info.get("address")
+        except Exception:
+            formatted_address = f"Coordinates: {latitude:.6f}°, {longitude:.6f}°"
+
+    ai_conf = analysis.get("confidence", 0.95)
+    try:
+        ai_conf = round(float(ai_conf), 3)
+    except Exception:
+        ai_conf = 0.95
+
     report_id = f"rpt-{uuid4().hex[:8]}"
     image_url = f"/reports/{report_id}/image"
 
@@ -478,8 +581,14 @@ async def create_report(
         description=description,
         timestamp=datetime.now(timezone.utc),
         status=ReportStatus.ai_analyzed,
-        ai_result=analysis["ai_result"],
-        category=analysis["category"],
+        ai_result=analysis.get("ai_result", "issue_detected"),
+        category=analysis.get("category", "garbage_dumps"),
+        gps_accuracy=gps_accuracy,
+        location_timestamp=location_timestamp or datetime.now(timezone.utc).isoformat(),
+        formatted_address=formatted_address,
+        ai_confidence=ai_conf,
+        location_source=location_source or "gps",
+        is_manually_confirmed=bool(is_manually_confirmed),
     )
     reports[report.report_id] = report
     save_report(report, image_data=image_bytes)
@@ -727,6 +836,63 @@ def get_report_evidence(report_id: str):
     if not evidence_data:
         raise HTTPException(status_code=404, detail="Evidence image not found")
     return Response(content=evidence_data, media_type="image/jpeg")
+
+
+@app.get("/reports/{report_id}/verify-audit")
+def audit_report_evidence(
+    report_id: str,
+    authorization: Optional[str] = Header(None)
+) -> dict[str, Any]:
+    """
+    Rigorously audits Before and After (Evidence) photos using Gemini Multimodal Vision,
+    evaluating scene consistency, waste removal, and fraud markers.
+    """
+    user = authenticated_user(authorization)
+    require_role(user.user_id, Role.administrator, Role.collector)
+    report = get_report(report_id)
+    if not report.evidence_reference:
+        raise HTTPException(status_code=400, detail="No completion evidence has been uploaded for this report yet.")
+
+    before_bytes = get_report_image_data(report_id)
+    evidence_bytes = get_report_evidence_data(report_id)
+
+    if not before_bytes or not evidence_bytes:
+        raise HTTPException(status_code=404, detail="Image data for before/after comparison not found in database.")
+
+    audit_result = gemini_audit_cleanup(
+        before_bytes=before_bytes,
+        after_bytes=evidence_bytes,
+        category=report.category or "",
+        description=report.description or "",
+    )
+    audit_result["report_id"] = report_id
+    audit_result["current_status"] = report.status.value
+    return audit_result
+
+
+@app.get("/analytics/ai-briefing")
+def get_ai_executive_briefing(
+    authorization: Optional[str] = Header(None)
+) -> dict[str, Any]:
+    """
+    Synthesizes real-time municipal cleanliness telemetry into a formal executive
+    briefing for the City Sanitation Directorate and Municipal Commissioner using Google Gemini.
+    """
+    user = authenticated_user(authorization)
+    require_role(user.user_id, Role.administrator)
+    stats_data = analytics(authorization)
+    recent_reports_data = [
+        {
+            "report_id": r.report_id,
+            "category": r.category,
+            "status": r.status.value,
+            "latitude": r.latitude,
+            "longitude": r.longitude,
+            "timestamp": r.timestamp.isoformat(),
+        }
+        for r in list(reports.values())[:12]
+    ]
+    return generate_executive_briefing(stats_data, recent_reports_data)
 
 
 @app.get("/analytics")

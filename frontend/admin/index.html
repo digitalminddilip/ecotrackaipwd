@@ -63,6 +63,9 @@
           <h2 class="page-title" id="page-title">Dashboard Overview</h2>
         </div>
         <div class="topbar-right">
+          <button id="btn-open-briefing" class="btn-briefing" style="display: flex; align-items: center; gap: 8px; background: linear-gradient(135deg, #6366f1, #4f46e5); color: #ffffff; border: none; padding: 8px 14px; border-radius: 8px; font-weight: 600; font-size: 0.85rem; cursor: pointer; box-shadow: 0 4px 6px -1px rgba(99,102,241,0.25); transition: transform 0.15s, box-shadow 0.15s;">
+            <i class="fa-solid fa-wand-magic-sparkles"></i> <span>Gemini Executive Briefing</span>
+          </button>
           <div class="notification-bell">
             <i class="fa-regular fa-bell"></i>
             <span class="badge">3</span>
@@ -201,10 +204,12 @@
               <table class="modern-table">
                 <thead>
                   <tr>
+                    <th>Photo</th>
                     <th>Report ID</th>
                     <th>Category</th>
                     <th>Date</th>
-                    <th>AI Confidence</th>
+                    <th>AI Result</th>
+                    <th>GPS & Address</th>
                     <th>Status</th>
                     <th>Actions</th>
                   </tr>
@@ -258,10 +263,20 @@
         <button class="btn-close" onclick="closeModal('modal-review')"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <div class="modal-body">
-        <div class="image-preview" id="review-image"></div>
-        <p><strong>AI Category:</strong> <span id="review-cat"></span></p>
-        <p><strong>Confidence:</strong> <span id="review-conf"></span>%</p>
-        <p><strong>Description:</strong> <span id="review-desc"></span></p>
+        <div class="image-preview" id="review-image" style="height: 220px; border-radius: 10px; background-size: cover; background-position: center; margin-bottom: 14px;"></div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; font-size: 0.88rem;">
+          <p style="margin: 0;"><strong>Category:</strong> <span id="review-cat" style="color: #059669; font-weight: 700;"></span></p>
+          <p style="margin: 0;"><strong>AI Result:</strong> <span id="review-conf"></span></p>
+        </div>
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; margin-bottom: 12px; font-size: 0.84rem;">
+          <p style="margin: 0 0 4px 0;"><strong><i class="fa-solid fa-location-crosshairs" style="color: #2563eb;"></i> GPS Coordinates:</strong> <span id="review-coords" style="font-family: monospace; font-weight: 700;"></span></p>
+          <p style="margin: 0 0 4px 0;"><strong><i class="fa-solid fa-circle-dot" style="color: #10b981;"></i> Accuracy:</strong> <span id="review-accuracy"></span></p>
+          <p style="margin: 0 0 8px 0;"><strong><i class="fa-solid fa-map-pin" style="color: #ef4444;"></i> Address:</strong> <span id="review-address"></span></p>
+          <a id="review-maps-link" href="#" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; border-radius: 6px; font-weight: 600; text-decoration: none; font-size: 0.8rem;">
+            <i class="fa-solid fa-diamond-turn-right"></i> Open Exact Location in Google Maps
+          </a>
+        </div>
+        <p style="margin: 0;"><strong>Description:</strong> <span id="review-desc" style="color: #475569;"></span></p>
       </div>
       <div class="modal-footer">
         <button class="btn-outline" onclick="closeModal('modal-review')">Cancel</button>
@@ -329,6 +344,58 @@
             <div class="image-preview" id="verify-after"></div>
           </div>
         </div>
+
+        <!-- Gemini AI Quality Audit Panel -->
+        <div class="gemini-audit-panel" id="gemini-audit-panel" style="margin-top: 16px; border: 1px solid #c7d2fe; border-radius: 10px; background: #f8faff; padding: 14px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <i class="fa-solid fa-wand-magic-sparkles" style="color: #6366f1; font-size: 1.1rem;"></i>
+              <strong style="color: #312e81; font-size: 0.92rem;">Gemini Multimodal Quality Audit</strong>
+            </div>
+            <span id="gemini-audit-status-badge" style="background: #e0e7ff; color: #4338ca; font-size: 0.75rem; padding: 3px 8px; border-radius: 12px; font-weight: 600;">Ready to Audit</span>
+          </div>
+
+          <div id="gemini-audit-loading" style="display: none; text-align: center; padding: 16px; color: #6366f1;">
+            <i class="fa-solid fa-spinner fa-spin" style="font-size: 1.3rem; margin-bottom: 6px; display: block;"></i>
+            <span style="font-size: 0.85rem; font-weight: 500;">Analyzing Before & After photos with Gemini Vision...</span>
+          </div>
+
+          <div id="gemini-audit-results" style="display: none;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+              <div style="background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 12px;">
+                <div style="display: flex; justify-content: space-between; font-size: 0.78rem; color: #64748b; font-weight: 600;">
+                  <span>Location Match</span>
+                  <span id="gemini-audit-loc-val">--%</span>
+                </div>
+                <div style="background: #e2e8f0; height: 6px; border-radius: 3px; margin-top: 4px; overflow: hidden;">
+                  <div id="gemini-audit-loc-bar" style="background: #6366f1; height: 100%; width: 0%; transition: width 0.4s;"></div>
+                </div>
+              </div>
+              <div style="background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 12px;">
+                <div style="display: flex; justify-content: space-between; font-size: 0.78rem; color: #64748b; font-weight: 600;">
+                  <span>Cleanliness Score</span>
+                  <span id="gemini-audit-clean-val">--%</span>
+                </div>
+                <div style="background: #e2e8f0; height: 6px; border-radius: 3px; margin-top: 4px; overflow: hidden;">
+                  <div id="gemini-audit-clean-bar" style="background: #10b981; height: 100%; width: 0%; transition: width 0.4s;"></div>
+                </div>
+              </div>
+            </div>
+
+            <div style="background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; font-size: 0.83rem; color: #334155; line-height: 1.4;">
+              <div style="font-weight: 600; color: #1e293b; margin-bottom: 3px; display: flex; align-items: center; gap: 5px;">
+                <i class="fa-solid fa-robot" style="color: #6366f1;"></i> AI Verification Findings:
+              </div>
+              <p id="gemini-audit-summary" style="margin: 0;"></p>
+            </div>
+          </div>
+
+          <div style="display: flex; justify-content: flex-end; margin-top: 10px;">
+            <button type="button" id="btn-run-gemini-audit" style="background: #4f46e5; color: white; border: none; border-radius: 6px; padding: 6px 14px; font-size: 0.82rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: background 0.15s;">
+              <i class="fa-solid fa-wand-magic-sparkles"></i> Run Gemini AI Verification Audit
+            </button>
+          </div>
+        </div>
       </div>
       <div class="modal-footer">
         <button class="btn-danger" id="btn-reject-evidence">Reject Proof</button>
@@ -350,7 +417,20 @@
           <p><strong>Name:</strong> <span id="view-name">Loading...</span></p>
           <p><strong>Email:</strong> <span id="view-email">Loading...</span></p>
           <p><strong>Role:</strong> <span id="view-role">Loading...</span></p>
-          <p><strong>Location/Desc:</strong> <br><span id="view-desc" style="white-space: pre-wrap; font-family: monospace;"></span></p>
+        </div>
+
+        <div style="padding-bottom: 12px; border-bottom: 1px solid #e2e8f0; margin-bottom: 12px;">
+          <h4 style="margin-bottom: 8px; font-size: 1rem; color: #1e293b;">Geospatial & Incident Telemetry</h4>
+          <p><strong>Waste Category:</strong> <span id="view-cat" style="color: #059669; font-weight: 700;"></span></p>
+          <p><strong>AI Classification:</strong> <span id="view-ai-result"></span></p>
+          <p><strong>GPS Coordinates:</strong> <span id="view-coords" style="font-family: monospace; font-weight: 700;"></span></p>
+          <p><strong>GPS Accuracy:</strong> <span id="view-accuracy"></span></p>
+          <p><strong>Location Source:</strong> <span id="view-source"></span></p>
+          <p><strong>Address:</strong> <span id="view-address"></span></p>
+          <p><strong>Description:</strong> <br><span id="view-desc" style="white-space: pre-wrap; font-family: monospace;"></span></p>
+          <a id="view-maps-link" href="#" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; background: #2563eb; color: #ffffff; border-radius: 6px; font-weight: 600; text-decoration: none; font-size: 0.84rem; margin-top: 6px;">
+            <i class="fa-solid fa-diamond-turn-right"></i> Open Exact Location in Google Maps
+          </a>
         </div>
         
         <div id="view-collector-section" style="display: none; padding-bottom: 12px; border-bottom: 1px solid #e2e8f0; margin-bottom: 12px;">
@@ -425,6 +505,74 @@
       <div class="modal-footer">
         <button class="btn-outline" onclick="closeModal('modal-add-collector')">Cancel</button>
         <button class="btn-primary" id="btn-save-new-collector"><i class="fa-solid fa-check"></i> Add Collector</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. Gemini AI Executive Briefing Modal -->
+  <div class="modal-overlay" id="modal-ai-briefing">
+    <div class="modal-card" style="max-width: 650px;">
+      <div class="modal-header" style="background: linear-gradient(135deg, #4f46e5, #6366f1); color: white; border-top-left-radius: 12px; border-top-right-radius: 12px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <i class="fa-solid fa-wand-magic-sparkles" style="font-size: 1.25rem;"></i>
+          <div>
+            <h3 style="margin: 0; color: white; font-size: 1.1rem;">Gemini Municipal Executive Briefing</h3>
+            <span style="font-size: 0.75rem; opacity: 0.85;">Civic Hygiene & Operational Intelligence</span>
+          </div>
+        </div>
+        <button class="btn-close" onclick="closeModal('modal-ai-briefing')" style="color: white;"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body" style="padding: 20px;">
+        <div id="briefing-loading" style="text-align: center; padding: 32px; color: #6366f1;">
+          <i class="fa-solid fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 12px; display: block;"></i>
+          <span style="font-weight: 600; font-size: 0.95rem;">Synthesizing city-wide civic reports with Google Gemini...</span>
+        </div>
+        <div id="briefing-content" style="display: none;">
+          <!-- Top KPI Score Row -->
+          <div style="display: flex; gap: 14px; align-items: stretch; margin-bottom: 18px;">
+            <div style="flex: 1; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px; text-align: center;">
+              <span style="font-size: 0.78rem; text-transform: uppercase; color: #64748b; font-weight: 700; letter-spacing: 0.5px;">District Hygiene Score</span>
+              <div style="font-size: 2.2rem; font-weight: 800; color: #10b981; margin: 4px 0;" id="briefing-hygiene-score">--<span style="font-size: 1.1rem; color: #64748b; font-weight: 500;">/100</span></div>
+              <span id="briefing-grade-badge" style="background: #dcfce7; color: #15803d; padding: 2px 10px; border-radius: 12px; font-weight: 700; font-size: 0.8rem;">GRADE --</span>
+            </div>
+            <div style="flex: 1.6; background: #eef2ff; border: 1px solid #c7d2fe; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; justify-content: center;">
+              <span style="font-size: 0.75rem; color: #4338ca; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;"><i class="fa-solid fa-bolt"></i> Operational Assessment</span>
+              <p id="briefing-headline" style="font-size: 0.92rem; font-weight: 600; color: #1e1b4b; margin: 6px 0 0 0; line-height: 1.4;"></p>
+            </div>
+          </div>
+
+          <!-- Key Findings -->
+          <div style="margin-bottom: 16px;">
+            <h4 style="font-size: 0.88rem; color: #334155; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+              <i class="fa-solid fa-magnifying-glass-chart" style="color: #6366f1;"></i> Strategic Findings
+            </h4>
+            <ul id="briefing-findings" style="margin: 0; padding-left: 20px; font-size: 0.85rem; color: #475569; line-height: 1.5;"></ul>
+          </div>
+
+          <!-- Urgent Directives -->
+          <div style="margin-bottom: 16px; background: #fffbeb; border: 1px solid #fef3c7; border-radius: 8px; padding: 12px;">
+            <h4 style="font-size: 0.88rem; color: #92400e; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+              <i class="fa-solid fa-triangle-exclamation" style="color: #f59e0b;"></i> Recommended Administrative Directives
+            </h4>
+            <ul id="briefing-directives" style="margin: 0; padding-left: 20px; font-size: 0.84rem; color: #78350f; line-height: 1.5;"></ul>
+          </div>
+
+          <!-- Fleet Allocation Advice -->
+          <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px; font-size: 0.84rem; color: #166534;">
+            <strong style="display: block; margin-bottom: 4px;"><i class="fa-solid fa-truck-pickup"></i> Fleet & Resource Allocation:</strong>
+            <span id="briefing-resource-advice"></span>
+          </div>
+          
+          <div style="margin-top: 14px; text-align: right; font-size: 0.75rem; color: #94a3b8;">
+            Generated by <span id="briefing-provider" style="font-weight: 600; color: #6366f1;">Google Gemini</span> • <span id="briefing-timestamp"></span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+        <button class="btn-outline" onclick="closeModal('modal-ai-briefing')">Close</button>
+        <button id="btn-refresh-briefing" style="background: #4f46e5; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+          <i class="fa-solid fa-arrows-rotate"></i> Re-generate Briefing
+        </button>
       </div>
     </div>
   </div>

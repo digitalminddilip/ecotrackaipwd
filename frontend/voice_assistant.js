@@ -251,7 +251,12 @@
     // 2. Populate fields
     if (action.location) {
       const locInput = document.getElementById("report-location");
-      if (locInput) locInput.value = action.location;
+      if (locInput) {
+        locInput.value = action.location;
+        if (typeof searchAddressFromInput === "function") {
+          searchAddressFromInput();
+        }
+      }
     }
 
     if (action.description) {

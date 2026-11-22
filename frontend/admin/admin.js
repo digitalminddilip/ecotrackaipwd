@@ -272,11 +272,34 @@ function renderReportsTable(reportsToRender) {
       actionHtml = `<button class="action-btn" style="background:rgba(59,130,246,0.2); color:#3b82f6;" onclick="openVerifyModal('${r.report_id}')">Verify Proof</button>`;
     }
     
+    const photoUrl = `${API_URL}/reports/${r.report_id}/image`;
+    const lat = typeof r.latitude === 'number' ? r.latitude : 0;
+    const lng = typeof r.longitude === 'number' ? r.longitude : 0;
+    const acc = r.gps_accuracy ? `±${Math.round(r.gps_accuracy)}m` : '±15m';
+    const mapsLink = `https://www.google.com/maps?q=${lat},${lng}`;
+
     tr.innerHTML = `
+      <td>
+        <img src="${photoUrl}" alt="Waste" style="width: 44px; height: 44px; object-fit: cover; border-radius: 6px; border: 1px solid #cbd5e1; cursor: pointer;" onclick="viewDetails('${r.report_id}')" onerror="this.src='../logo.png'" title="Click to view details" />
+      </td>
       <td><strong>${r.report_id.substring(0,8)}...</strong></td>
-      <td>${r.category || '-'}</td>
+      <td><span style="font-weight: 600; color: #047857;">${r.category ? r.category.replace(/_/g, ' ').toUpperCase() : '-'}</span></td>
       <td>${dateStr}</td>
-      <td>${r.ai_result || '-'}</td>
+      <td>
+        <span style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 0.76rem; border: 1px solid #e2e8f0; font-weight: 600;">
+          <i class="fa-solid fa-robot" style="color: #6366f1;"></i> ${r.ai_result || 'Analyzed'}
+        </span>
+      </td>
+      <td>
+        <div style="font-size: 0.8rem; font-family: monospace; font-weight: 700; color: #1e3a8a;">
+          <i class="fa-solid fa-location-crosshairs" style="color: #ef4444;"></i> ${lat.toFixed(4)}°, ${lng.toFixed(4)}°
+          <span style="font-size: 0.72rem; color: #059669; font-weight: 600; margin-left: 2px;">(${acc})</span>
+        </div>
+        ${r.formatted_address ? `<div style="font-size: 0.74rem; color: #64748b; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${r.formatted_address}">${r.formatted_address}</div>` : ''}
+        <a href="${mapsLink}" target="_blank" rel="noopener noreferrer" style="font-size: 0.74rem; color: #2563eb; font-weight: 600; text-decoration: underline; display: inline-flex; align-items: center; gap: 3px; margin-top: 2px;">
+          <i class="fa-solid fa-diamond-turn-right"></i> Google Maps
+        </a>
+      </td>
       <td><span class="status-badge status-${r.status}">${r.status}</span></td>
       <td>${actionHtml}</td>
     `;
@@ -309,11 +332,22 @@ function closeModal(id) {
 window.openReviewModal = (reportId) => {
   currentReportId = reportId;
   const report = allReports.find(r => r.report_id === reportId);
+  if (!report) return;
   
   byId("review-image").style.backgroundImage = `url('${API_URL}/reports/${reportId}/image')`;
-  byId("review-cat").textContent = report.category || "N/A";
+  byId("review-cat").textContent = report.category ? report.category.replace(/_/g, ' ').toUpperCase() : "N/A";
   byId("review-conf").textContent = report.ai_result || "N/A";
   byId("review-desc").textContent = report.description || "No description provided.";
+  
+  const lat = typeof report.latitude === 'number' ? report.latitude : 0;
+  const lng = typeof report.longitude === 'number' ? report.longitude : 0;
+  const acc = report.gps_accuracy ? `±${Math.round(report.gps_accuracy)}m` : '±15m';
+  const source = report.location_source === 'manual' ? 'Manually Adjusted Pin' : 'Satellite Device GPS';
+  
+  if (byId("review-coords")) byId("review-coords").textContent = `${lat.toFixed(6)}° N, ${lng.toFixed(6)}° E`;
+  if (byId("review-accuracy")) byId("review-accuracy").textContent = `${acc} (${source})`;
+  if (byId("review-address")) byId("review-address").textContent = report.formatted_address || "Address pending reverse geocode";
+  if (byId("review-maps-link")) byId("review-maps-link").href = `https://www.google.com/maps?q=${lat},${lng}`;
   
   openModal('modal-review');
 };
@@ -382,6 +416,34 @@ window.openVerifyModal = async (reportId) => {
   byId("verify-before").style.backgroundImage = `url('${API_URL}/reports/${reportId}/image')`;
   byId("verify-after").style.backgroundImage = `url('${API_URL}/reports/${reportId}/evidence-image?t=${new Date().getTime()}')`;
   
+  // Reset Gemini Audit panel
+  const auditResults = byId("gemini-audit-results");
+  const auditLoading = byId("gemini-audit-loading");
+  const auditBadge = byId("gemini-audit-status-badge");
+  const runAuditBtn = byId("btn-run-gemini-audit");
+  const approveBtn = byId("btn-approve-evidence");
+  const rejectBtn = byId("btn-reject-evidence");
+
+  if (auditResults) auditResults.style.display = "none";
+  if (auditLoading) auditLoading.style.display = "none";
+  if (auditBadge) {
+    auditBadge.textContent = "Ready to Audit";
+    auditBadge.style.background = "#e0e7ff";
+    auditBadge.style.color = "#4338ca";
+  }
+  if (runAuditBtn) {
+    runAuditBtn.disabled = false;
+    runAuditBtn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Run Gemini AI Verification Audit';
+  }
+  if (approveBtn) {
+    approveBtn.style.boxShadow = "none";
+    approveBtn.innerHTML = '<i class="fa-solid fa-check"></i> Verify Complete';
+  }
+  if (rejectBtn) {
+    rejectBtn.style.boxShadow = "none";
+    rejectBtn.innerHTML = '<i class="fa-solid fa-xmark"></i> Reject Proof';
+  }
+
   const report = allReports.find(r => r.report_id === reportId);
   if (report) {
     byId("verify-rep-desc").textContent = report.description || "N/A";
@@ -405,7 +467,100 @@ window.openVerifyModal = async (reportId) => {
   }
   
   openModal('modal-verify');
+
+  // Automatically initiate Gemini verification audit
+  window.runGeminiAudit(reportId);
 };
+
+window.runGeminiAudit = async (reportId) => {
+  const targetId = reportId || currentReportId;
+  if (!targetId) return;
+
+  const loadingEl = byId("gemini-audit-loading");
+  const resultsEl = byId("gemini-audit-results");
+  const badgeEl = byId("gemini-audit-status-badge");
+  const runBtn = byId("btn-run-gemini-audit");
+  const approveBtn = byId("btn-approve-evidence");
+  const rejectBtn = byId("btn-reject-evidence");
+
+  if (loadingEl) loadingEl.style.display = "block";
+  if (resultsEl) resultsEl.style.display = "none";
+  if (badgeEl) {
+    badgeEl.textContent = "AI Auditing...";
+    badgeEl.style.background = "#fef3c7";
+    badgeEl.style.color = "#b45309";
+  }
+  if (runBtn) {
+    runBtn.disabled = true;
+    runBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Auditing with Gemini...';
+  }
+
+  try {
+    const res = await fetch(`${API_URL}/reports/${targetId}/verify-audit`, {
+      headers: authHeaders()
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.detail || "Audit request failed");
+    }
+    const data = await res.json();
+
+    if (loadingEl) loadingEl.style.display = "none";
+    if (resultsEl) resultsEl.style.display = "block";
+
+    const locPct = data.location_match_pct || 0;
+    const cleanPct = data.cleanliness_pct || 0;
+    if (byId("gemini-audit-loc-val")) byId("gemini-audit-loc-val").textContent = `${locPct}%`;
+    if (byId("gemini-audit-loc-bar")) byId("gemini-audit-loc-bar").style.width = `${locPct}%`;
+    if (byId("gemini-audit-clean-val")) byId("gemini-audit-clean-val").textContent = `${cleanPct}%`;
+    if (byId("gemini-audit-clean-bar")) byId("gemini-audit-clean-bar").style.width = `${cleanPct}%`;
+
+    if (byId("gemini-audit-summary")) {
+      byId("gemini-audit-summary").textContent = data.audit_summary || "Audit complete.";
+    }
+
+    const isApproved = data.verdict === "APPROVED";
+    if (badgeEl) {
+      if (isApproved) {
+        badgeEl.textContent = `VERDICT: APPROVED (${cleanPct}% CLEAN)`;
+        badgeEl.style.background = "#dcfce7";
+        badgeEl.style.color = "#15803d";
+      } else {
+        badgeEl.textContent = `VERDICT: ${(data.verdict || 'REVIEW').replace(/_/g, ' ')}`;
+        badgeEl.style.background = "#fee2e2";
+        badgeEl.style.color = "#991b1b";
+      }
+    }
+
+    if (approveBtn && rejectBtn) {
+      if (data.recommended_action === "verify_and_reward") {
+        approveBtn.style.boxShadow = "0 0 0 3px rgba(34, 197, 94, 0.4)";
+        approveBtn.innerHTML = '<i class="fa-solid fa-check-double"></i> Accept AI Verdict & Verify';
+      } else {
+        rejectBtn.style.boxShadow = "0 0 0 3px rgba(239, 68, 68, 0.4)";
+        rejectBtn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Follow AI: Reject Proof';
+      }
+    }
+
+  } catch (err) {
+    if (loadingEl) loadingEl.style.display = "none";
+    if (badgeEl) {
+      badgeEl.textContent = "Audit Error";
+      badgeEl.style.background = "#fee2e2";
+      badgeEl.style.color = "#991b1b";
+    }
+    console.error("Gemini Audit Error:", err);
+  } finally {
+    if (runBtn) {
+      runBtn.disabled = false;
+      runBtn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Re-Run Gemini AI Verification Audit';
+    }
+  }
+};
+
+if (byId("btn-run-gemini-audit")) {
+  byId("btn-run-gemini-audit").onclick = () => window.runGeminiAudit();
+}
 
 byId("btn-approve-evidence").onclick = async () => {
   if (!currentReportId) return;
@@ -469,6 +624,19 @@ window.viewDetails = async (reportId) => {
   byId("view-desc").textContent = report.description || "No description provided.";
   byId("view-image-before").style.backgroundImage = `url('${API_URL}/reports/${reportId}/image')`;
   
+  const lat = typeof report.latitude === 'number' ? report.latitude : 0;
+  const lng = typeof report.longitude === 'number' ? report.longitude : 0;
+  const acc = report.gps_accuracy ? `±${Math.round(report.gps_accuracy)} meters` : '±15 meters';
+  const source = report.location_source === 'manual' ? 'Manually Adjusted Pin' : 'Satellite Device GPS';
+
+  if (byId("view-cat")) byId("view-cat").textContent = report.category ? report.category.replace(/_/g, ' ').toUpperCase() : "GENERAL WASTE";
+  if (byId("view-ai-result")) byId("view-ai-result").textContent = report.ai_result || "Verified by CleanConnect AI";
+  if (byId("view-coords")) byId("view-coords").textContent = `${lat.toFixed(6)}° N, ${lng.toFixed(6)}° E`;
+  if (byId("view-accuracy")) byId("view-accuracy").textContent = acc;
+  if (byId("view-source")) byId("view-source").textContent = source;
+  if (byId("view-address")) byId("view-address").textContent = report.formatted_address || "Address pending geocode";
+  if (byId("view-maps-link")) byId("view-maps-link").href = `https://www.google.com/maps?q=${lat},${lng}`;
+
   byId("view-name").textContent = "Loading...";
   byId("view-email").textContent = "Loading...";
   byId("view-role").textContent = "Loading...";
@@ -674,3 +842,68 @@ window.removeCollector = async (userId) => {
     alert("Network error while removing collector.");
   }
 };
+
+// --- GEMINI AI EXECUTIVE BRIEFING ---
+window.loadAiExecutiveBriefing = async () => {
+  openModal('modal-ai-briefing');
+  const loading = byId("briefing-loading");
+  const content = byId("briefing-content");
+
+  if (loading) loading.style.display = "block";
+  if (content) content.style.display = "none";
+
+  try {
+    const res = await fetch(`${API_URL}/analytics/ai-briefing`, {
+      headers: authHeaders()
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.detail || "Failed to load executive briefing");
+    }
+    const data = await res.json();
+
+    if (byId("briefing-hygiene-score")) {
+      byId("briefing-hygiene-score").innerHTML = `${data.hygiene_index || 85}<span style="font-size: 1.1rem; color: #64748b; font-weight: 500;">/100</span>`;
+    }
+    if (byId("briefing-grade-badge")) {
+      byId("briefing-grade-badge").textContent = `GRADE ${data.rating_grade || 'A-'}`;
+    }
+    if (byId("briefing-headline")) {
+      byId("briefing-headline").textContent = data.executive_headline || "";
+    }
+    if (byId("briefing-findings")) {
+      const findings = data.key_findings || [];
+      byId("briefing-findings").innerHTML = findings.map(f => `<li style="margin-bottom: 4px;">${f}</li>`).join("");
+    }
+    if (byId("briefing-directives")) {
+      const directives = data.urgent_directives || [];
+      byId("briefing-directives").innerHTML = directives.map(d => `<li style="margin-bottom: 4px;">${d}</li>`).join("");
+    }
+    if (byId("briefing-resource-advice")) {
+      byId("briefing-resource-advice").textContent = data.resource_allocation_advice || "Standard fleet rotation recommended.";
+    }
+    if (byId("briefing-provider")) {
+      byId("briefing-provider").textContent = (data.provider && data.provider.includes("gemini")) ? "Google Gemini 2.5 Flash" : "EcoTrack AI Intelligence Engine";
+    }
+    if (byId("briefing-timestamp")) {
+      byId("briefing-timestamp").textContent = data.generated_at || new Date().toLocaleString();
+    }
+
+    if (loading) loading.style.display = "none";
+    if (content) content.style.display = "block";
+  } catch (err) {
+    if (loading) loading.style.display = "none";
+    alert("Executive Briefing Error: " + err.message);
+    closeModal('modal-ai-briefing');
+  }
+};
+
+const briefingBtn = byId("btn-open-briefing");
+if (briefingBtn) {
+  briefingBtn.onclick = () => window.loadAiExecutiveBriefing();
+}
+
+const refreshBriefingBtn = byId("btn-refresh-briefing");
+if (refreshBriefingBtn) {
+  refreshBriefingBtn.onclick = () => window.loadAiExecutiveBriefing();
+}

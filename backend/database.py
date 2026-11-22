@@ -85,6 +85,24 @@ def init_db() -> None:
                 except Exception:
                     pass
 
+            # Ensure modern location & AI columns exist in reports table
+            cursor.execute("PRAGMA table_info(reports)")
+            report_cols = [col["name"] for col in cursor.fetchall()]
+            new_report_cols = [
+                ("gps_accuracy", "REAL"),
+                ("location_timestamp", "TEXT"),
+                ("formatted_address", "TEXT"),
+                ("ai_confidence", "REAL"),
+                ("location_source", "TEXT"),
+                ("is_manually_confirmed", "INTEGER DEFAULT 0"),
+            ]
+            for col_name, col_type in new_report_cols:
+                if col_name not in report_cols:
+                    try:
+                        cursor.execute(f"ALTER TABLE reports ADD COLUMN {col_name} {col_type}")
+                    except Exception:
+                        pass
+
             connection.commit()
             
            
@@ -175,15 +193,14 @@ def load_reports() -> dict[str, Any]:
         cursor = connection.cursor()
         # Exclude image_data and evidence_data to save memory during bulk loads
         cursor.execute("""
-            SELECT report_id, user_id, image_reference, ai_result, category, 
-                   latitude, longitude, description, timestamp, status, 
-                   collector_id, evidence_reference 
-            FROM reports ORDER BY timestamp DESC
+            SELECT * FROM reports ORDER BY timestamp DESC
         """)
         rows = cursor.fetchall()
             
-    return {
-        row["report_id"]: Report(
+    loaded = {}
+    for row in rows:
+        keys = row.keys()
+        loaded[row["report_id"]] = Report(
             report_id=row["report_id"],
             user_id=row["user_id"],
             image_reference=row["image_reference"],
@@ -196,9 +213,14 @@ def load_reports() -> dict[str, Any]:
             status=row["status"],
             collector_id=row["collector_id"],
             evidence_reference=row["evidence_reference"],
+            gps_accuracy=row["gps_accuracy"] if "gps_accuracy" in keys else None,
+            location_timestamp=row["location_timestamp"] if "location_timestamp" in keys else None,
+            formatted_address=row["formatted_address"] if "formatted_address" in keys else None,
+            ai_confidence=row["ai_confidence"] if "ai_confidence" in keys else None,
+            location_source=row["location_source"] if "location_source" in keys and row["location_source"] else "gps",
+            is_manually_confirmed=bool(row["is_manually_confirmed"]) if "is_manually_confirmed" in keys else False,
         )
-        for row in rows
-    }
+    return loaded
 
 def get_report_image_data(report_id: str) -> bytes | None:
     with closing(connect()) as connection, connection:
@@ -222,14 +244,23 @@ def save_report(report: Any, image_data: bytes | None = None, evidence_data: byt
         cursor.execute("SELECT report_id FROM reports WHERE report_id = ?", (report.report_id,))
         exists = cursor.fetchone()
         
+        gps_accuracy = getattr(report, "gps_accuracy", None)
+        location_timestamp = getattr(report, "location_timestamp", None)
+        formatted_address = getattr(report, "formatted_address", None)
+        ai_confidence = getattr(report, "ai_confidence", None)
+        location_source = getattr(report, "location_source", "gps")
+        is_manually_confirmed = 1 if getattr(report, "is_manually_confirmed", False) else 0
+
         if not exists:
             cursor.execute(
                 """
                 INSERT INTO reports (
                     report_id, user_id, image_reference, image_data, ai_result, category,
                     latitude, longitude, description, timestamp, status,
-                    collector_id, evidence_reference, evidence_data
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    collector_id, evidence_reference, evidence_data,
+                    gps_accuracy, location_timestamp, formatted_address, ai_confidence,
+                    location_source, is_manually_confirmed
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     report.report_id,
@@ -242,10 +273,16 @@ def save_report(report: Any, image_data: bytes | None = None, evidence_data: byt
                     report.longitude,
                     report.description,
                     report.timestamp.isoformat(),
-                    report.status.value,
+                    report.status.value if hasattr(report.status, "value") else str(report.status),
                     report.collector_id,
                     report.evidence_reference,
                     evidence_data,
+                    gps_accuracy,
+                    location_timestamp,
+                    formatted_address,
+                    ai_confidence,
+                    location_source,
+                    is_manually_confirmed,
                 ),
             )
         else:
@@ -256,11 +293,26 @@ def save_report(report: Any, image_data: bytes | None = None, evidence_data: byt
                     category = ?,
                     status = ?,
                     collector_id = ?,
-                    evidence_reference = ?
+                    evidence_reference = ?,
+                    gps_accuracy = COALESCE(?, gps_accuracy),
+                    location_timestamp = COALESCE(?, location_timestamp),
+                    formatted_address = COALESCE(?, formatted_address),
+                    ai_confidence = COALESCE(?, ai_confidence),
+                    location_source = COALESCE(?, location_source),
+                    is_manually_confirmed = COALESCE(?, is_manually_confirmed)
             """
             params = [
-                report.ai_result, report.category, report.status.value, 
-                report.collector_id, report.evidence_reference
+                report.ai_result,
+                report.category,
+                report.status.value if hasattr(report.status, "value") else str(report.status),
+                report.collector_id,
+                report.evidence_reference,
+                gps_accuracy,
+                location_timestamp,
+                formatted_address,
+                ai_confidence,
+                location_source,
+                is_manually_confirmed,
             ]
             
             if evidence_data is not None:

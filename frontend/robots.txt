@@ -1,0 +1,19 @@
+# EcoTrack AI - Robots Indexing Directive
+User-agent: *
+Allow: /
+Allow: /admin/
+Allow: /logo.png
+Allow: /manifest.json
+Allow: /styles.css
+Allow: /auth.css
+Allow: /citizen.css
+Allow: /collector.css
+Allow: /voice.css
+Allow: /app.js
+Allow: /voice_assistant.js
+Disallow: /api/
+Disallow: /auth/
+Disallow: /reports/*/image
+Disallow: /reports/*/evidence-image
+
+Sitemap: /sitemap.xml

@@ -1,5 +1,5 @@
 """
-Comprehensive Test Suite for EcoTrack AI (CleanConnect AI) Upgrades
+Comprehensive Test Suite for EcoTrack AI (EcoTrack AI) Upgrades
 Verifies:
 1. Database schema migration & persistence of new fields
 2. Reverse Geocoding API & Address extraction

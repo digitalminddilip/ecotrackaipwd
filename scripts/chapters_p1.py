@@ -28,7 +28,7 @@ def add_title_page(doc, helpers):
     p_title.alignment = WD_ALIGN_PARAGRAPH.CENTER
     p_title.paragraph_format.space_before = Pt(4)
     p_title.paragraph_format.space_after = Pt(2)
-    r_title = p_title.add_run("ECOTRACK AI (CLEANCONNECT)")
+    r_title = p_title.add_run("ECOTRACK AI")
     r_title.font.name = "Times New Roman"
     r_title.font.size = Pt(22)
     r_title.bold = True
@@ -56,7 +56,7 @@ def add_title_page(doc, helpers):
     r_grp.font.color.rgb = RGBColor(15, 23, 42)
     
     # Logo
-    add_figure(doc, "logo.png", "EcoTrack AI (CleanConnect) Official Emblem", width_inches=1.8)
+    add_figure(doc, "logo.png", "EcoTrack AI Official Emblem", width_inches=1.8)
     
     p_req = doc.add_paragraph()
     p_req.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -157,7 +157,7 @@ def add_certificate(doc, helpers):
     r.font.color.rgb = RGBColor(15, 23, 42)
     
     add_body_p(doc, 
-        "This is to certify that the major project report entitled \"ECOTRACK AI (CLEANCONNECT): "
+        "This is to certify that the major project report entitled \"ECOTRACK AI: "
         "Next-Gen AI-Powered Civic Cleanliness & Municipal Waste Intelligence Platform\" submitted by Team \"VIRUS-X\" "
         "comprising DILIP KUMAR SHARMA (Roll No: 2614018360025), KARAN YADAV (Roll No: 2614018360032), "
         "DHIRAJ KUMAR PRAJAPATI (Roll No: 2614018360022), and GAURAV KUMAR RAWAL (Roll No: 2614018360027), "
@@ -214,7 +214,7 @@ def add_declaration(doc, helpers):
     
     add_body_p(doc,
         "We, the undersigned students of Bachelor of Computer Applications (BCA) Final Year at ITM COLLEGE OF MANAGEMENT, "
-        "forming Team \"VIRUS-X\", hereby declare that the major project work entitled \"ECOTRACK AI (CLEANCONNECT): "
+        "forming Team \"VIRUS-X\", hereby declare that the major project work entitled \"ECOTRACK AI: "
         "Next-Gen AI-Powered Civic Cleanliness & Municipal Waste Intelligence Platform\" is an original piece of work developed "
         "and written by us under the supervision and guidance of Prof. SUBHAM CHATURVEDY, Department of Computer Applications.",
         space_after=10
@@ -304,7 +304,7 @@ def add_acknowledgement(doc, helpers):
     add_body_p(doc,
         "We express our deepest sense of gratitude and sincere indebtedness to our project guide, Prof. SUBHAM CHATURVEDY, "
         "Assistant Professor, Department of Computer Applications, for his invaluable guidance, continuous motivation, "
-        "constructive criticism, and technical insights throughout the design and execution of EcoTrack AI (CleanConnect). "
+        "constructive criticism, and technical insights throughout the design and execution of EcoTrack AI. "
         "His encouragement was pivotal in overcoming critical architectural hurdles, particularly around asynchronous "
         "REST design, cloud SMTP restrictions, and computer vision validation.",
         space_after=10
@@ -392,7 +392,7 @@ def add_table_of_contents(doc, helpers):
         ["List of Figures & List of Tables", "vii"],
         ["Chapter 1: Introduction & Project Overview", "1"],
         ["    1.1 Background of Urban Solid Waste Management in India", "1"],
-        ["    1.2 Motivation Behind EcoTrack AI (CleanConnect)", "2"],
+        ["    1.2 Motivation Behind EcoTrack AI", "2"],
         ["    1.3 Problem Statement & Real-world Civic Bottlenecks", "3"],
         ["    1.4 Objectives of the System", "4"],
         ["    1.5 Scope of the Project", "5"],
@@ -512,9 +512,9 @@ def add_chapter_1(doc, helpers):
         "inefficiencies, fuel misallocation, and lack of verified accountability."
     )
     
-    add_styled_heading(doc, "1.2 Motivation Behind EcoTrack AI (CleanConnect)", 2)
+    add_styled_heading(doc, "1.2 Motivation Behind EcoTrack AI", 2)
     add_body_p(doc,
-        "The primary motivation behind developing EcoTrack AI (CleanConnect) stems from a glaring technological void "
+        "The primary motivation behind developing EcoTrack AI stems from a glaring technological void "
         "observed in contemporary civic governance. Modern citizens carry ubiquitous smartphones equipped with multi-megapixel "
         "cameras, high-precision GNSS satellite receivers, and high-speed 4G/5G mobile connectivity. Conversely, municipal "
         "sanitation departments operate on dated dispatch mechanisms characterized by manual phone hotlines, paperwork, "
@@ -604,7 +604,7 @@ def add_chapter_2(doc, helpers):
     
     add_styled_heading(doc, "2.3 Proposed EcoTrack AI Architectural Paradigm", 2)
     add_body_p(doc,
-        "EcoTrack AI (CleanConnect) fundamentally transforms this dynamic by introducing an AI-first, zero-friction civic "
+        "EcoTrack AI fundamentally transforms this dynamic by introducing an AI-first, zero-friction civic "
         "architecture. Instead of requiring users to classify waste, the platform uses Google Gemini Multimodal Vision and "
         "custom localized feature models to extract waste category, confidence, and recommended disposal protocols within "
         "< 3.5 seconds directly from image pixels."

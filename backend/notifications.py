@@ -76,6 +76,10 @@ def notify_report_resolved(report_id: str, reporter_id: str, address: str) -> di
     return {"email": email_status, "agent": webhook_status}
 
 
+def notify_reporter(report_id: str, reporter_id: str, address: str | None = None) -> dict[str, str]:
+    return notify_report_resolved(report_id, reporter_id, address or "")
+
+
 def send_otp_email(recipient: str, otp: str) -> str:
     smtp_host, smtp_user, smtp_password, smtp_port = _get_smtp_config()
 

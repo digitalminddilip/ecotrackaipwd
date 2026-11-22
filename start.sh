@@ -4,7 +4,7 @@ set -e
 # Detect architecture
 ARCH=$(uname -m)
 echo "=========================================================="
-echo " Starting EcoTrack AI / CleanConnect on Architecture: $ARCH"
+echo " Starting EcoTrack AI on Architecture: $ARCH"
 echo "=========================================================="
 
 # Check if Python is installed

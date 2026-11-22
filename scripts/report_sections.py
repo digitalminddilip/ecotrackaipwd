@@ -1,10 +1,10 @@
 """
-Comprehensive Content Data for EcoTrack AI (CleanConnect) BCA Project Report.
+Comprehensive Content Data for EcoTrack AI BCA Project Report.
 Contains academic text, specifications, architectural descriptions, tables, and test cases.
 Author: Dilip Sharma (DIGITAL MIND DILIP)
 """
 
-PROJECT_TITLE = "ECOTRACK AI (CLEANCONNECT)"
+PROJECT_TITLE = "ECOTRACK AI"
 PROJECT_SUBTITLE = "Next-Gen AI-Powered Civic Cleanliness & Municipal Waste Intelligence Platform"
 COURSE_NAME = "Bachelor of Computer Applications (BCA)"
 SPECIALIZATION = "Final Year Major Project Report (Group Submission)"
@@ -36,7 +36,7 @@ ABSTRACT_TEXT = (
     "triage, linguistic barriers for non-tech-savvy citizens, and most critically, 'ghost cleanups' where contractors "
     "falsify completion proofs without physical waste collection. Furthermore, standard cloud hosting imposes severe "
     "budgetary constraints and SMTP network blocking (ports 25, 465, 587) that break critical citizen notification systems.\n\n"
-    "To resolve these foundational bottlenecks, this project presents EcoTrack AI (CleanConnect), an enterprise-grade, "
+    "To resolve these foundational bottlenecks, this project presents EcoTrack AI, an enterprise-grade, "
     "cloud-native civic intelligence platform engineered from the ground up to automate the entire waste lifecycle. "
     "EcoTrack AI integrates cutting-edge Multimodal Artificial Intelligence (Google Gemini Vision combined with a localized "
     "96-dimensional perceptual feature extraction model, EcoTrack-GarbageNet) to classify civic hazards (garbage dumps, "
@@ -55,7 +55,7 @@ ABSTRACT_TEXT = (
 
 # Comparison Table Data
 COMPARISON_TABLE_DATA = [
-    ["Feature / Dimension", "Traditional Portals / Swachhata App", "EcoTrack AI (CleanConnect)"],
+    ["Feature / Dimension", "Traditional Portals / Swachhata App", "EcoTrack AI"],
     ["Incident Reporting Time", "2 to 5 minutes (tedious manual forms)", "< 30 seconds (Camera + GPS Auto-fetch)"],
     ["Hazard Triage & Categorization", "Manual human inspection (delayed 24-48h)", "Instant Multimodal AI Classification (< 3.5s)"],
     ["Proof of Cleanup Verification", "Manual contractor self-certification (Ghost cleanups)", "Automated Computer Vision (75%+ SSIM Gate)"],

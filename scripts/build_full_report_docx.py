@@ -14,7 +14,7 @@ from docx.oxml.ns import nsdecls, qn
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ASSETS_DIR = os.path.join(BASE_DIR, "report_assets")
-OUTPUT_DOCX = os.path.join(BASE_DIR, "EcoTrack_AI_CleanConnect_Project_Report.docx")
+OUTPUT_DOCX = os.path.join(BASE_DIR, "EcoTrack_AI_Project_Report.docx")
 
 # Styling Palette
 COLOR_PRIMARY_HEX = "0F172A"      # Deep Navy
@@ -230,7 +230,7 @@ def setup_page_layout(doc):
         p_head = header.paragraphs[0]
         p_head.alignment = WD_ALIGN_PARAGRAPH.RIGHT
         p_head.paragraph_format.space_after = Pt(4)
-        r_head = p_head.add_run("EcoTrack AI (CleanConnect) — Team Virus-x • ITM College of Management")
+        r_head = p_head.add_run("EcoTrack AI — Team Virus-x • ITM College of Management")
         r_head.font.name = "Times New Roman"
         r_head.font.size = Pt(8.5)
         r_head.font.color.rgb = RGBColor(148, 163, 184)
@@ -246,7 +246,7 @@ def setup_page_layout(doc):
 
 def main():
     print("=" * 60)
-    print("ECOTRACK AI (CLEANCONNECT) - BCA PROJECT REPORT BUILDER")
+    print("ECOTRACK AI - BCA PROJECT REPORT BUILDER")
     print("=" * 60)
     
     # Initialize Document

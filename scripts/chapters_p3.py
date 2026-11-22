@@ -119,7 +119,7 @@ def add_chapter_10(doc, helpers):
     add_styled_heading(doc, "CHAPTER 10: SYSTEM WALKTHROUGH & USER INTERFACE SCREENSHOTS", 1)
     
     add_body_p(doc,
-        "This chapter presents the actual operational interface of EcoTrack AI (CleanConnect), "
+        "This chapter presents the actual operational interface of EcoTrack AI, "
         "demonstrating the complete user experience across Citizen, Collector, and Administrator roles."
     )
     
@@ -165,7 +165,7 @@ def add_chapter_11(doc, helpers):
     
     add_styled_heading(doc, "11.1 Project Summary & Achievements", 2)
     add_body_p(doc,
-        "EcoTrack AI (CleanConnect) represents a paradigm shift in digital civic governance. By uniting multimodal "
+        "EcoTrack AI represents a paradigm shift in digital civic governance. By uniting multimodal "
         "artificial intelligence, mathematical computer vision verification, civic gamification, and zero-cost cloud architecture, "
         "the project directly resolves the chronic inefficiencies that have crippled traditional municipal reporting systems. "
         "The platform successfully eliminates reporting friction, automates hazard categorization in under 3.5 seconds, "
@@ -260,6 +260,6 @@ def add_chapter_12(doc, helpers):
     )
     add_code_block(doc, code_otp)
     
-    add_callout(doc, "End of Major Project Report", "EcoTrack AI (CleanConnect) • Major Project Report completed for BCA Submission.")
+    add_callout(doc, "End of Major Project Report", "EcoTrack AI • Major Project Report completed for BCA Submission.")
 
 print("Part 3 complete: Ch8, Ch9, Ch10, Ch11, Ch12, Appendix.")

@@ -8,5 +8,5 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.9
-      - key: CLEANCONNECT_DATABASE
-        value: cleanconnect.db
+      - key: ECOTRACK_DATABASE
+        value: ecotrack.db

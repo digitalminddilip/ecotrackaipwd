@@ -1,5 +1,5 @@
 """
-Full PDF Builder for EcoTrack AI (CleanConnect) BCA Project Report.
+Full PDF Builder for EcoTrack AI BCA Project Report.
 Uses ReportLab to generate a high-resolution, print-ready PDF with running headers,
 two-pass page numbering ('Page X of Y'), styled tables, and embedded screenshots.
 Author: Dilip Sharma (DIGITAL MIND DILIP)
@@ -18,7 +18,7 @@ from reportlab.pdfgen import canvas
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ASSETS_DIR = os.path.join(BASE_DIR, "report_assets")
-OUTPUT_PDF = os.path.join(BASE_DIR, "EcoTrack_AI_CleanConnect_Project_Report.pdf")
+OUTPUT_PDF = os.path.join(BASE_DIR, "EcoTrack_AI_Project_Report.pdf")
 
 # Color Palette
 CLR_PRIMARY = colors.HexColor("#0F172A")    # Deep Navy
@@ -56,7 +56,7 @@ class NumberedCanvas(canvas.Canvas):
         self.setFillColor(CLR_MUTED)
 
         # Running Header
-        self.drawString(54, 804, "EcoTrack AI (CleanConnect) — Team Virus-x • ITM College of Management")
+        self.drawString(54, 804, "EcoTrack AI — Team Virus-x • ITM College of Management")
         self.drawRightString(541, 804, "BCA Final Year • 2026-2027")
         self.setStrokeColor(colors.HexColor("#E2E8F0"))
         self.setLineWidth(0.6)
@@ -289,7 +289,7 @@ def build_pdf_document():
     # ==========================================
     story.append(Spacer(1, 10))
     story.append(Paragraph("A MAJOR PROJECT REPORT (GROUP SUBMISSION) ON", styles['CoverTop']))
-    story.append(Paragraph("ECOTRACK AI (CLEANCONNECT)", styles['CoverTitle']))
+    story.append(Paragraph("ECOTRACK AI", styles['CoverTitle']))
     story.append(Paragraph("Next-Gen AI-Powered Civic Cleanliness & Municipal Waste Intelligence Platform", styles['CoverSubtitle']))
     story.append(Paragraph("<b>TEAM: VIRUS-X</b>", styles['CoverTop']))
     
@@ -336,7 +336,7 @@ def build_pdf_document():
     story.append(Paragraph("CERTIFICATE OF APPROVAL", styles['DocH1']))
     story.append(HRFlowable(width="100%", thickness=1, color=CLR_SECONDARY, spaceAfter=12))
     story.append(Paragraph(
-        "This is to certify that the major project report entitled <b>\"ECOTRACK AI (CLEANCONNECT): "
+        "This is to certify that the major project report entitled <b>\"ECOTRACK AI: "
         "Next-Gen AI-Powered Civic Cleanliness & Municipal Waste Intelligence Platform\"</b> submitted by Team <b>\"VIRUS-X\"</b> "
         "comprising <b>DILIP KUMAR SHARMA</b> (Roll No: 2614018360025), <b>KARAN YADAV</b> (Roll No: 2614018360032), "
         "<b>DHIRAJ KUMAR PRAJAPATI</b> (Roll No: 2614018360022), and <b>GAURAV KUMAR RAWAL</b> (Roll No: 2614018360027), "
@@ -382,7 +382,7 @@ def build_pdf_document():
     story.append(HRFlowable(width="100%", thickness=1, color=CLR_SECONDARY, spaceAfter=12))
     story.append(Paragraph(
         "We, the undersigned students of Bachelor of Computer Applications (BCA) Final Year at <b>ITM COLLEGE OF MANAGEMENT</b>, "
-        "forming Team <b>\"VIRUS-X\"</b>, hereby declare that the major project work entitled <b>\"ECOTRACK AI (CLEANCONNECT): "
+        "forming Team <b>\"VIRUS-X\"</b>, hereby declare that the major project work entitled <b>\"ECOTRACK AI: "
         "Next-Gen AI-Powered Civic Cleanliness & Municipal Waste Intelligence Platform\"</b> is an original piece of work developed "
         "and written by us under the supervision and guidance of <b>Prof. SUBHAM CHATURVEDY</b>, Department of Computer Applications.",
         styles['DocBody']
@@ -445,7 +445,7 @@ def build_pdf_document():
     story.append(Paragraph(
         "We express our deepest sense of gratitude and sincere indebtedness to our project guide, <b>Prof. SUBHAM CHATURVEDY</b>, "
         "Assistant Professor, Department of Computer Applications, for his invaluable guidance, continuous motivation, "
-        "constructive criticism, and technical insights throughout the design and execution of EcoTrack AI (CleanConnect). "
+        "constructive criticism, and technical insights throughout the design and execution of EcoTrack AI. "
         "His encouragement was pivotal in overcoming critical architectural hurdles, particularly around asynchronous "
         "REST design, cloud SMTP restrictions, and computer vision validation.",
         styles['DocBody']
@@ -492,7 +492,7 @@ def build_pdf_document():
         ["Acknowledgement & Abstract", "iv"],
         ["Chapter 1: Introduction & Project Overview", "1"],
         ["    1.1 Background of Urban Solid Waste Management in India", "1"],
-        ["    1.2 Motivation Behind EcoTrack AI (CleanConnect)", "2"],
+        ["    1.2 Motivation Behind EcoTrack AI", "2"],
         ["    1.3 Problem Statement & Real-world Civic Bottlenecks", "3"],
         ["    1.4 Objectives & Project Scope", "4"],
         ["    1.5 Feasibility Study (Technical, Operational, Economic)", "5"],
@@ -559,7 +559,7 @@ def build_pdf_document():
         "dumps, stormwater drainage channels, roadside heaps, and environmentally hazardous overflowing landfills.",
         styles['DocBody']
     ))
-    story.append(Paragraph("1.2 Motivation Behind EcoTrack AI (CleanConnect)", styles['DocH2']))
+    story.append(Paragraph("1.2 Motivation Behind EcoTrack AI", styles['DocH2']))
     story.append(Paragraph(
         "Modern citizens carry ubiquitous smartphones equipped with multi-megapixel cameras, high-precision GNSS "
         "satellite receivers, and high-speed 4G/5G mobile connectivity. Conversely, municipal sanitation departments "
@@ -799,7 +799,7 @@ def build_pdf_document():
     story.append(Paragraph("CHAPTER 11: CONCLUSION & FUTURE SCOPE", styles['DocH1']))
     story.append(HRFlowable(width="100%", thickness=1, color=CLR_SECONDARY, spaceAfter=10))
     story.append(Paragraph(
-        "EcoTrack AI (CleanConnect) represents a transformative leap in digital municipal governance. By uniting multimodal "
+        "EcoTrack AI represents a transformative leap in digital municipal governance. By uniting multimodal "
         "artificial intelligence, mathematical computer vision verification, civic gamification, and zero-cost cloud architecture, "
         "the project directly resolves the chronic inefficiencies that have crippled traditional civic reporting systems.",
         styles['DocBody']
@@ -826,7 +826,7 @@ def build_pdf_document():
         story.append(Paragraph(r, styles['DocBullet']))
         
     story.append(Spacer(1, 15))
-    story.append(create_callout("Project Completion", "EcoTrack AI (CleanConnect) • Major Project Report for Bachelor of Computer Applications (BCA) • Digital Mind Dilip", styles))
+    story.append(create_callout("Project Completion", "EcoTrack AI • Major Project Report for Bachelor of Computer Applications (BCA) • Digital Mind Dilip", styles))
 
     print("Compiling PDF flowables...")
     doc.build(story, canvasmaker=NumberedCanvas)

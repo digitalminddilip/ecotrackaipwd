@@ -26,7 +26,7 @@ def add_bg(slide):
     bg.line.color.rgb = DARK_BG
     return bg
 
-def add_header(slide, title_text, category_text="ECOTRACK AI (CLEANCONNECT) • PITCH DECK"):
+def add_header(slide, title_text, category_text="ECOTRACK AI • PITCH DECK"):
     cat_box = slide.shapes.add_textbox(Inches(0.8), Inches(0.5), Inches(11.7), Inches(0.4))
     tf_cat = cat_box.text_frame
     tf_cat.word_wrap = True
@@ -72,7 +72,7 @@ tb = s1.shapes.add_textbox(Inches(0.8), Inches(1.8), Inches(11.7), Inches(2.2))
 tf = tb.text_frame
 tf.word_wrap = True
 p = tf.paragraphs[0]
-p.text = "EcoTrack AI (CleanConnect)"
+p.text = "EcoTrack AI"
 p.font.size = Pt(44)
 p.font.bold = True
 p.font.color.rgb = WHITE
@@ -113,7 +113,7 @@ p_f.font.color.rgb = GRAY
 
 s1.notes_slide.notes_text_frame.text = (
     "SPEAKER NOTES (15-20s):\n"
-    "Good morning judges and evaluators! Today, I am proud to present EcoTrack AI—also known as CleanConnect. "
+    "Good morning judges and evaluators! Today, I am proud to present EcoTrack AI. "
     "It is a next-generation civic cleanliness and municipal waste intelligence platform designed to eliminate urban waste bottlenecks "
     "by bridging the gap between citizens encountering hazards and municipal sanitation squads in real time."
 )
@@ -498,7 +498,7 @@ tf_tbl = tb_tbl.text_frame
 tf_tbl.word_wrap = True
 
 rows = [
-    ("Capability / Feature", "Traditional Govt Portals", "Generic Complaint Apps", "EcoTrack AI (CleanConnect)"),
+    ("Capability / Feature", "Traditional Govt Portals", "Generic Complaint Apps", "EcoTrack AI"),
     ("Multimodal AI Waste Classification", "❌ None (Manual Review)", "❌ None", "✅ Gemini Vision + 96D Local Model"),
     ("Bilingual Voice AI Assistant (Hinglish)", "❌ None", "❌ None", "✅ Full Conversational Voice Agent"),
     ("Automated Proof Verification (CV)", "❌ None (Trust-based)", "❌ Basic Photo Upload", "✅ CV Before/After Feature Match (75%+)"),
@@ -587,7 +587,7 @@ p_c1.font.bold = True
 p_c1.font.color.rgb = DARK_BG
 p_c1.alignment = PP_ALIGN.CENTER
 p_c2 = tf_close.add_paragraph()
-p_c2.text = "EcoTrack AI (CleanConnect) • Turning Civic Cleanliness into a Collective Movement"
+p_c2.text = "EcoTrack AI • Turning Civic Cleanliness into a Collective Movement"
 p_c2.font.size = Pt(13)
 p_c2.font.color.rgb = DARK_BG
 p_c2.alignment = PP_ALIGN.CENTER

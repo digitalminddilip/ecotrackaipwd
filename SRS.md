@@ -1,12 +1,12 @@
 # Software Requirements Specification (SRS)
-## EcoTrack AI (CleanConnect)
+## EcoTrack AI
 ### *Next-Gen AI-Powered Civic Cleanliness & Municipal Waste Intelligence Platform*
 
 ---
 
 | **Document Attribute** | **Specification Details** |
 | :--- | :--- |
-| **Project Name** | **EcoTrack AI (CleanConnect)** |
+| **Project Name** | **EcoTrack AI** |
 | **Document Version** | **1.0.0 (Production & Ideathon Baseline)** |
 | **Author / Development Lead** | **DIGITAL MIND DILIP** |
 | **Target Deployment** | **Cloud Native ($0 Free Tier: Render + Vercel) / IBM LinuxONE Community Cloud** |
@@ -67,7 +67,7 @@
 ## 1. Introduction
 
 ### 1.1 Purpose
-This Software Requirements Specification (SRS) document details the complete functional, non-functional, behavioral, and architectural requirements for **EcoTrack AI (CleanConnect)**. It serves as the definitive reference for software engineers, testers, municipal evaluators, and hackathon judges to understand the technical architecture, security guarantees, and execution logic of the platform.
+This Software Requirements Specification (SRS) document details the complete functional, non-functional, behavioral, and architectural requirements for **EcoTrack AI**. It serves as the definitive reference for software engineers, testers, municipal evaluators, and hackathon judges to understand the technical architecture, security guarantees, and execution logic of the platform.
 
 ### 1.2 Document Conventions
 - This document adheres to the **IEEE Std 830-1998** standard for software requirements specifications.
@@ -83,7 +83,7 @@ This Software Requirements Specification (SRS) document details the complete fun
 - **Municipal Sanitation Authorities**: Operational planning, dispatch logic, and civic oversight.
 
 ### 1.4 Project Scope
-**EcoTrack AI (CleanConnect)** is an enterprise-grade civic cleanliness and municipal waste intelligence platform. It bridges the gap between urban citizens encountering civic hazards (unattended garbage dumps, blocked drains, biohazards, litter) and municipal sanitation departments.
+**EcoTrack AI** is an enterprise-grade civic cleanliness and municipal waste intelligence platform. It bridges the gap between urban citizens encountering civic hazards (unattended garbage dumps, blocked drains, biohazards, litter) and municipal sanitation departments.
 The platform enables:
 1. Instant citizen reporting with automated GPS telemetry and camera capture.
 2. Multimodal AI categorization (powered by Google Gemini Vision & perceptual hashing).
@@ -128,7 +128,7 @@ flowchart TD
     end
 
     subgraph Storage["Data Persistence"]
-        SQLiteDB[("SQLite WAL Database\ncleanconnect.db")]
+        SQLiteDB[("SQLite WAL Database\necotrack.db")]
         FileStore[("Local Encrypted Media Store\nBase64 / Multipart Buffers")]
     end
 
@@ -208,7 +208,7 @@ The system adopts an **Asynchronous RESTful Microservice Architecture**:
 | | Security & Auth | PyJWT, Passlib (Bcrypt), Google Auth | Secure tokens, salted hashing, OAuth |
 | | Image Processing | Pillow (PIL), OpenCV-Python-Headless | Image hashing, dimension scaling, proof comparison |
 | | HTTP Client | Requests 2.31.0+ | Outbound HTTPS API requests to Resend & Google |
-| **Database** | Embedded Storage | SQLite 3 (WAL Mode) | Relational persistence (`cleanconnect.db`) |
+| **Database** | Embedded Storage | SQLite 3 (WAL Mode) | Relational persistence (`ecotrack.db`) |
 | **Cloud & Ops** | Frontend Edge | Vercel CDN | Global static deployment |
 | | Backend Web Service| Render Cloud Web Service | Continuous deployment synced with Git `main` |
 | | Remote Repository | GitHub (`digitalminddilip/ecotrackaipwd`) | Continuous integration and deployment origin |
@@ -519,4 +519,4 @@ sequenceDiagram
 
 ---
 *End of Software Requirements Specification (SRS) Document.*
-*EcoTrack AI (CleanConnect) • Powered by DIGITAL MIND DILIP*
+*EcoTrack AI • Powered by DIGITAL MIND DILIP*

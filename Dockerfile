@@ -6,7 +6,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PORT=8000 \
     HOST=0.0.0.0 \
-    CLEANCONNECT_DATABASE=/app/cleanconnect.db
+    ECOTRACK_DATABASE=/app/ecotrack.db \
+    CLEANCONNECT_DATABASE=/app/ecotrack.db
 
 WORKDIR /app
 
@@ -28,7 +29,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # Copy application files
 COPY backend/ ./backend/
 COPY frontend/ ./frontend/
-COPY cleanconnect.db ./cleanconnect.db
+COPY ecotrack.db ./ecotrack.db
 COPY .env* ./
 
 # Expose server port

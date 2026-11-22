@@ -9,7 +9,7 @@ from docx.oxml.ns import nsdecls, qn
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ASSETS_DIR = os.path.join(BASE_DIR, "report_assets")
-OUTPUT_DOCX = os.path.join(BASE_DIR, "EcoTrack_AI_CleanConnect_Project_Report.docx")
+OUTPUT_DOCX = os.path.join(BASE_DIR, "EcoTrack_AI_Project_Report.docx")
 
 COLOR_PRIMARY_HEX = "0F172A"      # Deep Navy
 COLOR_SECONDARY_HEX = "0D9488"    # Emerald / Teal

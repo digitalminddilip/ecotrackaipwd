@@ -49,7 +49,7 @@ def add_chapter_4(doc, helpers):
         "     | Outbound HTTPS:443 | External Cloud API     | Local WAL Engine      \n"
         "+----v--------------------v------------------------v----------------------+\n"
         "| EXTERNAL SERVICES       | DATA PERSISTENCE                              |\n"
-        "| - Resend REST API       | - SQLite WAL Database (cleanconnect.db)        |\n"
+        "| - Resend REST API       | - SQLite WAL Database (ecotrack.db)        |\n"
         "| - Google Gemini Vision  | - Local Encrypted Multipart File Store        |\n"
         "+-------------------------+-----------------------------------------------+\n"
     )
@@ -75,7 +75,7 @@ def add_chapter_4(doc, helpers):
         "         +-------------------------------+                                  \n"
         "         |                               | <--- (Task Accept, In-Progress)  \n"
         "         |          ECOTRACK AI          | ---> (Assigned Incidents Queue)  \n"
-        "         |        (CLEANCONNECT)         | <--- (Cleanup Proof Photo)       \n"
+        "         |      CIVIC INTELLIGENCE       | <--- (Cleanup Proof Photo)       \n"
         "         |      CORE SYSTEM ENGINE       |            [ COLLECTOR ]         \n"
         "         |                               |                                  \n"
         "         +-------------------------------+                                  \n"
@@ -293,7 +293,7 @@ def add_chapter_7(doc, helpers):
     
     add_styled_heading(doc, "7.1 Schema Overview & Third Normal Form (3NF) Compliance", 2)
     add_body_p(doc,
-        "The EcoTrack AI database schema (`cleanconnect.db`) is normalized to Third Normal Form (3NF). "
+        "The EcoTrack AI database schema (`ecotrack.db`) is normalized to Third Normal Form (3NF). "
         "All tables feature atomic attributes (1NF), eliminate partial key dependencies (2NF), and eliminate transitive "
         "dependencies (3NF). Foreign keys link reports and notifications back to unique user records."
     )

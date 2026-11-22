@@ -13,9 +13,10 @@ services:
     environment:
       - PORT=8000
       - HOST=0.0.0.0
-      - CLEANCONNECT_DATABASE=/app/cleanconnect.db
+      - ECOTRACK_DATABASE=/app/ecotrack.db
+      - CLEANCONNECT_DATABASE=/app/ecotrack.db
     volumes:
-      - ./cleanconnect.db:/app/cleanconnect.db
+      - ./ecotrack.db:/app/ecotrack.db
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s

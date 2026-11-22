@@ -1,5 +1,5 @@
 """
-Test suite verifying Gemini API features in EcoTrack AI (CleanConnect):
+Test suite verifying Gemini API features in EcoTrack AI:
 1. Gemini Multimodal Dual-Image Cleanup Auditor
 2. Gemini Municipal Executive Briefing Engine
 3. Integrated FastAPI Endpoints

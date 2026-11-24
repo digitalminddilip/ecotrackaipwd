@@ -526,6 +526,9 @@ async def analyze_waste_preview(
         "confidence": conf,
         "material": analysis.get("material", "mixed"),
         "disposal_bin": analysis.get("disposal_bin", "blue_bin"),
+        "detected_item": analysis.get("detected_item"),
+        "detected_label": analysis.get("detected_label"),
+        "disposal_instructions": analysis.get("disposal_instructions"),
         "class_probabilities": analysis.get("class_probabilities", {}),
         "provider": analysis.get("provider", "trained-model"),
     }

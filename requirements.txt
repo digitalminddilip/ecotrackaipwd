@@ -10,3 +10,5 @@ requests>=2.30
 google-genai
 python-dotenv>=1.0.0
 google-auth>=2.20.0
+tensorflow>=2.16.0
+h5py>=3.11.0
